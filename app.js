@@ -1,5 +1,5 @@
-// === 1. CLAVES DE CONFIGURACIÓN ===
-// !!! REEMPLAZA ESTOS MARCADORES con tus CLAVES REALES de Firebase y APPS SCRIPT !!!
+// === 1. CLAVES DE CONFIGURACIÓN (GLOBALES) ===
+// 🚨 REEMPLAZA LOS VALORES MARCADOS CON TUS CLAVES REALES Y LA URL DE APPS SCRIPT 🚨
 const firebaseConfig = {
   apiKey: "AIzaSyCFD1fE88T9eJV8oK7Ccm20vXq4eRvAizQ",
   authDomain: "app-vendedores-inteligente.firebaseapp.com",
@@ -18,18 +18,22 @@ let messaging;
 let FCM_TOKEN = localStorage.getItem('fcmToken') || null;
 let ENCARGADO_NAME = localStorage.getItem('encargadoName') || null;
 
-// Registrar Service Worker (se espera que sw.js esté en la raíz)
+// Registrar Service Worker
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')
         .then(function(registration) {
             console.log('Service Worker registrado con éxito:', registration);
+            // ENVIAR LA CONFIGURACIÓN AL SW
+            if (registration.active) {
+                registration.active.postMessage({ type: 'SET_CONFIG', config: FIREBASE_CONFIG });
+            }
         })
         .catch(function(error) {
             console.log('Fallo el registro del Service Worker:', error);
         });
 }
 
-// Inicializar Firebase
+// Inicializar Firebase (usa FIREBASE_CONFIG definida arriba)
 try {
     firebase.initializeApp(FIREBASE_CONFIG);
     messaging = firebase.messaging();
@@ -38,21 +42,7 @@ try {
     console.error("Error al inicializar Firebase:", e);
 }
 
-// === 3. MANEJO DE NOTIFICACIONES EN FOREGROUND ===
-// Cuando la app está abierta y activa
-if (messaging) {
-    messaging.onMessage((payload) => {
-        console.log('Mensaje recibido en foreground:', payload);
-        const notificationTitle = payload.notification.title;
-        const notificationOptions = {
-            body: payload.notification.body,
-        };
-        // Mostrar la notificación directamente en la interfaz
-        displayMessage(`${notificationTitle}: ${notificationOptions.body}`);
-    });
-}
-
-// === 4. FUNCIONES DE INTERFAZ Y LÓGICA ===
+// === 3. FUNCIONES DE INTERFAZ Y LÓGICA ===
 
 function updateUI() {
     if (ENCARGADO_NAME) {
@@ -86,7 +76,7 @@ function saveEncargado() {
 }
 
 function requestNotificationPermission() {
-    if (!messaging || FCM_TOKEN) return; // No hacer nada si ya tenemos token
+    if (!messaging || FCM_TOKEN) return; 
 
     messaging.requestPermission()
         .then(function() {
@@ -97,7 +87,7 @@ function requestNotificationPermission() {
             FCM_TOKEN = token;
             localStorage.setItem('fcmToken', token);
             console.log('FCM Token:', token);
-            sendTokenToAppsScript(token); // Enviar el token al backend de Google
+            sendTokenToAppsScript(token); 
             updateUI();
         })
         .catch(function(err) {
@@ -150,7 +140,6 @@ function markStockDone(proveedor) {
         fechaRealizacion: new Date().toISOString()
     };
 
-    // Usamos el endpoint de Apps Script para registrar la acción y enviar el email
     fetch(APPS_SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
@@ -158,7 +147,7 @@ function markStockDone(proveedor) {
     })
     .then(() => {
         displayMessage(`✅ Stock de ${proveedor} marcado como REALIZADO. Email enviado.`);
-        // Ocultar el botón (ejemplo) para dar feedback de que la tarea terminó
+        // Usamos el ID del contenedor para ocultar el botón
         document.querySelector(`#item-${proveedor.toLowerCase().replace(/\s/g, '-')}`).classList.add('hidden');
     })
     .catch(error => {
@@ -167,5 +156,4 @@ function markStockDone(proveedor) {
     });
 }
 
-// Ejecutar al cargar la página
 window.onload = updateUI;

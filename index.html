@@ -8,7 +8,7 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <style>
-        /* Estilos CSS incluidos aquí para simplificar */
+        /* Estilos CSS omitidos para espacio, asume que están correctos */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
@@ -123,15 +123,15 @@
                     <h3>Stock de ROMYL</h3>
                     <button class="btn-green" onclick="markStockDone('ROMYL')">Marcar Realizado</button>
                 </div>
-                <div id="item-make" class="stock-item">
-                    <h3>Stock de MAKE</h3>
-                    <button class="btn-green" onclick="markStockDone('MAKE')">Marcar Realizado</button>
+                <div id="item-stock-make" class="stock-item">
+                    <h3>Stock de STOCK MAKE</h3>
+                    <button class="btn-green" onclick="markStockDone('STOCK MAKE')">Marcar Realizado</button>
                 </div>
                 <div id="item-biobag" class="stock-item">
                     <h3>Stock de BIO BAG</h3>
                     <button class="btn-green" onclick="markStockDone('BIO BAG')">Marcar Realizado</button>
                 </div>
-                </div>
+            </div>
 
             <p style="text-align: center; margin-top: 30px;">
                 <span id="notification-status" class="status-badge"></span>
@@ -141,6 +141,19 @@
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js"></script>
+    
+    <script>
+        // Registrar el Service Worker con el nombre estándar de Firebase
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/firebase-messaging-sw.js') // CAMBIO DE NOMBRE
+                .then(function(registration) {
+                    console.log('Service Worker registrado con éxito:', registration);
+                })
+                .catch(function(error) {
+                    console.log('Fallo el registro del Service Worker:', error);
+                });
+        }
+    </script>
     
     <script src="app.js"></script> 
 </body>

@@ -144,8 +144,10 @@
     
     <script>
         // Registrar el Service Worker con el nombre estándar de Firebase
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/firebase-messaging-sw.js') // CAMBIO DE NOMBRE
+        // CAMBIO: Usaremos un nombre nuevo y nunca antes visto por el navegador
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/stock-sw-v3.js') 
+        // ...
                 .then(function(registration) {
                     console.log('Service Worker registrado con éxito:', registration);
                 })

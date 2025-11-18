@@ -10,7 +10,7 @@ const firebaseConfig = {
 };
 
 // URL de tu implementación de Apps Script (la Web App URL desplegada)
-const APPS_SCRIPT_URL = 'MARCADOR_DE_POSICION_APPS_SCRIPT_URL'; 
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwXa7vxx1AM4nm3bVP1qhO3IbDncAQPjG4XeZdQJcONQ6ljC_OeBigGH9L_i61irhIXBw/exec'; 
 
 // === 2. REGISTRO DEL SERVICE WORKER Y FIREBASE ===
 

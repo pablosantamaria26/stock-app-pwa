@@ -2,31 +2,39 @@
 importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js');
 importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js');
 
-// === CLAVES DE CONFIGURACIÓN (DEBEN SER IDÉNTICAS AL app.js) ===
-const firebaseConfig = {
-  apiKey: "AIzaSyCFD1fE88T9eJV8oK7Ccm20vXq4eRvAizQ",
-  authDomain: "app-vendedores-inteligente.firebaseapp.com",
-  projectId: "app-vendedores-inteligente",
-  storageBucket: "app-vendedores-inteligente.firebasestorage.app",
-  messagingSenderId: "583313989429",
-  appId: "1:583313989429:web:bc8110067d4d25a811367c"
-};
-// ==============================================================
+let firebaseConfig = null;
 
-firebase.initializeApp(firebaseConfig);
-const messaging = firebase.messaging();
+// Escucha mensajes del app.js para recibir la configuración de las claves
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SET_CONFIG') {
+        firebaseConfig = event.data.config;
+        console.log('[SW] Configuración de Firebase recibida.');
+        try {
+            firebase.initializeApp(firebaseConfig);
+            self.messaging = firebase.messaging();
+        } catch(e) {
+            console.error("[SW] Error al inicializar Firebase:", e);
+        }
+    }
+});
+
 
 // Maneja los mensajes PUSH que llegan cuando la aplicación NO está abierta (Background)
-messaging.onBackgroundMessage(function(payload) {
-    console.log('[sw.js] Mensaje recibido en background:', payload);
+self.addEventListener('push', function(event) {
+    if (event.data) {
+        const payload = event.data.json();
+        console.log('[SW] Mensaje recibido en background:', payload);
 
-    const notificationTitle = payload.notification.title;
-    const notificationOptions = {
-        body: payload.notification.body,
-        icon: '/icon.png', // Asegúrate de tener un archivo icon.png en la raíz
-        tag: 'stock-request', // Esto asegura que no se acumulen notificaciones duplicadas
-        renotify: true // Para forzar la alerta si llega otro mensaje con el mismo tag
-    };
+        const notificationTitle = payload.notification.title;
+        const notificationOptions = {
+            body: payload.notification.body,
+            icon: '/icon.png', // Debe existir un archivo icon.png en la raíz
+            tag: 'stock-request', 
+            renotify: true
+        };
 
-    return self.registration.showNotification(notificationTitle, notificationOptions);
+        event.waitUntil(
+            self.registration.showNotification(notificationTitle, notificationOptions)
+        );
+    }
 });

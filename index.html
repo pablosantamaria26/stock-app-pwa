@@ -6,154 +6,165 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stock Supervisor</title>
 
-    <meta name="theme-color" content="#008000">
+    <!-- PWA -->
+    <meta name="theme-color" content="#0faa4b">
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 
+    <!-- ESTILOS MODERNOS -->
     <style>
         :root {
-            --primary: #008000;
-            --primary-dark: #005d00;
-            --bg: #f1f5f2;
+            --primary: #0faa4b;
+            --primary-dark: #078a3b;
+            --accent: #c3ff9c;
+            --bg: #eef6ef;
             --white: #fff;
-            --shadow: 0 4px 10px rgba(0,0,0,0.12);
+            --shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+            --radius: 18px;
         }
 
         body {
             margin: 0;
             background: var(--bg);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: "Segoe UI", Roboto, Arial, sans-serif;
             color: #333;
         }
 
-        /* --- ENCABEZADO --- */
+        /* HEADER */
         .header {
-            background: var(--primary);
-            padding: 20px 15px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            padding: 25px 15px;
             text-align: center;
             color: var(--white);
             box-shadow: var(--shadow);
-            border-radius: 0 0 20px 20px;
+            border-radius: 0 0 25px 25px;
         }
 
         .header h1 {
             margin: 0;
-            font-size: 1.6em;
-            font-weight: 700;
-            letter-spacing: 0.3px;
+            font-size: 1.7em;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            animation: bounceIn 0.8s ease;
         }
 
-        /* --- CONTENEDOR PRINCIPAL --- */
+        @keyframes bounceIn {
+            0% { transform: scale(0.75); opacity: 0; }
+            60% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+
+        /* CONTENEDOR */
         .container {
             padding: 20px;
             max-width: 520px;
             margin: auto;
         }
 
-        /* --- TARJETAS / INPUTS --- */
-        .form-group {
-            margin-bottom: 20px;
-        }
-
+        /* INPUT Y BOTONES */
         label {
             font-weight: 600;
-            display: block;
             margin-bottom: 8px;
-            color: #444;
+            display: block;
         }
 
         input {
             width: 100%;
             padding: 14px;
             font-size: 1em;
-            border-radius: 10px;
+            border-radius: var(--radius);
             border: 2px solid #ccc;
-            box-sizing: border-box;
-            transition: all 0.25s ease;
+            transition: 0.25s;
         }
 
         input:focus {
             border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(15, 170, 75, 0.25);
             outline: none;
-            box-shadow: 0 0 0 3px rgba(0,128,0,0.25);
         }
 
-        .btn-green {
-            width: 100%;
+        .btn {
             padding: 14px;
-            border: none;
-            border-radius: 10px;
+            border-radius: var(--radius);
             font-size: 1.1em;
+            border: none;
+            cursor: pointer;
+            width: 100%;
             background: var(--primary);
             color: var(--white);
-            cursor: pointer;
-            transition: background 0.25s ease, transform 0.1s ease;
-            margin-top: 10px;
+            font-weight: bold;
+            box-shadow: var(--shadow);
+            transition: 0.15s ease;
         }
 
-        .btn-green:active {
-            transform: scale(0.97);
-        }
-
-        .btn-green:hover {
+        .btn:hover {
             background: var(--primary-dark);
         }
 
-        /* --- LISTA DE STOCKS --- */
-        .stock-list {
-            margin-top: 25px;
+        .btn:active {
+            transform: scale(0.95);
         }
 
+        /* TARJETAS */
         .stock-item {
             background: var(--white);
             padding: 18px;
-            border-radius: 15px;
             margin-bottom: 18px;
-            box-shadow: var(--shadow);
+            border-radius: var(--radius);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: transform 0.15s ease;
+            box-shadow: var(--shadow);
+            transition: 0.15s ease;
         }
 
         .stock-item:hover {
-            transform: translateY(-3px);
+            transform: translateY(-5px);
         }
 
         .stock-item h3 {
             margin: 0;
-            font-size: 1.2em;
+            max-width: 50%;
         }
 
-        /* --- BADGE DE NOTIFICACIONES --- */
+        /* BADGE */
         #notification-status {
-            padding: 8px 15px;
-            border-radius: 25px;
-            font-size: 0.9em;
-            font-weight: 600;
+            padding: 10px 18px;
+            border-radius: 40px;
+            font-weight: bold;
             background: #ff9800;
             color: var(--white);
+            display: inline-block;
+            box-shadow: var(--shadow);
         }
 
         .status-success {
-            background: #4caf50 !important;
+            background: #22c55e !important;
         }
 
-        /* --- MENSAJE TEMPORAL --- */
-        #message-area {
-            padding: 12px;
-            border-radius: 12px;
-            text-align: center;
-            font-weight: 600;
-            display: none;
-            margin-top: 15px;
+        /* TOAST */
+        #toast {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%) scale(0.8);
+            background: var(--primary-dark);
+            color: white;
+            padding: 14px 22px;
+            border-radius: var(--radius);
+            opacity: 0;
+            pointer-events: none;
+            font-weight: bold;
+            transition: 0.3s ease;
+            box-shadow: var(--shadow);
         }
 
-        /* Ocultar elementos */
-        .hidden {
-            display: none !important;
+        #toast.show {
+            opacity: 1;
+            transform: translateX(-50%) scale(1);
         }
 
+        .hidden { display: none !important; }
     </style>
 </head>
 
@@ -164,61 +175,66 @@
         <h1><i class="material-icons" style="vertical-align: middle;">inventory</i> Stock Supervisor</h1>
     </div>
 
-    <!-- CONTENIDO -->
+    <!-- CONTENEDOR -->
     <div class="container">
 
-        <!-- 1. CONFIGURACIÓN INICIAL -->
-        <div id="encargado-setup" class="form-group">
-            <label for="encargado-name">Ingresa tu Nombre (Encargado):</label>
+        <!-- FORM INICIAL -->
+        <div id="encargado-setup">
+            <label>Ingresa tu Nombre (Encargado):</label>
             <input type="text" id="encargado-name" placeholder="Tu nombre completo">
-            <button class="btn-green" onclick="saveEncargado()">Guardar y Activar Notificaciones</button>
+            <button class="btn" onclick="saveEncargado()">Guardar y Activar Notificaciones</button>
         </div>
 
-        <!-- 2. APLICACIÓN PRINCIPAL -->
+        <!-- MAIN APP -->
         <div id="main-app" class="hidden">
             <p style="font-size: 1.1em;">
-                Hola <strong id="current-encargado"></strong>, estas son tus tareas de stock:
+                Hola <strong id="current-encargado"></strong>, estas son tus tareas:
             </p>
 
-            <div id="message-area"></div>
-
-            <div id="pending-stocks" class="stock-list">
+            <div id="pending-stocks">
 
                 <div id="item-romyl" class="stock-item">
                     <h3>Stock de ROMYL</h3>
-                    <button class="btn-green" onclick="markStockDone('ROMYL')">
-                        Marcar Realizado
-                    </button>
+                    <button class="btn" onclick="markStockDone('ROMYL')">Marcar Realizado</button>
                 </div>
 
                 <div id="item-stock-make" class="stock-item">
                     <h3>Stock de STOCK MAKE</h3>
-                    <button class="btn-green" onclick="markStockDone('STOCK MAKE')">
-                        Marcar Realizado
-                    </button>
+                    <button class="btn" onclick="markStockDone('STOCK MAKE')">Marcar Realizado</button>
                 </div>
 
                 <div id="item-biobag" class="stock-item">
                     <h3>Stock de BIO BAG</h3>
-                    <button class="btn-green" onclick="markStockDone('BIO BAG')">
-                        Marcar Realizado
-                    </button>
+                    <button class="btn" onclick="markStockDone('BIO BAG')">Marcar Realizado</button>
                 </div>
 
             </div>
 
-            <p style="text-align: center; margin-top: 30px;">
-                <span id="notification-status" class="status-badge">Notificaciones: PENDIENTE</span>
-            </p>
+            <div style="text-align:center; margin-top:25px">
+                <span id="notification-status">Notificaciones: PENDIENTE</span>
+            </div>
         </div>
+
     </div>
 
-    <!-- FIREBASE SDK -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js"></script>
+    <!-- TOAST -->
+    <div id="toast"></div>
 
-    <!-- APP JS -->
+    <!-- APP.JS -->
     <script src="app.js"></script>
+
+    <!-- 🔔 OneSignal -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+
+    <script>
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function (OneSignal) {
+            await OneSignal.init({
+                appId: "b89337f7-3997-43ab-be02-bdd99346fad7",
+                notifyButton: { enable: true }
+            });
+        });
+    </script>
 
 </body>
 </html>

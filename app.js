@@ -157,3 +157,98 @@ function markStockDone(proveedor) {
 }
 
 window.onload = updateUI;
+
+// ==========================================================
+// === 2.1. RECIBIR EVENTOS DEL SERVICE WORKER (STOCK_CLICK)
+// ==========================================================
+if (navigator.serviceWorker) {
+    navigator.serviceWorker.addEventListener("message", event => {
+        if (!event.data) return;
+
+        if (event.data.type === "STOCK_CLICK") {
+    const proveedor = event.data.proveedor;
+    console.log("💬 App recibió STOCK_CLICK para:", proveedor);
+
+    // 1) Llevarlo al card del proveedor
+    focusProveedor(proveedor);
+
+    // 2) Mostrar automáticamente el botón de acción
+    setTimeout(() => {
+        openProveedorAction(proveedor);
+    }, 800);
+}
+
+        }
+    });
+}
+
+// ==========================================================
+// === 2.2. ENFOCAR AUTOMÁTICAMENTE EL PROVEEDOR
+// ==========================================================
+function focusProveedor(proveedor) {
+    if (!proveedor) return;
+
+    const id = `item-${proveedor.toLowerCase().replace(/\s+/g, "-")}`;
+    const element = document.getElementById(id);
+
+    if (!element) {
+        console.warn("No se encontró el elemento del proveedor:", id);
+        return;
+    }
+
+    // Mostrar un borde o highlight visual
+    element.style.transition = "all 0.4s ease";
+    element.style.boxShadow = "0 0 15px 3px #00c853";
+    element.style.border = "2px solid #00c853";
+
+    // Scroll hasta ese proveedor
+    element.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    // Quitar highlight después de unos segundos
+    setTimeout(() => {
+        element.style.boxShadow = "";
+        element.style.border = "";
+    }, 3500);
+}
+
+// ==========================================================
+// === 3. MOSTRAR AUTOMÁTICAMENTE EL BOTÓN DE MARCAR STOCK ===
+// ==========================================================
+function openProveedorAction(proveedor) {
+
+    if (!proveedor) return;
+
+    const id = `item-${proveedor.toLowerCase().replace(/\s+/g, "-")}`;
+    const element = document.getElementById(id);
+
+    if (!element) {
+        console.warn("No se encontró el proveedor para acción:", id);
+        return;
+    }
+
+    // Buscar botón dentro del card (tiene un <button> normalmente)
+    const btn = element.querySelector("button");
+
+    if (!btn) {
+        console.warn("No se encontró el botón para el proveedor:", proveedor);
+        return;
+    }
+
+    // Hacer visible el bloque si estuviera oculto
+    element.classList.remove("hidden");
+
+    // Destacar el botón (visual)
+    btn.style.transition = "all 0.4s ease";
+    btn.style.boxShadow = "0 0 12px 3px #ffab00";
+    btn.style.border = "2px solid #ffab00";
+
+    // Scroll directo al botón
+    btn.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    // Quitar highlight luego de unos segundos
+    setTimeout(() => {
+        btn.style.boxShadow = "";
+        btn.style.border = "";
+    }, 3000);
+}
+

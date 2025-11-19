@@ -26,9 +26,10 @@ if ('serviceWorker' in navigator) {
             // Enviar configuración Firebase al SW
             if (registration.active) {
                 registration.active.postMessage({
-                    type: 'SET_CONFIG',
-                    config: FIREBASE_CONFIG
-                });
+    type: 'SET_CONFIG',
+    config: firebaseConfig
+});
+
             }
         })
         .catch(function(error) {

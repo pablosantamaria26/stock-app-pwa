@@ -142,20 +142,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js"></script>
     
-    <script>
-        // Registrar el Service Worker con el nombre estándar de Firebase
-        // CAMBIO: Usaremos un nombre nuevo y nunca antes visto por el navegador
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/stock-sw-v3.js') 
-        // ...
-                .then(function(registration) {
-                    console.log('Service Worker registrado con éxito:', registration);
-                })
-                .catch(function(error) {
-                    console.log('Fallo el registro del Service Worker:', error);
-                });
-        }
-    </script>
+
     
     <script src="app.js"></script> 
 </body>

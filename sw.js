@@ -1,96 +1,76 @@
 // ===============================================
-// === SERVICE WORKER COMPLETO (Firebase + Push Persistente)
+// === SERVICE WORKER OFICIAL PARA LA PWA (SIN Firebase)
 // ===============================================
 
-// Importa Firebase (necesario para recibir notificaciones FCM)
-importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js');
-importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js');
-
-let firebaseConfig = null;
+// Files to cache
+const CACHE_NAME = "stock-supervisor-v1";
+const ASSETS = [
+    "./",
+    "index.html",
+    "app.js",
+    "manifest.json",
+    "icon-192.png",
+    "icon-512.png"
+];
 
 // -----------------------------------------------
-// 🔹 RECIBO CONFIG desde app.js (SET_CONFIG)
+// 1. INSTALACIÓN DEL SERVICE WORKER
 // -----------------------------------------------
-self.addEventListener('message', (event) => {
-    if (event.data && event.data.type === 'SET_CONFIG') {
-        firebaseConfig = event.data.config;
-        console.log('[SW] Configuración de Firebase recibida.');
-
-        try {
-            firebase.initializeApp(firebaseConfig);
-            self.messaging = firebase.messaging();
-        } catch(e) {
-            console.error("[SW] Error al inicializar Firebase:", e);
-        }
-    }
-});
-
-// =========================================================
-// 🔹 PUSH RECIBIDO (cuando la app está cerrada o en segundo plano)
-//     👉 AHORA notificación PERSISTENTE (requireInteraction)
-// =========================================================
-self.addEventListener('push', function(event) {
-
-    if (!event.data) return;
-
-    let payload = {};
-    try {
-        payload = event.data.json();
-    } catch (e) {
-        payload = { notification: { title: "Stock", body: event.data.text() } };
-    }
-
-    console.log('[SW] Push recibido:', payload);
-
-    const title = payload.notification?.title || "Stock pendiente";
-    const body = payload.notification?.body || "Revisar proveedor";
-    const proveedor = payload.data?.proveedor || "Proveedor";
-
-    const notificationOptions = {
-        body: body,
-        icon: '/icon.png',
-        badge: '/icon.png',
-        requireInteraction: true,   // ⛔ NOTIFICACIÓN PERSISTENTE
-        tag: 'stock-pendiente',     // agrupa las notificaciones
-        renotify: true,
-        data: {
-            proveedor: proveedor
-        }
-    };
-
+self.addEventListener("install", (event) => {
     event.waitUntil(
-        self.registration.showNotification(title, notificationOptions)
+        caches.open(CACHE_NAME).then((cache) => {
+            return cache.addAll(ASSETS);
+        })
     );
+    self.skipWaiting();
 });
 
-// =========================================================
-// 🔹 CUANDO EL USUARIO HACE CLICK EN LA NOTIFICACIÓN
-//     👉 Abrir la app o enfocarla
-//     👉 Enviar el proveedor clickeado al frontend
-// =========================================================
-self.addEventListener('notificationclick', event => {
-    const proveedor = event.notification.data.proveedor;
-    event.notification.close();
-
-    console.log("[SW] Notificación clickeada:", proveedor);
-
+// -----------------------------------------------
+// 2. ACTIVACIÓN (limpiar caches viejos)
+// -----------------------------------------------
+self.addEventListener("activate", (event) => {
     event.waitUntil(
-        clients.matchAll({ type: "window", includeUncontrolled: true }).then(clientList => {
+        caches.keys().then((keys) =>
+            Promise.all(
+                keys.map((key) => {
+                    if (key !== CACHE_NAME) {
+                        return caches.delete(key);
+                    }
+                })
+            )
+        )
+    );
+    self.clients.claim();
+});
 
-            // Si ya existe una ventana → enfocarla y enviar mensaje
-            if (clientList.length > 0) {
-                const client = clientList[0];
-                client.focus();
-                client.postMessage({ type: "STOCK_CLICK", proveedor });
-                return;
-            }
+// -----------------------------------------------
+// 3. FETCH: usar cache + network fallback
+// -----------------------------------------------
+self.addEventListener("fetch", (event) => {
+    if (event.request.method !== "GET") return;
 
-            // Si NO existe → abrir la app y luego enviar mensaje
-            return clients.openWindow('/').then(newClient => {
-                if (newClient) {
-                    newClient.postMessage({ type: "STOCK_CLICK", proveedor });
-                }
-            });
+    event.respondWith(
+        caches.match(event.request).then((cachedResponse) => {
+            return (
+                cachedResponse ||
+                fetch(event.request).catch(() =>
+                    caches.match("index.html")
+                )
+            );
         })
     );
 });
+
+// =========================================================
+// 4. RECIBIR MENSAJES DEL FRONTEND (para manejar eventos)
+// =========================================================
+self.addEventListener("message", (event) => {
+    // Aquí solo recibimos mensajes del frontend (si hace falta)
+    console.log("[SW] Mensaje recibido del cliente:", event.data);
+});
+
+// =========================================================
+// 🔥 IMPORTANTE:
+// *NO* agregues initializeApp() en este SW.
+// Firebase Messaging usa firebase-messaging-sw.js aparte.
+// =========================================================

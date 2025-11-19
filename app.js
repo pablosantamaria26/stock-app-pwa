@@ -1,5 +1,13 @@
-// === 1. CLAVES DE CONFIGURACIÓN (GLOBALES) ===
-// 🚨 REEMPLAZA LOS VALORES MARCADOS CON TUS CLAVES REALES Y LA URL DE APPS SCRIPT 🚨
+/****************************************************
+ * APP.JS — STOCK SUPERVISOR (PWA)
+ * Versión Final 2025 — Corregida y Operativa
+ ****************************************************/
+
+
+// ======================================================
+// === 1. CONFIGURACIÓN FIREBASE + APPS SCRIPT ==========
+// ======================================================
+
 const firebaseConfig = {
   apiKey: "AIzaSyCFD1fE88T9eJV8oK7Ccm20vXq4eRvAizQ",
   authDomain: "app-vendedores-inteligente.firebaseapp.com",
@@ -9,251 +17,238 @@ const firebaseConfig = {
   appId: "1:583313989429:web:bc8110067d4d25a811367c"
 };
 
-// URL de tu implementación de Apps Script (la Web App URL desplegada)
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwXa7vxx1AM4nm3bVP1qhO3IbDncAQPjG4XeZdQJcONQ6ljC_OeBigGH9L_i61irhIXBw/exec'; 
-
-// === 2. REGISTRO DEL SERVICE WORKER Y FIREBASE ===
+// URL de tu Apps Script
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwXa7vxx1AM4nm3bVP1qhO3IbDncAQPjG4XeZdQJcONQ6ljC_OeBigGH9L_i61irhIXBw/exec";
 
 let messaging;
-let FCM_TOKEN = localStorage.getItem('fcmToken') || null;
-let ENCARGADO_NAME = localStorage.getItem('encargadoName') || null;
+let FCM_TOKEN = localStorage.getItem("fcmToken") || null;
+let ENCARGADO_NAME = localStorage.getItem("encargadoName") || null;
 
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js')
-        .then(function(registration) {
-            console.log('Service Worker registrado con éxito:', registration);
 
-            // Enviar configuración Firebase al SW
+// ======================================================
+// === 2. REGISTRO DEL SERVICE WORKER ===================
+// ======================================================
+
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js")
+        .then((registration) => {
+            console.log("Service Worker registrado:", registration);
+
+            // Enviar config Firebase al SW
             if (registration.active) {
                 registration.active.postMessage({
-    type: 'SET_CONFIG',
-    config: firebaseConfig
-});
-
+                    type: "SET_CONFIG",
+                    config: firebaseConfig
+                });
             }
         })
-        .catch(function(error) {
-            console.error('Fallo el registro del Service Worker:', error);
+        .catch((error) => {
+            console.error("Error registrando Service Worker:", error);
         });
 }
 
 
-// Inicializar Firebase (usa FIREBASE_CONFIG definida arriba)
+// ======================================================
+// === 3. INICIALIZAR FIREBASE ==========================
+// ======================================================
+
 try {
-    firebase.initializeApp(FIREBASE_CONFIG);
+    firebase.initializeApp(firebaseConfig);
     messaging = firebase.messaging();
-    console.log("Firebase inicializado.");
+    console.log("Firebase inicializado correctamente.");
 } catch (e) {
-    console.error("Error al inicializar Firebase:", e);
+    console.error("Error inicializando Firebase:", e);
 }
 
-// === 3. FUNCIONES DE INTERFAZ Y LÓGICA ===
+
+// ======================================================
+// === 4. INTERFAZ DE USUARIO ===========================
+// ======================================================
 
 function updateUI() {
     if (ENCARGADO_NAME) {
-        document.getElementById('encargado-setup').classList.add('hidden');
-        document.getElementById('main-app').classList.remove('hidden');
-        document.getElementById('current-encargado').textContent = ENCARGADO_NAME;
+        document.getElementById("encargado-setup").classList.add("hidden");
+        document.getElementById("main-app").classList.remove("hidden");
+        document.getElementById("current-encargado").textContent = ENCARGADO_NAME;
         requestNotificationPermission();
     } else {
-        document.getElementById('encargado-setup').classList.remove('hidden');
-        document.getElementById('main-app').classList.add('hidden');
+        document.getElementById("encargado-setup").classList.remove("hidden");
+        document.getElementById("main-app").classList.add("hidden");
     }
 
     if (FCM_TOKEN) {
-        document.getElementById('notification-status').textContent = 'Notificaciones: ACTIVAS';
-        document.getElementById('notification-status').classList.add('status-success');
-    } else {
-        document.getElementById('notification-status').textContent = 'Notificaciones: PENDIENTE';
-        document.getElementById('notification-status').classList.remove('status-success');
+        const badge = document.getElementById("notification-status");
+        badge.textContent = "Notificaciones: ACTIVAS";
+        badge.classList.add("status-success");
     }
 }
 
 function saveEncargado() {
-    const name = document.getElementById('encargado-name').value.trim();
-    if (name) {
-        localStorage.setItem('encargadoName', name);
-        ENCARGADO_NAME = name;
-        updateUI();
-    } else {
-        alert("Por favor, ingresa tu nombre.");
+    const name = document.getElementById("encargado-name").value.trim();
+    if (!name) {
+        alert("Por favor ingresá tu nombre.");
+        return;
     }
+
+    ENCARGADO_NAME = name;
+    localStorage.setItem("encargadoName", name);
+    updateUI();
 }
 
+
+// ======================================================
+// === 5. PERMISOS Y TOKEN DE NOTIFICACIONES ============
+// ======================================================
+
 function requestNotificationPermission() {
-    if (!messaging || FCM_TOKEN) return; 
+    if (!messaging || FCM_TOKEN) return;
 
     messaging.requestPermission()
-        .then(function() {
-            console.log('Permiso de notificación concedido.');
+        .then(() => {
+            console.log("Permiso concedido. Obteniendo token...");
             return messaging.getToken();
         })
-        .then(function(token) {
+        .then((token) => {
             FCM_TOKEN = token;
-            localStorage.setItem('fcmToken', token);
-            console.log('FCM Token:', token);
-            sendTokenToAppsScript(token); 
+            localStorage.setItem("fcmToken", token);
+            sendTokenToAppsScript(token);
             updateUI();
         })
-        .catch(function(err) {
-            console.error('No se pudo obtener el permiso de notificación. ', err);
-            document.getElementById('notification-status').textContent = 'Notificaciones: BLOQUEADAS';
+        .catch((err) => {
+            console.error("Permiso denegado o error:", err);
+            document.getElementById("notification-status").textContent = "Notificaciones: BLOQUEADAS";
         });
 }
 
 function sendTokenToAppsScript(token) {
-    const data = {
-        action: 'saveToken',
-        encargado: ENCARGADO_NAME,
-        token: token
-    };
-
     fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors', 
-        body: JSON.stringify(data) 
-    })
-    .then(() => {
-        console.log('Token enviado a Apps Script para ser guardado.');
-    })
-    .catch(error => {
-        console.error('Error al enviar el token:', error);
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({
+            action: "saveToken",
+            encargado: ENCARGADO_NAME,
+            token: token
+        })
+    }).then(() => {
+        console.log("Token enviado al servidor.");
     });
 }
 
-function displayMessage(text, isError = false) {
-    const msgArea = document.getElementById('message-area');
-    msgArea.textContent = text;
-    msgArea.classList.remove('hidden');
-    msgArea.style.backgroundColor = isError ? '#f44336' : '#81c784';
-    msgArea.style.color = 'white';
-    setTimeout(() => msgArea.classList.add('hidden'), 5000);
-}
+
+// ======================================================
+// === 6. MARCAR STOCK REALIZADO ========================
+// ======================================================
 
 function markStockDone(proveedor) {
     if (!ENCARGADO_NAME) {
-        displayMessage("¡Primero ingresa tu nombre!", true);
+        displayMessage("Primero ingresá tu nombre", true);
         return;
     }
 
     displayMessage(`Marcando ${proveedor} como realizado...`);
 
-    const data = {
-        action: 'stockDone',
-        proveedor: proveedor,
-        encargado: ENCARGADO_NAME,
-        fechaRealizacion: new Date().toISOString()
-    };
-
     fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        body: JSON.stringify(data) 
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({
+            action: "stockDone",
+            proveedor,
+            encargado: ENCARGADO_NAME,
+            fechaRealizacion: new Date().toISOString()
+        })
     })
     .then(() => {
-        displayMessage(`✅ Stock de ${proveedor} marcado como REALIZADO. Email enviado.`);
-        // Usamos el ID del contenedor para ocultar el botón
-        document.querySelector(`#item-${proveedor.toLowerCase().replace(/\s/g, '-')}`).classList.add('hidden');
+        displayMessage(`✔ Stock de ${proveedor} registrado correctamente.`);
+        document.querySelector(`#item-${proveedor.toLowerCase().replace(/\s/g, "-")}`).classList.add("hidden");
     })
-    .catch(error => {
-        console.error('Error al marcar stock como realizado:', error);
-        displayMessage("Error al registrar la acción. Intenta de nuevo.", true);
+    .catch(() => {
+        displayMessage("Error al registrar stock.", true);
     });
 }
 
-window.onload = updateUI;
 
-// ==========================================================
-// === 2.1. RECIBIR EVENTOS DEL SERVICE WORKER (STOCK_CLICK)
-// ==========================================================
+// ======================================================
+// === 7. MENSAJES DEL SERVICE WORKER ===================
+// ======================================================
+
 if (navigator.serviceWorker) {
-    navigator.serviceWorker.addEventListener("message", event => {
+    navigator.serviceWorker.addEventListener("message", (event) => {
         if (!event.data) return;
 
         if (event.data.type === "STOCK_CLICK") {
-    const proveedor = event.data.proveedor;
-    console.log("💬 App recibió STOCK_CLICK para:", proveedor);
+            const proveedor = event.data.proveedor;
+            console.log("Evento STOCK_CLICK para:", proveedor);
+            focusProveedor(proveedor);
 
-    // 1) Llevarlo al card del proveedor
-    focusProveedor(proveedor);
-
-    // 2) Mostrar automáticamente el botón de acción
-    setTimeout(() => {
-        openProveedorAction(proveedor);
-    }, 800);
-}
-
+            setTimeout(() => {
+                openProveedorAction(proveedor);
+            }, 800);
         }
     });
 }
 
-// ==========================================================
-// === 2.2. ENFOCAR AUTOMÁTICAMENTE EL PROVEEDOR
-// ==========================================================
+
+// ======================================================
+// === 8. ENFOCAR AL PROVEEDOR ==========================
+// ======================================================
+
 function focusProveedor(proveedor) {
-    if (!proveedor) return;
-
     const id = `item-${proveedor.toLowerCase().replace(/\s+/g, "-")}`;
-    const element = document.getElementById(id);
+    const card = document.getElementById(id);
 
-    if (!element) {
-        console.warn("No se encontró el elemento del proveedor:", id);
-        return;
-    }
+    if (!card) return;
 
-    // Mostrar un borde o highlight visual
-    element.style.transition = "all 0.4s ease";
-    element.style.boxShadow = "0 0 15px 3px #00c853";
-    element.style.border = "2px solid #00c853";
+    card.style.boxShadow = "0 0 15px 3px #00c853";
+    card.style.border = "2px solid #00c853";
+    card.scrollIntoView({ behavior: "smooth", block: "center" });
 
-    // Scroll hasta ese proveedor
-    element.scrollIntoView({ behavior: "smooth", block: "center" });
-
-    // Quitar highlight después de unos segundos
     setTimeout(() => {
-        element.style.boxShadow = "";
-        element.style.border = "";
-    }, 3500);
+        card.style.boxShadow = "";
+        card.style.border = "";
+    }, 3000);
 }
 
-// ==========================================================
-// === 3. MOSTRAR AUTOMÁTICAMENTE EL BOTÓN DE MARCAR STOCK ===
-// ==========================================================
+
+// ======================================================
+// === 9. DESTACAR EL BOTÓN DE MARCAR ===================
+// ======================================================
+
 function openProveedorAction(proveedor) {
-
-    if (!proveedor) return;
-
     const id = `item-${proveedor.toLowerCase().replace(/\s+/g, "-")}`;
-    const element = document.getElementById(id);
+    const card = document.getElementById(id);
+    if (!card) return;
 
-    if (!element) {
-        console.warn("No se encontró el proveedor para acción:", id);
-        return;
-    }
+    const btn = card.querySelector("button");
+    if (!btn) return;
 
-    // Buscar botón dentro del card (tiene un <button> normalmente)
-    const btn = element.querySelector("button");
-
-    if (!btn) {
-        console.warn("No se encontró el botón para el proveedor:", proveedor);
-        return;
-    }
-
-    // Hacer visible el bloque si estuviera oculto
-    element.classList.remove("hidden");
-
-    // Destacar el botón (visual)
-    btn.style.transition = "all 0.4s ease";
+    card.classList.remove("hidden");
     btn.style.boxShadow = "0 0 12px 3px #ffab00";
     btn.style.border = "2px solid #ffab00";
 
-    // Scroll directo al botón
     btn.scrollIntoView({ behavior: "smooth", block: "center" });
 
-    // Quitar highlight luego de unos segundos
     setTimeout(() => {
         btn.style.boxShadow = "";
         btn.style.border = "";
     }, 3000);
 }
 
+
+// ======================================================
+// === 10. MENSAJES A LA UI =============================
+// ======================================================
+
+function displayMessage(text, isError = false) {
+    const box = document.getElementById("message-area");
+    box.textContent = text;
+    box.style.display = "block";
+    box.style.backgroundColor = isError ? "#e53935" : "#43a047";
+    box.style.color = "white";
+
+    setTimeout(() => {
+        box.style.display = "none";
+    }, 4000);
+}
+
+
+window.onload = updateUI;

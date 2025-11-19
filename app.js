@@ -18,20 +18,24 @@ let messaging;
 let FCM_TOKEN = localStorage.getItem('fcmToken') || null;
 let ENCARGADO_NAME = localStorage.getItem('encargadoName') || null;
 
-// Registrar Service Worker
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js')
+    navigator.serviceWorker.register('sw.js')
         .then(function(registration) {
             console.log('Service Worker registrado con éxito:', registration);
-            // ENVIAR LA CONFIGURACIÓN AL SW
+
+            // Enviar configuración Firebase al SW
             if (registration.active) {
-                registration.active.postMessage({ type: 'SET_CONFIG', config: FIREBASE_CONFIG });
+                registration.active.postMessage({
+                    type: 'SET_CONFIG',
+                    config: FIREBASE_CONFIG
+                });
             }
         })
         .catch(function(error) {
-            console.log('Fallo el registro del Service Worker:', error);
+            console.error('Fallo el registro del Service Worker:', error);
         });
 }
+
 
 // Inicializar Firebase (usa FIREBASE_CONFIG definida arriba)
 try {

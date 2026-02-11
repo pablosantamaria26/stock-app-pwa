@@ -1,4 +1,4 @@
-const CACHE_NAME = 'deposito-pro-v4'; // Versión 4 (Nativa + Install Force)
+const CACHE_NAME = 'deposito-pro-v5'; // Versión 4 (Nativa + Install Force)
 const ASSETS = [
   './',
   './index.html',

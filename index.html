@@ -24,7 +24,9 @@
                         'bounce-slow': 'bounce 3s infinite', 
                         'party-border': 'partyRGB 3s linear infinite',
                         'spin-slow': 'spin 3s linear infinite',
-                        'slide-up-dock': 'slideUpDock 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards'
+                        'slide-up-dock': 'slideUpDock 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
+                        'scale-in': 'scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                        'check-stroke': 'checkStroke 0.3s ease-in-out forwards 0.2s'
                     },
                     keyframes: {
                         partyRGB: {
@@ -36,6 +38,14 @@
                         slideUpDock: {
                             'from': { transform: 'translateY(100%)', opacity: '0' },
                             'to': { transform: 'translateY(0)', opacity: '1' }
+                        },
+                        scaleIn: {
+                            '0%': { transform: 'scale(0.8)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' }
+                        },
+                        checkStroke: {
+                            '0%': { strokeDashoffset: '100' },
+                            '100%': { strokeDashoffset: '0' }
                         }
                     }
                 }
@@ -83,18 +93,20 @@
         }
         .big-btn:active { transform: scale(0.97); }
         
-        /* Input Numérico Estable */
+        /* Input Numérico Estable y Gigante */
         .stock-input {
-            font-size: 1.5rem;
-            font-weight: 800;
+            font-size: 2.5rem; /* MUCHO MÁS GRANDE */
+            font-weight: 900;
             text-align: center;
             background: transparent;
             width: 100%;
+            height: 60px;
             outline: none;
-            border-bottom: 2px solid #e2e8f0;
+            border-bottom: 3px solid #e2e8f0;
             border-radius: 0;
-            padding: 4px 0;
+            padding: 0;
             transition: border-color 0.2s;
+            font-family: monospace; /* Alineación numérica perfecta */
         }
         .stock-input:focus { border-color: #3b82f6; }
         .dark .stock-input { color: white; border-color: #334155; }
@@ -121,8 +133,31 @@
         .bottom-dock.visible { transform: translateY(0); }
         .bottom-dock:active { transform: translateY(0) scale(0.98); }
 
-        .modal-overlay { background-color: rgba(0,0,0,0.7); backdrop-filter: blur(5px); }
+        .modal-overlay { background-color: rgba(0,0,0,0.7); backdrop-filter: blur(8px); }
         .party-box { border-width: 2px; border-style: solid; animation: partyRGB 4s linear infinite; }
+        
+        /* Grid para fila de editor - AHORA MÁS ALTO */
+        .item-grid {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 16px;
+            align-items: center;
+            min-height: 120px; /* Fila más alta para dedos */
+        }
+        .controls-grid {
+            display: grid;
+            grid-template-columns: auto 100px; /* Input más ancho */
+            gap: 16px;
+            align-items: center;
+        }
+
+        /* SVG Checkmark Animation */
+        .checkmark__circle { stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 2; stroke-miterlimit: 10; stroke: #4bb71b; fill: none; animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards; }
+        .checkmark { width: 80px; height: 80px; border-radius: 50%; display: block; stroke-width: 2; stroke: #fff; stroke-miterlimit: 10; margin: 10% auto; box-shadow: inset 0px 0px 0px #4bb71b; animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both; }
+        .checkmark__check { transform-origin: 50% 50%; stroke-dasharray: 48; stroke-dashoffset: 48; animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards; }
+        @keyframes stroke { 100% { stroke-dashoffset: 0; } }
+        @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }
+        @keyframes fill { 100% { box-shadow: inset 0px 0px 0px 50px #4bb71b; } }
         
         .galaxy-spinner {
             width: 50px; height: 50px;
@@ -133,19 +168,6 @@
         }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* Grid para fila de editor */
-        .item-grid {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 12px;
-            align-items: center;
-        }
-        .controls-grid {
-            display: grid;
-            grid-template-columns: auto 80px; /* Botones fijos, Input ancho fijo */
-            gap: 12px;
-            align-items: center;
-        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 dark:bg-dark-bg dark:text-dark-text transition-colors duration-300">
@@ -190,8 +212,19 @@
             </button>
         </div>
 
-        <!-- VISTA: LISTADO -->
+        <!-- VISTA: LISTADO (CON BUSCADOR) -->
         <div id="view-list" class="hidden px-4 animate-[slideUp_0.4s_ease-out]">
+            <!-- BUSCADOR -->
+            <div class="sticky top-0 z-20 bg-gray-50 dark:bg-dark-bg pt-2 pb-4 -mx-2 px-2">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-magnifying-glass text-gray-400 text-lg"></i>
+                    </div>
+                    <input type="text" id="provider-search" oninput="filterProviders(this.value)" placeholder="Buscar proveedor..." 
+                        class="w-full pl-12 pr-4 py-4 rounded-2xl border-none shadow-md bg-white dark:bg-dark-card text-gray-800 dark:text-white font-bold text-lg outline-none focus:ring-4 focus:ring-blue-500/20 transition-all">
+                </div>
+            </div>
+
             <div id="list-container" class="space-y-3 pb-8"></div>
             <div id="loader-list" class="hidden flex flex-col items-center justify-center mt-32">
                 <div class="galaxy-spinner mb-4"></div>
@@ -199,7 +232,7 @@
             </div>
         </div>
 
-        <!-- VISTA: EDITOR DE STOCK -->
+        <!-- VISTA: EDITOR DE STOCK (GIGANTE) -->
         <div id="view-editor" class="hidden px-4 animate-[slideUp_0.4s_ease-out]">
             <!-- Botón Agregar Item -->
             <div onclick="openAddItemModal()" class="glass mb-6 p-5 rounded-3xl flex items-center justify-between cursor-pointer active:scale-95 transition-transform shadow-md border border-white/50 dark:border-white/10">
@@ -224,16 +257,28 @@
 
     <!-- BARRA INFERIOR DE CONFIRMACIÓN (DOCK) -->
     <div id="bottom-dock" class="bottom-dock" onclick="promptUserForSave()">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white text-lg shadow-lg animate-pulse">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center text-white text-xl shadow-lg animate-pulse">
                 <i class="fa-solid fa-check"></i>
             </div>
             <div class="flex flex-col">
-                <span class="font-black text-sm tracking-wide uppercase text-gray-200">Confirmar Cambios</span>
+                <span class="font-black text-base tracking-wide uppercase text-gray-200">Confirmar Cambios</span>
                 <span class="text-xs font-medium text-green-400" id="changes-counter">0 modificaciones</span>
             </div>
         </div>
-        <i class="fa-solid fa-chevron-right text-gray-400"></i>
+        <i class="fa-solid fa-chevron-right text-gray-400 text-xl mr-2"></i>
+    </div>
+
+    <!-- MODAL DE ÉXITO (INSTANTÁNEO) -->
+    <div id="success-modal" class="fixed inset-0 z-[100] flex flex-col items-center justify-center modal-overlay hidden px-6">
+        <div class="bg-white dark:bg-dark-card p-10 rounded-[3rem] shadow-2xl w-full max-w-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center animate-scale-in">
+            <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+                <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+            </svg>
+            <h2 class="text-3xl font-black text-gray-800 dark:text-white mt-4 mb-2">¡Guardado!</h2>
+            <p class="text-gray-500 text-center font-medium">Actualizando nube...</p>
+        </div>
     </div>
 
     <!-- MODAL INSTALAR APP -->
@@ -353,7 +398,6 @@
         window.addEventListener('load', () => {
             silentLoadProviders();
             if ('serviceWorker' in navigator) {
-                // Fix para el error de URL protocol en entornos de desarrollo/preview
                 navigator.serviceWorker.register('service-worker.js')
                 .then(reg => console.log('SW registrado', reg))
                 .catch(err => console.log('SW fallo (posiblemente por entorno preview):', err));
@@ -377,6 +421,12 @@
             
             if (view === 'editor' && currentCatalogUrl) catBtn.classList.remove('hidden');
             currentView = view;
+            
+            // Limpiar buscador al volver
+            if(view === 'list') {
+                document.getElementById('provider-search').value = '';
+                filterProviders('');
+            }
         }
         function goBack() { if (currentView === 'editor') setView('list', 'Proveedores', 'Estado del Stock'); else if (currentView === 'list') { setView('home', 'Depósito', 'Panel Central'); runRandomTaskAI(); } }
 
@@ -477,9 +527,21 @@
         }
         async function loadCatalogs() { setView('list', 'Catálogos', 'Cargando...'); const l=document.getElementById('loader-list');const c=document.getElementById('list-container'); c.innerHTML='';l.classList.remove('hidden'); try{const r=await fetch(`${WORKER_URL}?action=getCatalogs`); renderList(await r.json(),'catalog');}catch(e){}finally{l.classList.add('hidden');} }
 
+        // Filtro de Proveedores en vivo
+        function filterProviders(query) {
+            if(!cachedProviders.length) return;
+            const term = query.toLowerCase();
+            const filtered = cachedProviders.filter(p => p.name.toLowerCase().includes(term));
+            renderList(filtered, 'provider');
+        }
+
         function renderList(items, type) {
-            const c = document.getElementById('list-container'); if(!items.length){ c.innerHTML='<div class="text-center opacity-50 mt-10">Vacío</div>'; return; }
+            const c = document.getElementById('list-container'); 
+            c.innerHTML = ''; // Limpiar siempre
+            
+            if(!items.length){ c.innerHTML='<div class="text-center opacity-50 mt-10 font-medium">No se encontraron resultados</div>'; return; }
             if(type==='provider') items.sort((a,b)=>new Date(a.lastUpdated||0)-new Date(b.lastUpdated||0));
+            
             items.forEach((i,x)=>{
                 const d = document.createElement('div'); d.className="glass p-5 rounded-2xl shadow-sm flex items-center justify-between cursor-pointer active:scale-95 transition-transform mb-3 relative overflow-hidden animate-[slideUp_0.4s_ease-out]"; d.style.animationDelay=`${x*0.05}s`;
                 if(type==='provider'){
@@ -503,22 +565,22 @@
             const c=document.getElementById('editor-container'); changes={}; if(!items.length){ c.innerHTML='<div class="text-center p-10 opacity-50 font-medium">Hoja vacía</div>'; return; }
             items.forEach(i=>{
                 const k=`${i.row}_${i.col}`; let raw=i.stock?i.stock.toString():"0"; let num=parseInt(raw.replace(/[^0-9]/g,''))||0; let typ=raw.toLowerCase().includes('b')?'b':'u';
-                const d=document.createElement('div'); d.className="glass p-5 rounded-[1.5rem] flex flex-col gap-4 shadow-sm item-grid";
+                const d=document.createElement('div'); d.className="glass p-6 rounded-[2rem] flex flex-col gap-6 shadow-sm item-grid"; // Padding aumentado y gap aumentado
                 d.innerHTML=`
-                    <div class="flex flex-col gap-1">
-                        <span class="font-bold text-gray-800 dark:text-gray-200 text-lg leading-tight">${i.name}</span>
-                        <div class="flex items-center gap-2">
-                             <span class="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Stock Anterior:</span>
-                             <div class="text-xs font-black bg-gray-100 dark:bg-dark-bg px-2 py-0.5 rounded text-blue-600 dark:text-blue-400 party-box">${raw==='0'||raw==='x'?'0':raw}</div>
+                    <div class="flex flex-col gap-2">
+                        <span class="font-black text-gray-800 dark:text-gray-100 text-2xl leading-tight">${i.name}</span>
+                        <div class="flex items-center gap-3">
+                             <span class="text-xs text-gray-400 font-bold uppercase tracking-wide">Anterior:</span>
+                             <div class="text-sm font-black bg-gray-100 dark:bg-dark-bg px-3 py-1 rounded-lg text-blue-600 dark:text-blue-400 party-box">${raw==='0'||raw==='x'?'0':raw}</div>
                         </div>
                     </div>
                     <div class="controls-grid">
                         <div class="flex flex-col items-center">
-                             <div class="flex bg-gray-100 dark:bg-dark-border p-1 rounded-xl shrink-0 mb-1">
-                                <button onclick="toggleType('${k}','u',this)" class="w-10 h-10 rounded-lg font-black transition-all ${typ==='u'?'bg-white dark:bg-dark-card shadow text-blue-600':'text-gray-400'}">U</button>
-                                <button onclick="toggleType('${k}','b',this)" class="w-10 h-10 rounded-lg font-black transition-all ${typ==='b'?'bg-white dark:bg-dark-card shadow text-blue-600':'text-gray-400'}">B</button>
+                             <div class="flex bg-gray-100 dark:bg-dark-border p-1.5 rounded-2xl shrink-0 mb-2">
+                                <button onclick="toggleType('${k}','u',this)" class="w-16 h-16 rounded-xl font-black text-xl transition-all ${typ==='u'?'bg-white dark:bg-dark-card shadow-md text-blue-600 transform scale-105':'text-gray-400'}">U</button>
+                                <button onclick="toggleType('${k}','b',this)" class="w-16 h-16 rounded-xl font-black text-xl transition-all ${typ==='b'?'bg-white dark:bg-dark-card shadow-md text-blue-600 transform scale-105':'text-gray-400'}">B</button>
                             </div>
-                            <span class="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Uni / Bultos</span>
+                            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Uni / Bultos</span>
                         </div>
                         <input type="number" id="input_${k}" value="${num===0?'':num}" placeholder="0" class="stock-input" oninput="trackChange('${k}',${i.row},${i.col})" data-type="${typ}">
                     </div>`;
@@ -527,7 +589,7 @@
             c.appendChild(document.createElement('div')).className="h-24";
         }
 
-        function toggleType(k,t,b){ const p=b.parentElement; p.querySelectorAll('button').forEach(x=>x.className="w-10 h-10 rounded-lg font-black transition-all text-gray-400"); b.className="w-10 h-10 rounded-lg font-black transition-all bg-white dark:bg-dark-card shadow text-blue-600"; document.getElementById(`input_${k}`).dataset.type=t; const pt=k.split('_'); trackChange(k,parseInt(pt[0]),parseInt(pt[1])); }
+        function toggleType(k,t,b){ const p=b.parentElement; p.querySelectorAll('button').forEach(x=>x.className="w-16 h-16 rounded-xl font-black text-xl transition-all text-gray-400"); b.className="w-16 h-16 rounded-xl font-black text-xl transition-all bg-white dark:bg-dark-card shadow-md text-blue-600 transform scale-105"; document.getElementById(`input_${k}`).dataset.type=t; const pt=k.split('_'); trackChange(k,parseInt(pt[0]),parseInt(pt[1])); }
         
         function trackChange(k,r,c){ 
             const i=document.getElementById(`input_${k}`); let v=i.value; let t=i.dataset.type; let f=(v===""||v==="0")?"x":(t==='b'?v+"B":v); changes[k]={row:r,col:c,newStock:f}; 
@@ -553,10 +615,35 @@
 
         function promptUserForSave(){ if(!Object.keys(changes).length) return; document.getElementById('user-modal').classList.remove('hidden'); const s=localStorage.getItem('depositoUserName'); if(s)document.getElementById('username-input').value=s; }
         function closeUserModal(){document.getElementById('user-modal').classList.add('hidden');}
-        async function confirmSave(){ 
-            const u=document.getElementById('username-input').value.trim(); if(!u){showToast("Falta nombre",true);return;} localStorage.setItem('depositoUserName',u); closeUserModal(); 
-            const dock = document.getElementById('bottom-dock'); dock.innerHTML = '<div class="galaxy-spinner w-6 h-6 border-2 mx-auto"></div>';
-            try{ const r=await fetch(WORKER_URL,{method:'POST',body:JSON.stringify({action:'updateStock',fileId:currentFileId,items:Object.values(changes),user:u})}); const d=await r.json(); if(d.error)throw new Error(d.error); showToast("¡Guardado Exitoso!"); goBack(); changes={}; } catch(e){ showToast("Error",true); dock.innerHTML='<span class="text-red-400">Error</span>'; setTimeout(()=>goBack(),2000); } 
+        
+        // --- GUARDADO OPTIMISTA Y BACKGROUND ---
+        function confirmSave(){ 
+            const u=document.getElementById('username-input').value.trim(); if(!u){showToast("Falta nombre",true);return;} 
+            localStorage.setItem('depositoUserName',u); 
+            closeUserModal(); 
+            
+            // 1. Mostrar Éxito Inmediato (Optimistic UI)
+            const successModal = document.getElementById('success-modal');
+            successModal.classList.remove('hidden');
+            
+            // 2. Esperar 1.5s para ver animación y volver al inicio
+            setTimeout(() => {
+                successModal.classList.add('hidden');
+                goBack(); // Volver a home
+                changes={}; // Limpiar cambios locales
+                document.getElementById('bottom-dock').classList.remove('visible');
+            }, 1800);
+
+            // 3. Enviar datos en segundo plano (Fire & Forget visual)
+            fetch(WORKER_URL,{
+                method:'POST',
+                body:JSON.stringify({action:'updateStock',fileId:currentFileId,items:Object.values(changes),user:u})
+            }).then(r => r.json())
+              .then(d => {
+                  if(d.error) console.error("Error guardando en background:", d.error);
+                  else console.log("Guardado OK en background");
+              })
+              .catch(e => console.error("Error de red en background:", e));
         }
 
         function getDaysSince(d){if(!d)return 999;return Math.floor((new Date()-new Date(d))/(1000*60*60*24));}

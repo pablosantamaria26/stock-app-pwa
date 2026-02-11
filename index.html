@@ -2,29 +2,36 @@
 <html lang="es" class="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Viewport optimizado para "Notch" y pantalla completa -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Stock Depósito Pro</title>
     
-    <!-- PWA Manifest Link -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2563eb">
     <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    colors: { dark: { bg: '#0f172a', card: '#1e293b', text: '#f8fafc', border: '#334155' } },
-                    animation: { 'bounce-slow': 'bounce 3s infinite', 'party-border': 'partyRGB 3s linear infinite' },
+                    colors: { 
+                        dark: { bg: '#0f172a', card: '#1e293b', text: '#f8fafc', border: '#334155' } 
+                    },
+                    animation: { 
+                        'bounce-slow': 'bounce 3s infinite', 
+                        'party-border': 'partyRGB 3s linear infinite',
+                        'spin-slow': 'spin 3s linear infinite'
+                    },
                     keyframes: {
                         partyRGB: {
-                            '0%': { borderColor: '#ef4444', boxShadow: '0 0 2px rgba(239, 68, 68, 0.5)' },
-                            '33%': { borderColor: '#22c55e', boxShadow: '0 0 2px rgba(34, 197, 94, 0.5)' },
-                            '66%': { borderColor: '#3b82f6', boxShadow: '0 0 2px rgba(59, 130, 246, 0.5)' },
-                            '100%': { borderColor: '#ef4444', boxShadow: '0 0 2px rgba(239, 68, 68, 0.5)' }
+                            '0%': { borderColor: '#ef4444', boxShadow: '0 0 5px rgba(239, 68, 68, 0.4)' },
+                            '33%': { borderColor: '#22c55e', boxShadow: '0 0 5px rgba(34, 197, 94, 0.4)' },
+                            '66%': { borderColor: '#3b82f6', boxShadow: '0 0 5px rgba(59, 130, 246, 0.4)' },
+                            '100%': { borderColor: '#ef4444', boxShadow: '0 0 5px rgba(239, 68, 68, 0.4)' }
                         }
                     }
                 }
@@ -33,91 +40,190 @@
     </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; user-select: none; transition: background-color 0.3s, color 0.3s; }
-        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.5); }
-        .dark .glass { background: rgba(30, 41, 59, 0.95); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .big-btn { height: 38vh; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 2rem; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; }
-        .big-btn:active { transform: scale(0.96); }
-        .slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        .modal-overlay { background-color: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
+        /* --- ESTILO NATIVO BLINDADO --- */
+        html, body { 
+            height: 100%; 
+            width: 100%; 
+            overflow: hidden; 
+            position: fixed; /* Evita rebote elástico en iOS/Android */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+            user-select: none;
+        }
+
+        /* Área de Scroll Principal */
+        #main-scroll-area {
+            height: 100%;
+            width: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            padding-top: 70px; /* Header */
+            padding-bottom: 120px; /* FAB y espacio inferior */
+        }
         
-        /* Clase Party Box Fina RGB */
-        .party-box { border-width: 1px; border-style: solid; animation: partyRGB 4s linear infinite; }
+        /* Vidrio Esmerilado (Glassmorphism) */
+        .glass { background: rgba(255, 255, 255, 0.90); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .dark .glass { background: rgba(15, 23, 42, 0.90); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        
+        /* Botones Gigantes de Inicio */
+        .big-btn { 
+            height: 40vh; /* Ocupan casi toda la pantalla vertical */
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            border-radius: 2.5rem; 
+            position: relative; 
+            overflow: hidden; 
+            transition: transform 0.1s;
+        }
+        .big-btn:active { transform: scale(0.97); }
+        
+        /* Animaciones de Entrada */
+        .slide-up { animation: slideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .modal-overlay { background-color: rgba(0,0,0,0.7); backdrop-filter: blur(5px); }
+        
+        /* Efecto Party Box (Borde RGB) */
+        .party-box { border-width: 2px; border-style: solid; animation: partyRGB 4s linear infinite; }
+        
+        /* Spinner Personalizado estilo Galaxy */
+        .galaxy-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(59, 130, 246, 0.1);
+            border-left-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        .dark .galaxy-spinner { border-left-color: #60a5fa; border-color: rgba(96, 165, 250, 0.1); }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800 dark:bg-dark-bg dark:text-dark-text h-screen flex flex-col transition-colors duration-300">
+<body class="bg-gray-50 text-gray-800 dark:bg-dark-bg dark:text-dark-text transition-colors duration-300">
 
-    <!-- HEADER -->
-    <header class="glass sticky top-0 z-30 shadow-sm px-4 py-3 flex justify-between items-center h-16 shrink-0 transition-colors duration-300">
+    <!-- HEADER FLOTANTE -->
+    <header class="glass fixed top-0 w-full z-40 px-4 h-16 flex justify-between items-center transition-colors duration-300">
         <div class="flex items-center gap-3 w-full">
-            <button onclick="goBack()" id="back-btn" class="hidden w-10 h-10 rounded-full bg-gray-100 dark:bg-dark-border flex items-center justify-center shadow-sm text-blue-600 dark:text-blue-400 active:scale-90 transition-transform"><i class="fa-solid fa-arrow-left"></i></button>
+            <button onclick="goBack()" id="back-btn" class="hidden w-10 h-10 rounded-full bg-gray-100 dark:bg-dark-border flex items-center justify-center shadow-sm text-blue-600 dark:text-blue-400 active:scale-90 transition-transform">
+                <i class="fa-solid fa-arrow-left text-lg"></i>
+            </button>
+            
             <div class="leading-tight flex-1 overflow-hidden">
-                <h1 class="font-extrabold text-xl tracking-tight truncate" id="header-title">Depósito</h1>
+                <h1 class="font-black text-xl tracking-tight truncate" id="header-title">Depósito</h1>
                 <p class="text-xs text-gray-500 dark:text-gray-400 font-medium truncate" id="header-subtitle">Panel Central</p>
             </div>
+
             <div class="flex items-center gap-2">
-                <button onclick="toggleTheme()" class="w-10 h-10 rounded-full bg-gray-200 dark:bg-dark-border text-gray-600 dark:text-yellow-400 flex items-center justify-center transition-colors active:scale-90"><i id="theme-icon" class="fa-solid fa-moon"></i></button>
-                <button onclick="openCurrentCatalog()" id="catalog-btn" class="hidden bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-1.5 rounded-full text-sm font-bold shadow-md flex items-center gap-2 active:scale-90 transition-transform"><i class="fa-solid fa-file-pdf"></i></button>
+                <button onclick="toggleTheme()" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-dark-border text-gray-600 dark:text-yellow-400 flex items-center justify-center active:scale-90 transition-transform">
+                    <i id="theme-icon" class="fa-solid fa-moon"></i>
+                </button>
+                <button onclick="openCurrentCatalog()" id="catalog-btn" class="hidden bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-lg shadow-orange-500/30 flex items-center gap-2 active:scale-95 transition-transform">
+                    <i class="fa-solid fa-file-pdf"></i>
+                </button>
             </div>
         </div>
     </header>
 
-    <!-- MAIN CONTENT -->
-    <main class="flex-1 overflow-y-auto p-4 relative" id="main-content">
+    <!-- ÁREA DE SCROLL PRINCIPAL -->
+    <div id="main-scroll-area">
         
-        <!-- HOME -->
-        <div id="view-home" class="flex flex-col gap-4 h-full pb-4 slide-up">
-            <button onclick="loadProviders()" class="big-btn bg-white dark:bg-dark-card shadow-xl border-l-8 border-green-500 dark:border-green-600 group">
-                <div class="absolute right-0 top-0 w-48 h-48 bg-green-500 opacity-5 rounded-bl-full -mr-10 -mt-10 pointer-events-none group-active:scale-110 transition-transform duration-500"></div>
-                <div class="w-24 h-24 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-600 dark:text-green-400 text-5xl shadow-inner mb-4 animate-bounce-slow"><i class="fa-solid fa-boxes-packing"></i></div>
-                <h2 class="text-3xl font-black dark:text-white tracking-tight">Cargar Stock</h2><p class="text-gray-500 dark:text-gray-400 font-medium mt-1">Gestión de Inventario</p>
-            </button>
-            <button onclick="loadCatalogs()" class="big-btn bg-white dark:bg-dark-card shadow-xl border-l-8 border-orange-500 dark:border-orange-600 group">
-                <div class="absolute right-0 top-0 w-48 h-48 bg-orange-500 opacity-5 rounded-bl-full -mr-10 -mt-10 pointer-events-none group-active:scale-110 transition-transform duration-500"></div>
-                <div class="w-24 h-24 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center text-orange-600 dark:text-orange-400 text-5xl shadow-inner mb-4"><i class="fa-solid fa-book-open"></i></div>
-                <h2 class="text-3xl font-black dark:text-white tracking-tight">Ver Catálogos</h2><p class="text-gray-500 dark:text-gray-400 font-medium mt-1">Biblioteca PDF</p>
-            </button>
-        </div>
-
-        <!-- LISTADO -->
-        <div id="view-list" class="hidden slide-up pb-32">
-            <div id="list-container" class="space-y-3"></div>
-            <div id="loader-list" class="hidden flex flex-col items-center justify-center mt-20 text-blue-600"><i class="fa-solid fa-circle-notch fa-spin text-4xl mb-3"></i><span class="text-gray-400 text-sm animate-pulse">Consultando al Depósito...</span></div>
-        </div>
-
-        <!-- EDITOR DE STOCK -->
-        <div id="view-editor" class="hidden slide-up pb-40">
-            <!-- BARRA DE AGREGAR ITEM (NUEVA) -->
-            <div onclick="openAddItemModal()" class="glass mb-4 p-4 rounded-2xl flex items-center justify-between cursor-pointer active:scale-95 transition-transform shadow-sm border border-blue-100 dark:border-blue-900">
-                <div>
-                    <h3 class="font-bold text-blue-600 dark:text-blue-400">✨ ¿Falta un producto?</h3>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Toca aquí para crearlo y que aparezca siempre.</p>
+        <!-- VISTA: HOME (Botones Grandes) -->
+        <div id="view-home" class="flex flex-col gap-4 h-full px-4 slide-up">
+            
+            <!-- Botón Stock -->
+            <button onclick="loadProviders()" class="big-btn bg-white dark:bg-dark-card shadow-xl border-l-8 border-green-500 dark:border-green-500 group">
+                <div class="absolute right-0 top-0 w-56 h-56 bg-green-500 opacity-5 rounded-bl-[100%] -mr-12 -mt-12 pointer-events-none group-active:scale-110 transition-transform duration-500"></div>
+                
+                <div class="w-28 h-28 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center text-green-600 dark:text-green-400 text-6xl shadow-inner mb-6 animate-bounce-slow">
+                    <i class="fa-solid fa-boxes-packing"></i>
                 </div>
-                <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-300">
+                <h2 class="text-4xl font-black dark:text-white tracking-tight">Stock</h2>
+                <p class="text-gray-500 dark:text-gray-400 font-medium mt-1 text-lg">Cargar Inventario</p>
+            </button>
+
+            <!-- Botón Catálogos -->
+            <button onclick="loadCatalogs()" class="big-btn bg-white dark:bg-dark-card shadow-xl border-l-8 border-orange-500 dark:border-orange-500 group">
+                <div class="absolute right-0 top-0 w-56 h-56 bg-orange-500 opacity-5 rounded-bl-[100%] -mr-12 -mt-12 pointer-events-none group-active:scale-110 transition-transform duration-500"></div>
+                
+                <div class="w-28 h-28 bg-orange-50 dark:bg-orange-900/20 rounded-full flex items-center justify-center text-orange-600 dark:text-orange-400 text-6xl shadow-inner mb-6">
+                    <i class="fa-solid fa-book-open"></i>
+                </div>
+                <h2 class="text-4xl font-black dark:text-white tracking-tight">Catálogos</h2>
+                <p class="text-gray-500 dark:text-gray-400 font-medium mt-1 text-lg">Biblioteca PDF</p>
+            </button>
+
+        </div>
+
+        <!-- VISTA: LISTADO -->
+        <div id="view-list" class="hidden slide-up px-4">
+            <div id="list-container" class="space-y-3 pb-8"></div>
+            
+            <!-- Spinner Galaxy -->
+            <div id="loader-list" class="hidden flex flex-col items-center justify-center mt-32">
+                <div class="galaxy-spinner mb-4"></div>
+                <span class="text-blue-600 dark:text-blue-400 font-bold text-sm tracking-wide animate-pulse">CONECTANDO...</span>
+            </div>
+        </div>
+
+        <!-- VISTA: EDITOR DE STOCK -->
+        <div id="view-editor" class="hidden slide-up px-4">
+            
+            <!-- Barra Agregar Item -->
+            <div onclick="openAddItemModal()" class="glass mb-6 p-5 rounded-3xl flex items-center justify-between cursor-pointer active:scale-95 transition-transform shadow-md border border-white/50 dark:border-white/10">
+                <div>
+                    <h3 class="font-bold text-lg text-blue-600 dark:text-blue-400">✨ ¿Falta un producto?</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Toca aquí para crearlo ahora.</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-300 shadow-sm">
                     <i class="fa-solid fa-plus text-xl"></i>
                 </div>
             </div>
 
-            <div id="editor-container" class="space-y-3"></div>
-            <div id="loader-editor" class="hidden flex flex-col items-center mt-20 text-gray-400"><i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-600 mb-3"></i><span class="text-sm font-medium animate-pulse">Analizando hoja inteligente...</span></div>
+            <div id="editor-container" class="space-y-4 pb-8"></div>
+            
+            <!-- Spinner Galaxy Editor -->
+            <div id="loader-editor" class="hidden flex flex-col items-center mt-32">
+                <div class="galaxy-spinner mb-4"></div>
+                <span class="text-gray-500 dark:text-gray-400 font-bold text-sm tracking-wide animate-pulse">ANALIZANDO HOJA...</span>
+            </div>
         </div>
 
-    </main>
+    </div>
 
-    <!-- FAB: GUARDAR -->
-    <button onclick="promptUserForSave()" id="fab-save" class="hidden fixed bottom-8 right-6 bg-gradient-to-r from-green-500 to-green-600 text-white w-20 h-20 rounded-full shadow-2xl shadow-green-500/40 flex items-center justify-center text-3xl active:scale-90 transition-transform z-30"><i class="fa-solid fa-check"></i></button>
+    <!-- FAB: GUARDAR (Flotante Fijo) -->
+    <button onclick="promptUserForSave()" id="fab-save" class="hidden fixed bottom-8 right-6 bg-gradient-to-tr from-green-600 to-green-400 text-white w-20 h-20 rounded-[2rem] shadow-2xl shadow-green-500/40 flex items-center justify-center text-3xl active:scale-90 transition-transform z-50">
+        <i class="fa-solid fa-check"></i>
+    </button>
 
-    <!-- MODAL ADD ITEM -->
-    <div id="add-item-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-overlay hidden px-4">
-        <div class="bg-white dark:bg-dark-card p-6 rounded-3xl shadow-2xl w-full max-w-sm border border-gray-100 dark:border-gray-700">
-            <div class="text-center mb-6">
-                <div class="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
-                <h3 class="text-2xl font-black text-gray-800 dark:text-white">Nuevo Artículo</h3>
-                <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm">Se agregará al final de la lista.</p>
+    <!-- MODAL INSTALAR APP -->
+    <div id="install-modal" class="fixed inset-0 z-[100] flex flex-col items-center justify-center modal-overlay hidden px-6 text-center">
+        <div class="bg-white dark:bg-dark-card p-8 rounded-[2.5rem] shadow-2xl w-full max-w-sm border border-gray-100 dark:border-gray-800 relative overflow-hidden">
+            <div class="w-24 h-24 bg-gradient-to-br from-blue-600 to-blue-400 text-white rounded-3xl mx-auto mb-6 flex items-center justify-center text-5xl shadow-lg shadow-blue-500/30">
+                <i class="fa-solid fa-mobile-screen-button"></i>
             </div>
-            <input type="text" id="new-item-name" placeholder="Ej: Jabón Liquido 5L" class="w-full p-4 bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-xl mb-6 focus:outline-none focus:ring-4 focus:ring-purple-100 dark:focus:ring-purple-900 font-bold text-lg">
+            <h2 class="text-3xl font-black text-gray-800 dark:text-white mb-2">Instalar App</h2>
+            <p class="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">Para la mejor experiencia a pantalla completa y sin interrupciones.</p>
+            <button id="install-btn" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-bold shadow-xl shadow-blue-500/20 active:scale-95 transition-transform text-xl">Instalar Ahora 📲</button>
+            <button onclick="closeInstallModal()" class="mt-6 text-sm text-gray-400 font-medium tracking-wide">Continuar en navegador</button>
+        </div>
+    </div>
+
+    <!-- MODAL NUEVO ARTICULO -->
+    <div id="add-item-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-overlay hidden px-4">
+        <div class="bg-white dark:bg-dark-card p-6 rounded-[2rem] shadow-2xl w-full max-w-sm border border-gray-100 dark:border-gray-700">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+                <h3 class="text-2xl font-black text-gray-800 dark:text-white">Nuevo Artículo</h3>
+                <p class="text-gray-500 dark:text-gray-400 mt-1 text-sm">Se agregará al final de la lista.</p>
+            </div>
+            <input type="text" id="new-item-name" placeholder="Ej: Jabón Liquido 5L" class="w-full p-4 bg-gray-50 dark:bg-dark-bg border-2 border-gray-100 dark:border-gray-700 rounded-xl mb-6 focus:outline-none focus:border-purple-500 dark:focus:border-purple-500 font-bold text-lg text-center">
             <div class="flex gap-3">
                 <button onclick="closeAddItemModal()" class="flex-1 py-3 rounded-xl font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-dark-border active:scale-95 transition-transform">Cancelar</button>
                 <button onclick="confirmAddItem()" class="flex-1 py-3 rounded-xl font-bold text-white bg-purple-600 shadow-lg shadow-purple-500/30 active:scale-95 transition-transform">Crear ✨</button>
@@ -127,13 +233,15 @@
 
     <!-- MODAL CONFIRMACION USUARIO -->
     <div id="user-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-overlay hidden px-4">
-        <div class="bg-white dark:bg-dark-card p-6 rounded-3xl shadow-2xl w-full max-w-sm border border-gray-100 dark:border-gray-700">
+        <div class="bg-white dark:bg-dark-card p-6 rounded-[2rem] shadow-2xl w-full max-w-sm border border-gray-100 dark:border-gray-700">
             <div class="text-center mb-6">
-                <div class="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl"><i class="fa-solid fa-user-check"></i></div>
+                <div class="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                    <i class="fa-solid fa-user-check"></i>
+                </div>
                 <h3 class="text-2xl font-black text-gray-800 dark:text-white">Confirmar</h3>
                 <p class="text-gray-500 dark:text-gray-400 mt-2">¿Quién realizó este control?</p>
             </div>
-            <input type="text" id="username-input" placeholder="Tu nombre..." class="w-full p-4 bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-xl mb-6 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900 text-center font-bold text-lg">
+            <input type="text" id="username-input" placeholder="Tu nombre..." class="w-full p-4 bg-gray-50 dark:bg-dark-bg border-2 border-gray-100 dark:border-gray-700 rounded-xl mb-6 focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 text-center font-bold text-xl">
             <div class="flex gap-3">
                 <button onclick="closeUserModal()" class="flex-1 py-4 rounded-xl font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-dark-border active:scale-95 transition-transform">Cancelar</button>
                 <button onclick="confirmSave()" class="flex-1 py-4 rounded-xl font-bold text-white bg-blue-600 shadow-lg shadow-blue-500/30 active:scale-95 transition-transform">Enviar 🚀</button>
@@ -141,141 +249,413 @@
         </div>
     </div>
 
-    <!-- MODAL ALERTA IA -->
+    <!-- MODAL ALERTA IA (RANKING) -->
     <div id="ai-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-overlay hidden px-4">
-        <div class="bg-white dark:bg-dark-card p-6 rounded-3xl shadow-2xl w-full max-w-md transform transition-all scale-100 border-2 border-indigo-100 dark:border-indigo-900 relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
-            <div class="text-center">
+        <div class="bg-white dark:bg-dark-card p-6 rounded-[2rem] shadow-2xl w-full max-w-md transform transition-all scale-100 border-2 border-indigo-100 dark:border-indigo-900 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
+            <div class="text-center pt-2">
                 <div id="ai-icon" class="text-6xl mb-4 animate-bounce">🤖</div>
                 <h3 id="ai-title" class="text-2xl font-black text-gray-800 dark:text-white mb-2">Hola</h3>
-                <p id="ai-msg" class="text-lg text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">...</p>
-                <div id="ai-action-container"></div>
-                <button onclick="closeAIModal()" class="mt-4 text-gray-400 text-sm font-medium hover:text-gray-600">Entendido, cerrar</button>
+                <p id="ai-msg" class="text-lg text-gray-600 dark:text-gray-300 mb-8 leading-relaxed font-medium">...</p>
+                
+                <div id="ai-action-container" class="mb-4"></div>
+                
+                <button onclick="closeAIModal()" class="text-gray-400 text-sm font-medium hover:text-gray-600 py-2">Cerrar</button>
             </div>
         </div>
     </div>
 
     <!-- MODAL PDF -->
-    <div id="pdf-modal" class="fixed inset-0 z-50 bg-black/90 hidden flex-col">
-        <div class="flex justify-between items-center p-4 bg-gray-900 text-white shadow-lg shrink-0">
-            <div class="flex items-center gap-2"><i class="fa-solid fa-file-pdf text-orange-500"></i><span class="font-bold tracking-wide">Visor</span></div>
-            <button onclick="closeCatalogModal()" class="w-10 h-10 rounded-full bg-gray-700 hover:bg-gray-600 flex items-center justify-center text-xl"><i class="fa-solid fa-xmark"></i></button>
+    <div id="pdf-modal" class="fixed inset-0 z-50 bg-black/95 hidden flex-col">
+        <div class="flex justify-between items-center p-4 bg-gray-900 text-white shadow-lg shrink-0 h-16">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-file-pdf text-orange-500 text-xl"></i>
+                <span class="font-bold tracking-wide text-lg">Visor</span>
+            </div>
+            <button onclick="closeCatalogModal()" class="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         </div>
-        <div class="flex-1 bg-white relative w-full h-full"><iframe id="pdf-frame" class="w-full h-full border-0" src=""></iframe></div>
+        <div class="flex-1 bg-white relative w-full h-full">
+            <iframe id="pdf-frame" class="w-full h-full border-0" src=""></iframe>
+        </div>
     </div>
 
-    <!-- TOAST -->
-    <div id="toast" class="fixed top-24 left-1/2 transform -translate-x-1/2 bg-gray-800 dark:bg-white text-white dark:text-gray-900 px-6 py-3 rounded-full shadow-2xl text-sm font-bold opacity-0 pointer-events-none transition-all duration-300 z-50 flex items-center gap-2 whitespace-nowrap"><span id="toast-msg">Mensaje</span></div>
+    <!-- TOAST NOTIFICACIÓN -->
+    <div id="toast" class="fixed top-24 left-1/2 transform -translate-x-1/2 bg-gray-900/95 dark:bg-white/95 backdrop-blur-md text-white dark:text-gray-900 px-8 py-4 rounded-full shadow-2xl text-sm font-bold opacity-0 pointer-events-none transition-all duration-300 z-[60] flex items-center gap-3 whitespace-nowrap scale-90">
+        <span id="toast-msg">Mensaje</span>
+    </div>
 
     <script>
+        // CONFIGURACIÓN
         const WORKER_URL = "https://broken-butterfly-3928.santamariapablodaniel.workers.dev/";
-        let currentView = 'home'; let currentFileId = null; let currentCatalogUrl = null; let changes = {}; let cachedProviders = []; let aiCheckDone = false; 
+        
+        // ESTADO
+        let currentView = 'home'; 
+        let currentFileId = null; 
+        let currentCatalogUrl = null; 
+        let changes = {}; 
+        let cachedProviders = []; 
+        let aiCheckDone = false; 
+        let deferredPrompt;
 
+        // --- INSTALACIÓN PWA ---
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Solo mostrar modal si no está instalada
+            if (!window.matchMedia('(display-mode: standalone)').matches) {
+                setTimeout(() => document.getElementById('install-modal').classList.remove('hidden'), 2000);
+            }
+        });
+
+        document.getElementById('install-btn').addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') closeInstallModal();
+                deferredPrompt = null;
+            }
+        });
+
+        function closeInstallModal() { document.getElementById('install-modal').classList.add('hidden'); }
+
+        // --- INICIO ---
         window.addEventListener('load', () => {
             silentLoadProviders();
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('service-worker.js')
-                .then(() => console.log('Service Worker Registrado'))
-                .catch(err => console.log('Service Worker Falló', err));
+                .then(() => console.log('SW Listo'))
+                .catch(err => console.log('SW Error', err));
             }
         });
         
-        function toggleTheme() { const h = document.documentElement; h.classList.toggle('dark'); h.classList.toggle('light'); document.getElementById('theme-icon').className = h.classList.contains('dark') ? 'fa-solid fa-sun' : 'fa-solid fa-moon'; }
+        function toggleTheme() { 
+            const h = document.documentElement; 
+            h.classList.toggle('dark'); h.classList.toggle('light'); 
+            document.getElementById('theme-icon').className = h.classList.contains('dark') ? 'fa-solid fa-sun' : 'fa-solid fa-moon'; 
+        }
 
+        // --- NAVEGACIÓN ---
         function setView(view, title, subtitle) {
+            // Ocultar todas las vistas
             ['view-home', 'view-list', 'view-editor'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            
+            // Mostrar nueva vista con animación
             const el = document.getElementById(`view-${view}`);
-            el.classList.remove('hidden'); el.classList.remove('slide-up'); void el.offsetWidth; el.classList.add('slide-up');
-            document.getElementById('header-title').innerText = title; document.getElementById('header-subtitle').innerText = subtitle || '';
-            const backBtn = document.getElementById('back-btn'); const catBtn = document.getElementById('catalog-btn'); const fab = document.getElementById('fab-save');
-            backBtn.classList.toggle('hidden', view === 'home'); catBtn.classList.add('hidden'); fab.classList.add('hidden');
+            el.classList.remove('hidden'); 
+            el.classList.remove('slide-up'); 
+            void el.offsetWidth; // Trigger reflow
+            el.classList.add('slide-up');
+            
+            // Header
+            document.getElementById('header-title').innerText = title; 
+            document.getElementById('header-subtitle').innerText = subtitle || '';
+            
+            // Botones Header
+            const backBtn = document.getElementById('back-btn'); 
+            const catBtn = document.getElementById('catalog-btn'); 
+            const fab = document.getElementById('fab-save');
+            
+            backBtn.classList.toggle('hidden', view === 'home'); 
+            catBtn.classList.add('hidden'); 
+            fab.classList.add('hidden');
+            
             if (view === 'editor' && currentCatalogUrl) catBtn.classList.remove('hidden');
+            
             currentView = view;
         }
 
-        function goBack() { if (currentView === 'editor') setView('list', 'Proveedores', 'Estado del Stock'); else if (currentView === 'list') { setView('home', 'Depósito', 'Panel Central'); runRandomTaskAI(); } }
+        function goBack() { 
+            if (currentView === 'editor') setView('list', 'Proveedores', 'Estado del Stock'); 
+            else if (currentView === 'list') { setView('home', 'Depósito', 'Panel Central'); runRandomTaskAI(); } 
+        }
 
-        // --- IA ---
-        async function silentLoadProviders() { try { const res = await fetch(`${WORKER_URL}?action=getProviders`); const data = await res.json(); if(!data.error) { cachedProviders = data; runAutonomousAICheck(); } } catch(e) {} }
-        function runAutonomousAICheck() { if(aiCheckDone || !cachedProviders.length) return; let crit = null; for(let p of cachedProviders) { const d = getDaysSince(p.lastUpdated); let th = (p.name.toLowerCase().includes('romyl')||p.name.toLowerCase().includes('make'))?30:7; if(d>th*1.5){ crit={name:p.name,days:d,id:p.id}; break; } } if(crit) showAIModal('¡Alerta de Stock! 🚨', `Ojo, <strong>${crit.name}</strong> lleva ${crit.days} días sin tocarse. ¿Lo actualizamos hoy?`, '🚨', `<button onclick="loadSheet('${crit.id}', '${crit.name}'); closeAIModal()" class="w-full bg-red-500 text-white py-3 rounded-xl font-bold shadow-lg">Ir a actualizar</button>`); else runRandomTaskAI(); aiCheckDone = true; }
-        function runRandomTaskAI() { if(Math.random()>0.3) return; const t = [{t:"¡A brillar! ✨",m:"¿Barremos la vereda?",i:"🧹"},{t:"Ojo al piojo 🧐",m:"Revisá el depósito de plásticos que este todo repuesto y ordenado.",i:"♻️"},{t:"Misión a Realizar 🥷",m:"Revisa la Planta Alta, ¿Esta en orden?",i:"📦"},{t:"Garage 🚗",m:"Un barrido rápido al garage no vendría mal.",i:"🚿"}]; const x = t[Math.floor(Math.random()*t.length)]; showAIModal(x.t, x.m, x.i, `<button onclick="closeAIModal()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold">¡Anotado!</button>`); }
-        function showAIModal(t,m,i,a) { document.getElementById('ai-icon').innerText=i; document.getElementById('ai-title').innerText=t; document.getElementById('ai-msg').innerHTML=m; document.getElementById('ai-action-container').innerHTML=a; document.getElementById('ai-modal').classList.remove('hidden'); }
+        // --- IA AUTÓNOMA + RANKING ---
+        async function silentLoadProviders() { 
+            try { 
+                const res = await fetch(`${WORKER_URL}?action=getProviders`); 
+                const data = await res.json(); 
+                if(!data.error) { cachedProviders = data; runAutonomousAICheck(); } 
+            } catch(e) {} 
+        }
+        
+        async function runAutonomousAICheck() { 
+            if(aiCheckDone || !cachedProviders.length) return; 
+            
+            // 1. Obtener Ranking (Top 20)
+            let rankingItems = [];
+            try {
+                const rRes = await fetch(`${WORKER_URL}?action=getRanking`);
+                const rJson = await rRes.json();
+                if(rJson.found) rankingItems = rJson.data; 
+            } catch(e) {}
+
+            let alertData = null;
+
+            // 2. Prioridad: Alerta de Fechas (Si Romyl o Make están muy atrasados)
+            for(let p of cachedProviders) { 
+                const d = getDaysSince(p.lastUpdated); 
+                let th = (p.name.toLowerCase().includes('romyl')||p.name.toLowerCase().includes('make'))?30:7; 
+                if(d > th * 1.5){ 
+                    alertData = {
+                        title: '¡Alerta de Stock! 🚨',
+                        msg: `Ojo, <strong>${p.name}</strong> lleva ${d} días sin actualizarse.`,
+                        icon: '🚨',
+                        action: `<button onclick="loadSheet('${p.id}', '${p.name}'); closeAIModal()" class="w-full bg-red-500 text-white py-3 rounded-xl font-bold shadow-lg shadow-red-500/30 active:scale-95 transition-transform">Ir a actualizar ahora</button>`
+                    };
+                    break; 
+                } 
+            }
+
+            // 3. Si no hay alerta fecha, tirar dato de Ranking (Sutil)
+            if(!alertData && rankingItems.length > 0) {
+                // Elegir uno al azar del Top 10
+                const topItem = rankingItems[Math.floor(Math.random() * Math.min(10, rankingItems.length))]; 
+                
+                // 50% de probabilidad de mostrarlo para no ser molesto
+                if(topItem && Math.random() > 0.5) { 
+                    alertData = {
+                        title: '🔥 Artículo Muy Vendido',
+                        msg: `El producto <strong>${topItem.name}</strong> suele salir mucho.<br>¿Revisamos que haya stock suficiente?`,
+                        icon: '📈',
+                        // El botón solo cierra, el usuario navega manualmente
+                        action: `<button onclick="closeAIModal()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-blue-500/30 active:scale-95 transition-transform">Voy a revisar</button>`
+                    };
+                }
+            }
+
+            if(alertData) {
+                showAIModal(alertData.title, alertData.msg, alertData.icon, alertData.action);
+            } else {
+                runRandomTaskAI(); 
+            }
+            aiCheckDone = true; 
+        }
+
+        function runRandomTaskAI() { 
+            if(Math.random() > 0.3) return; 
+            const tasks = [
+                {t:"¡A brillar! ✨",m:"¿Barremos la vereda?",i:"🧹"},
+                {t:"Ojo al piojo 🧐",m:"Revisá el depósito de plásticos.",i:"♻️"},
+                {t:"Misión Ninja 🥷",m:"¿Planta Alta en orden?",i:"📦"},
+                {t:"Garage 🚗",m:"Un barrido rápido al garage no vendría mal.",i:"🚿"}
+            ]; 
+            const x = tasks[Math.floor(Math.random()*tasks.length)]; 
+            showAIModal(x.t, x.m, x.i, `<button onclick="closeAIModal()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg active:scale-95 transition-transform">¡Anotado!</button>`); 
+        }
+        
+        function showAIModal(t,m,i,a) { 
+            document.getElementById('ai-icon').innerText=i; 
+            document.getElementById('ai-title').innerText=t; 
+            document.getElementById('ai-msg').innerHTML=m; 
+            document.getElementById('ai-action-container').innerHTML=a; 
+            document.getElementById('ai-modal').classList.remove('hidden'); 
+        }
         function closeAIModal() { document.getElementById('ai-modal').classList.add('hidden'); }
 
-        // --- LOADERS ---
-        async function loadProviders() { setView('list', 'Proveedores', 'Cargando...'); const l = document.getElementById('loader-list'); const c = document.getElementById('list-container'); c.innerHTML = ''; l.classList.remove('hidden'); if(cachedProviders.length){ renderList(cachedProviders,'provider'); l.classList.add('hidden'); } else { try{ const res = await fetch(`${WORKER_URL}?action=getProviders`); const d = await res.json(); cachedProviders = d; renderList(d,'provider'); }catch(e){showToast(e.message,true);}finally{l.classList.add('hidden');} } }
-        async function loadCatalogs() { setView('list', 'Catálogos', 'Cargando...'); const l = document.getElementById('loader-list'); const c = document.getElementById('list-container'); c.innerHTML = ''; l.classList.remove('hidden'); try{ const res = await fetch(`${WORKER_URL}?action=getCatalogs`); renderList(await res.json(),'catalog'); }catch(e){}finally{l.classList.add('hidden');} }
+        // --- CARGA DE DATOS ---
+        async function loadProviders() { 
+            setView('list', 'Proveedores', 'Cargando...'); 
+            const l = document.getElementById('loader-list'); 
+            const c = document.getElementById('list-container'); 
+            c.innerHTML = ''; l.classList.remove('hidden'); 
+            
+            if(cachedProviders.length){ renderList(cachedProviders,'provider'); l.classList.add('hidden'); } 
+            else { 
+                try{ 
+                    const res = await fetch(`${WORKER_URL}?action=getProviders`); 
+                    const d = await res.json(); 
+                    cachedProviders = d; 
+                    renderList(d,'provider'); 
+                } catch(e){ showToast(e.message,true); } 
+                finally{ l.classList.add('hidden'); } 
+            } 
+        }
+        
+        async function loadCatalogs() { 
+            setView('list', 'Catálogos', 'Cargando...'); 
+            const l = document.getElementById('loader-list'); 
+            const c = document.getElementById('list-container'); 
+            c.innerHTML = ''; l.classList.remove('hidden'); 
+            try{ 
+                const res = await fetch(`${WORKER_URL}?action=getCatalogs`); 
+                renderList(await res.json(),'catalog'); 
+            } catch(e){} 
+            finally{ l.classList.add('hidden'); } 
+        }
 
         function renderList(items, type) {
-            const c = document.getElementById('list-container'); if(!items.length){c.innerHTML='<div class="text-center opacity-50 mt-10">Vacío</div>';return;}
+            const c = document.getElementById('list-container'); 
+            if(!items.length){ c.innerHTML='<div class="text-center opacity-50 mt-10">Vacío</div>'; return; }
+            
             if(type==='provider') items.sort((a,b)=>new Date(a.lastUpdated||0)-new Date(b.lastUpdated||0));
+            
             items.forEach((i,x)=>{
-                const d = document.createElement('div'); d.className="glass p-4 rounded-xl shadow-sm flex items-center justify-between cursor-pointer btn-press mb-3 relative overflow-hidden slide-up"; d.style.animationDelay=`${x*0.05}s`;
+                const d = document.createElement('div'); 
+                d.className="glass p-5 rounded-2xl shadow-sm flex items-center justify-between cursor-pointer active:scale-95 transition-transform mb-3 relative overflow-hidden slide-up"; 
+                d.style.animationDelay=`${x*0.05}s`;
+                
                 if(type==='provider'){
-                    const days=getDaysSince(i.lastUpdated); let col='green',lbl='Al día'; if(days>30){col='red';lbl='Atrasado';}else if(days>7){col='yellow';lbl='Revisar';}
-                    d.classList.add(`border-l-4`,`border-${col}-500`); d.onclick=()=>loadSheet(i.id,i.name);
-                    d.innerHTML=`<div class="flex items-center gap-4"><div class="w-12 h-12 rounded-full bg-${col}-100 dark:bg-${col}-900/30 text-${col}-600 dark:text-${col}-400 flex items-center justify-center font-bold text-lg">${i.name.charAt(0)}</div><div><h3 class="font-bold text-gray-800 dark:text-gray-100 text-lg">${i.name}</h3><div class="flex gap-2 mt-1"><span class="text-xs px-2 py-0.5 rounded bg-${col}-100 dark:bg-${col}-900/50 text-${col}-700 dark:text-${col}-300 font-bold">${lbl}</span><span class="text-xs text-gray-400"><i class="fa-regular fa-clock mr-1"></i>${days}d</span></div></div></div><i class="fa-solid fa-chevron-right text-gray-300"></i>`;
-                } else { d.onclick=()=>openPdfViewer(i.url); d.innerHTML=`<div class="flex items-center gap-4"><div class="w-12 h-12 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center"><i class="fa-solid fa-file-pdf"></i></div><h3 class="font-bold text-gray-800 dark:text-gray-100 text-lg">${i.name}</h3></div><i class="fa-solid fa-chevron-right text-gray-300 dark:text-gray-600"></i>`; }
+                    const days=getDaysSince(i.lastUpdated); 
+                    let col='green', lbl='Al día'; 
+                    if(days>30){col='red';lbl='Atrasado';} else if(days>7){col='yellow';lbl='Revisar';}
+                    
+                    d.classList.add(`border-l-[6px]`,`border-${col}-500`); 
+                    d.onclick=()=>loadSheet(i.id,i.name);
+                    
+                    d.innerHTML=`
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 rounded-2xl bg-${col}-100 dark:bg-${col}-900/30 text-${col}-600 dark:text-${col}-400 flex items-center justify-center font-black text-xl shadow-inner">${i.name.charAt(0)}</div>
+                            <div>
+                                <h3 class="font-bold text-gray-800 dark:text-gray-100 text-lg leading-tight">${i.name}</h3>
+                                <div class="flex items-center gap-2 mt-1.5">
+                                    <span class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-${col}-100 dark:bg-${col}-900/50 text-${col}-700 dark:text-${col}-300 font-bold">${lbl}</span>
+                                    <span class="text-xs text-gray-400 font-medium"><i class="fa-regular fa-clock mr-1"></i>${days}d</span>
+                                </div>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-gray-300 dark:text-gray-600"></i>`;
+                } else { 
+                    d.onclick=()=>openPdfViewer(i.url); 
+                    d.innerHTML=`
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center shadow-inner"><i class="fa-solid fa-file-pdf text-2xl"></i></div>
+                            <h3 class="font-bold text-gray-800 dark:text-gray-100 text-lg">${i.name}</h3>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-gray-300 dark:text-gray-600"></i>`; 
+                }
                 c.appendChild(d);
             });
         }
 
-        async function loadSheet(id, name) { currentFileId=id; currentCatalogUrl=null; setView('editor',name,'Escaneando...'); const c=document.getElementById('editor-container'); const l=document.getElementById('loader-editor'); c.innerHTML=''; l.classList.remove('hidden'); try{ const res=await fetch(`${WORKER_URL}?action=getSheetData&fileId=${id}`); const d=await res.json(); if(d.catalogUrl){currentCatalogUrl=d.catalogUrl;document.getElementById('catalog-btn').classList.remove('hidden');} renderEditor(d.items); document.getElementById('fab-save').classList.remove('hidden'); }catch(e){c.innerHTML=`<div class="bg-red-50 text-red-600 p-6 text-center">${e.message}</div>`;}finally{l.classList.add('hidden');} }
+        async function loadSheet(id, name) { 
+            currentFileId=id; currentCatalogUrl=null; 
+            setView('editor',name,'Escaneando...'); 
+            const c=document.getElementById('editor-container'); 
+            const l=document.getElementById('loader-editor'); 
+            c.innerHTML=''; l.classList.remove('hidden'); 
+            try{ 
+                const res=await fetch(`${WORKER_URL}?action=getSheetData&fileId=${id}`); 
+                const d=await res.json(); 
+                if(d.catalogUrl){ currentCatalogUrl=d.catalogUrl; document.getElementById('catalog-btn').classList.remove('hidden'); } 
+                renderEditor(d.items); 
+                document.getElementById('fab-save').classList.remove('hidden'); 
+            } catch(e){ c.innerHTML=`<div class="bg-red-50 text-red-600 p-6 text-center rounded-xl font-bold">${e.message}</div>`; } 
+            finally{ l.classList.add('hidden'); } 
+        }
 
         function renderEditor(items) {
-            const c=document.getElementById('editor-container'); changes={}; if(!items.length){c.innerHTML='<div class="text-center p-10 opacity-50">Vacío</div>';return;}
+            const c=document.getElementById('editor-container'); changes={}; 
+            if(!items.length){ c.innerHTML='<div class="text-center p-10 opacity-50 font-medium">Hoja vacía o no reconocida</div>'; return; }
+            
             items.forEach(i=>{
-                const k=`${i.row}_${i.col}`; let raw=i.stock?i.stock.toString():"0"; let num=parseInt(raw.replace(/[^0-9]/g,''))||0; let typ=raw.toLowerCase().includes('b')?'b':'u';
-                const d=document.createElement('div'); d.className="glass p-4 rounded-xl flex flex-col gap-3";
+                const k=`${i.row}_${i.col}`; 
+                let raw=i.stock?i.stock.toString():"0"; 
+                let num=parseInt(raw.replace(/[^0-9]/g,''))||0; 
+                let typ=raw.toLowerCase().includes('b')?'b':'u';
+                
+                const d=document.createElement('div'); 
+                d.className="glass p-5 rounded-[1.5rem] flex flex-col gap-4 shadow-sm";
                 d.innerHTML=`
                     <div class="flex justify-between items-start">
-                        <span class="font-bold text-gray-800 dark:text-gray-200 w-3/4">${i.name}</span>
+                        <span class="font-bold text-gray-800 dark:text-gray-200 w-3/4 text-lg leading-snug">${i.name}</span>
                         <div class="flex flex-col items-end">
-                             <div class="text-sm font-bold bg-white dark:bg-dark-bg px-3 py-1 rounded-full text-blue-600 dark:text-blue-400 party-box shadow-sm">
+                             <div class="text-base font-black bg-white dark:bg-dark-bg px-4 py-1.5 rounded-full text-blue-600 dark:text-blue-400 party-box shadow-sm">
                                  ${raw==='0'||raw==='x'?'0':raw}
                              </div>
-                             <span class="text-[10px] text-gray-400 mt-1">📦 Cantidad guardada antes</span>
+                             <span class="text-[10px] text-gray-400 mt-1 font-medium">Anterior</span>
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
-                        <div class="flex bg-gray-200 dark:bg-dark-border p-1 rounded-lg shrink-0"><button onclick="toggleType('${k}','u',this)" class="w-10 h-10 rounded font-bold transition-all ${typ==='u'?'bg-white dark:bg-dark-card shadow text-blue-600':'text-gray-400'}">U</button><button onclick="toggleType('${k}','b',this)" class="w-10 h-10 rounded font-bold transition-all ${typ==='b'?'bg-white dark:bg-dark-card shadow text-blue-600':'text-gray-400'}">B</button></div>
-                        <input type="number" id="input_${k}" value="${num===0?'':num}" placeholder="0" class="flex-1 bg-transparent border-b-2 border-gray-200 dark:border-dark-border text-center text-2xl font-bold focus:border-blue-500 outline-none text-gray-800 dark:text-white py-1" oninput="trackChange('${k}',${i.row},${i.col})" data-type="${typ}">
+                        <div class="flex bg-gray-100 dark:bg-dark-border p-1.5 rounded-xl shrink-0">
+                            <button onclick="toggleType('${k}','u',this)" class="w-12 h-12 rounded-lg font-black transition-all ${typ==='u'?'bg-white dark:bg-dark-card shadow text-blue-600':'text-gray-400'}">U</button>
+                            <button onclick="toggleType('${k}','b',this)" class="w-12 h-12 rounded-lg font-black transition-all ${typ==='b'?'bg-white dark:bg-dark-card shadow text-blue-600':'text-gray-400'}">B</button>
+                        </div>
+                        <input type="number" id="input_${k}" value="${num===0?'':num}" placeholder="0" class="flex-1 bg-transparent border-b-2 border-gray-200 dark:border-dark-border text-center text-3xl font-black focus:border-blue-500 outline-none text-gray-800 dark:text-white py-1" oninput="trackChange('${k}',${i.row},${i.col})" data-type="${typ}">
                     </div>`;
                 c.appendChild(d);
             });
             c.appendChild(document.createElement('div')).className="h-24";
         }
 
-        function toggleType(k,t,b){ const p=b.parentElement; p.querySelectorAll('button').forEach(x=>x.className="w-10 h-10 rounded font-bold transition-all text-gray-400"); b.className="w-10 h-10 rounded font-bold transition-all bg-white dark:bg-dark-card shadow text-blue-600"; document.getElementById(`input_${k}`).dataset.type=t; const pt=k.split('_'); trackChange(k,parseInt(pt[0]),parseInt(pt[1])); }
-        function trackChange(k,r,c){ const i=document.getElementById(`input_${k}`); let v=i.value; let t=i.dataset.type; let f=(v===""||v==="0")?"x":(t==='b'?v+"B":v); changes[k]={row:r,col:c,newStock:f}; }
+        function toggleType(k,t,b){ 
+            const p=b.parentElement; 
+            p.querySelectorAll('button').forEach(x=>x.className="w-12 h-12 rounded-lg font-black transition-all text-gray-400"); 
+            b.className="w-12 h-12 rounded-lg font-black transition-all bg-white dark:bg-dark-card shadow text-blue-600"; 
+            document.getElementById(`input_${k}`).dataset.type=t; 
+            const pt=k.split('_'); 
+            trackChange(k,parseInt(pt[0]),parseInt(pt[1])); 
+        }
+        
+        function trackChange(k,r,c){ 
+            const i=document.getElementById(`input_${k}`); 
+            let v=i.value; let t=i.dataset.type; 
+            let f=(v===""||v==="0")?"x":(t==='b'?v+"B":v); 
+            changes[k]={row:r,col:c,newStock:f}; 
+        }
 
         // --- ADD ITEM ---
         function openAddItemModal() { document.getElementById('add-item-modal').classList.remove('hidden'); }
         function closeAddItemModal() { document.getElementById('add-item-modal').classList.add('hidden'); document.getElementById('new-item-name').value=''; }
+        
         async function confirmAddItem() {
             const name = document.getElementById('new-item-name').value.trim();
             if(!name) { showToast("Escribe un nombre", true); return; }
             closeAddItemModal();
             try {
-                showToast("Creando artículo...", false);
+                showToast("Creando...", false);
                 const res = await fetch(WORKER_URL, { method: 'POST', body: JSON.stringify({ action: 'addItem', fileId: currentFileId, itemName: name, user: localStorage.getItem('depositoUserName')||'Anon' }) });
                 const d = await res.json();
                 if(d.error) throw new Error(d.error);
-                showToast("¡Artículo Creado! Recargando...");
+                showToast("¡Creado! Recargando...");
                 loadSheet(currentFileId, document.getElementById('header-title').innerText); 
             } catch(e) { showToast("Error: " + e.message, true); }
         }
 
         // --- SAVE ---
-        function promptUserForSave(){ if(!Object.keys(changes).length){showToast("No hay cambios");return;} document.getElementById('user-modal').classList.remove('hidden'); const s=localStorage.getItem('depositoUserName'); if(s)document.getElementById('username-input').value=s; }
+        function promptUserForSave(){ 
+            if(!Object.keys(changes).length){showToast("No hay cambios");return;} 
+            document.getElementById('user-modal').classList.remove('hidden'); 
+            const s=localStorage.getItem('depositoUserName'); 
+            if(s)document.getElementById('username-input').value=s; 
+        }
         function closeUserModal(){document.getElementById('user-modal').classList.add('hidden');}
-        async function confirmSave(){ const u=document.getElementById('username-input').value.trim(); if(!u){showToast("Ingresa tu nombre",true);return;} localStorage.setItem('depositoUserName',u); closeUserModal(); const p=Object.values(changes); const f=document.getElementById('fab-save'); f.innerHTML='<i class="fa-solid fa-circle-notch fa-spin"></i>'; f.disabled=true; try{ const res=await fetch(WORKER_URL,{method:'POST',body:JSON.stringify({action:'updateStock',fileId:currentFileId,items:p,user:u})}); const d=await res.json(); if(d.error)throw new Error(d.error); showToast("¡Listo! Guardado"); goBack(); }catch(e){showToast("Error: "+e.message,true);}finally{f.innerHTML='<i class="fa-solid fa-check"></i>';f.disabled=false;} }
+        
+        async function confirmSave(){ 
+            const u=document.getElementById('username-input').value.trim(); 
+            if(!u){showToast("Ingresa tu nombre",true);return;} 
+            localStorage.setItem('depositoUserName',u); 
+            closeUserModal(); 
+            const p=Object.values(changes); 
+            const f=document.getElementById('fab-save'); 
+            const original = f.innerHTML;
+            f.innerHTML='<div class="galaxy-spinner w-8 h-8 border-2"></div>'; 
+            f.disabled=true; 
+            
+            try{ 
+                const res=await fetch(WORKER_URL,{method:'POST',body:JSON.stringify({action:'updateStock',fileId:currentFileId,items:p,user:u})}); 
+                const d=await res.json(); 
+                if(d.error)throw new Error(d.error); 
+                showToast("¡Guardado Exitoso!"); 
+                goBack(); 
+            } catch(e){ showToast("Error: "+e.message,true); } 
+            finally{ f.innerHTML=original; f.disabled=false; } 
+        }
 
+        // UTILS
         function getDaysSince(d){if(!d)return 999;return Math.floor((new Date()-new Date(d))/(1000*60*60*24));}
         function openCurrentCatalog(){if(currentCatalogUrl)openPdfViewer(currentCatalogUrl);}
         function openPdfViewer(u){document.getElementById('pdf-frame').src=u.replace(/\/view.*/,'/preview').replace(/\/edit.*/,'/preview');document.getElementById('pdf-modal').classList.remove('hidden');document.getElementById('pdf-modal').classList.add('flex');}
         function closeCatalogModal(){document.getElementById('pdf-modal').classList.add('hidden');document.getElementById('pdf-modal').classList.remove('flex');document.getElementById('pdf-frame').src="";}
-        function showToast(m,e){const t=document.getElementById('toast');document.getElementById('toast-msg').innerText=m;t.style.opacity='1';t.classList.toggle('bg-red-600',e);setTimeout(()=>t.style.opacity='0',3000);}
+        
+        function showToast(m,e){
+            const t=document.getElementById('toast');
+            document.getElementById('toast-msg').innerText=m;
+            t.style.opacity='1'; t.style.transform = 'translate(-50%, 0) scale(1)';
+            t.className = `fixed top-24 left-1/2 transform -translate-x-1/2 px-8 py-4 rounded-full shadow-2xl text-sm font-bold transition-all duration-300 z-[60] flex items-center gap-3 whitespace-nowrap backdrop-blur-md border ${e ? 'bg-red-500/90 border-red-400 text-white' : 'bg-gray-900/90 border-gray-700 text-white dark:bg-white/90 dark:text-gray-900'}`;
+            setTimeout(() => { t.style.opacity='0'; t.style.transform = 'translate(-50%, -20px) scale(0.9)'; }, 3000);
+        }
     </script>
 </body>
 </html>

@@ -2,7 +2,6 @@
 <html lang="es" class="light">
 <head>
     <meta charset="UTF-8">
-    <!-- Viewport optimizado para "Notch" y pantalla completa -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Stock Depósito Pro</title>
     
@@ -24,14 +23,19 @@
                     animation: { 
                         'bounce-slow': 'bounce 3s infinite', 
                         'party-border': 'partyRGB 3s linear infinite',
-                        'spin-slow': 'spin 3s linear infinite'
+                        'spin-slow': 'spin 3s linear infinite',
+                        'slide-up-dock': 'slideUpDock 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards'
                     },
                     keyframes: {
                         partyRGB: {
-                            '0%': { borderColor: '#ef4444', boxShadow: '0 0 5px rgba(239, 68, 68, 0.4)' },
-                            '33%': { borderColor: '#22c55e', boxShadow: '0 0 5px rgba(34, 197, 94, 0.4)' },
-                            '66%': { borderColor: '#3b82f6', boxShadow: '0 0 5px rgba(59, 130, 246, 0.4)' },
-                            '100%': { borderColor: '#ef4444', boxShadow: '0 0 5px rgba(239, 68, 68, 0.4)' }
+                            '0%': { borderColor: '#ef4444', boxShadow: '0 0 3px rgba(239, 68, 68, 0.4)' },
+                            '33%': { borderColor: '#22c55e', boxShadow: '0 0 3px rgba(34, 197, 94, 0.4)' },
+                            '66%': { borderColor: '#3b82f6', boxShadow: '0 0 3px rgba(59, 130, 246, 0.4)' },
+                            '100%': { borderColor: '#ef4444', boxShadow: '0 0 3px rgba(239, 68, 68, 0.4)' }
+                        },
+                        slideUpDock: {
+                            'from': { transform: 'translateY(100%)', opacity: '0' },
+                            'to': { transform: 'translateY(0)', opacity: '1' }
                         }
                     }
                 }
@@ -45,7 +49,7 @@
             height: 100%; 
             width: 100%; 
             overflow: hidden; 
-            position: fixed; /* Evita rebote elástico en iOS/Android */
+            position: fixed; 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
             -webkit-tap-highlight-color: transparent; 
             user-select: none;
@@ -59,16 +63,15 @@
             overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
             padding-top: 70px; /* Header */
-            padding-bottom: 120px; /* FAB y espacio inferior */
+            padding-bottom: 140px; /* Espacio para el Dock inferior */
         }
         
-        /* Vidrio Esmerilado (Glassmorphism) */
         .glass { background: rgba(255, 255, 255, 0.90); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0,0,0,0.05); }
         .dark .glass { background: rgba(15, 23, 42, 0.90); border-bottom: 1px solid rgba(255,255,255,0.05); }
         
-        /* Botones Gigantes de Inicio */
+        /* Botones Gigantes */
         .big-btn { 
-            height: 40vh; /* Ocupan casi toda la pantalla vertical */
+            height: 40vh; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
@@ -80,28 +83,69 @@
         }
         .big-btn:active { transform: scale(0.97); }
         
-        /* Animaciones de Entrada */
-        .slide-up { animation: slideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        
-        input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        /* Input Numérico Estable */
+        .stock-input {
+            font-size: 1.5rem;
+            font-weight: 800;
+            text-align: center;
+            background: transparent;
+            width: 100%;
+            outline: none;
+            border-bottom: 2px solid #e2e8f0;
+            border-radius: 0;
+            padding: 4px 0;
+            transition: border-color 0.2s;
+        }
+        .stock-input:focus { border-color: #3b82f6; }
+        .dark .stock-input { color: white; border-color: #334155; }
+        .dark .stock-input:focus { border-color: #60a5fa; }
+
+        /* Barra Inferior (Dock) */
+        .bottom-dock {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: #1e293b;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 50;
+            transform: translateY(150%); /* Oculto por defecto */
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .bottom-dock.visible { transform: translateY(0); }
+        .bottom-dock:active { transform: translateY(0) scale(0.98); }
+
         .modal-overlay { background-color: rgba(0,0,0,0.7); backdrop-filter: blur(5px); }
-        
-        /* Efecto Party Box (Borde RGB) */
         .party-box { border-width: 2px; border-style: solid; animation: partyRGB 4s linear infinite; }
         
-        /* Spinner Personalizado estilo Galaxy */
         .galaxy-spinner {
-            width: 50px;
-            height: 50px;
+            width: 50px; height: 50px;
             border: 4px solid rgba(59, 130, 246, 0.1);
             border-left-color: #3b82f6;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-        .dark .galaxy-spinner { border-left-color: #60a5fa; border-color: rgba(96, 165, 250, 0.1); }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
+        /* Grid para fila de editor */
+        .item-grid {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            align-items: center;
+        }
+        .controls-grid {
+            display: grid;
+            grid-template-columns: auto 80px; /* Botones fijos, Input ancho fijo */
+            gap: 12px;
+            align-items: center;
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 dark:bg-dark-bg dark:text-dark-text transition-colors duration-300">
@@ -112,12 +156,10 @@
             <button onclick="goBack()" id="back-btn" class="hidden w-10 h-10 rounded-full bg-gray-100 dark:bg-dark-border flex items-center justify-center shadow-sm text-blue-600 dark:text-blue-400 active:scale-90 transition-transform">
                 <i class="fa-solid fa-arrow-left text-lg"></i>
             </button>
-            
             <div class="leading-tight flex-1 overflow-hidden">
                 <h1 class="font-black text-xl tracking-tight truncate" id="header-title">Depósito</h1>
                 <p class="text-xs text-gray-500 dark:text-gray-400 font-medium truncate" id="header-subtitle">Panel Central</p>
             </div>
-
             <div class="flex items-center gap-2">
                 <button onclick="toggleTheme()" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-dark-border text-gray-600 dark:text-yellow-400 flex items-center justify-center active:scale-90 transition-transform">
                     <i id="theme-icon" class="fa-solid fa-moon"></i>
@@ -132,38 +174,25 @@
     <!-- ÁREA DE SCROLL PRINCIPAL -->
     <div id="main-scroll-area">
         
-        <!-- VISTA: HOME (Botones Grandes) -->
-        <div id="view-home" class="flex flex-col gap-4 h-full px-4 slide-up">
-            
-            <!-- Botón Stock -->
+        <!-- VISTA: HOME -->
+        <div id="view-home" class="flex flex-col gap-4 h-full px-4 animate-[slideUp_0.4s_ease-out]">
             <button onclick="loadProviders()" class="big-btn bg-white dark:bg-dark-card shadow-xl border-l-8 border-green-500 dark:border-green-500 group">
                 <div class="absolute right-0 top-0 w-56 h-56 bg-green-500 opacity-5 rounded-bl-[100%] -mr-12 -mt-12 pointer-events-none group-active:scale-110 transition-transform duration-500"></div>
-                
-                <div class="w-28 h-28 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center text-green-600 dark:text-green-400 text-6xl shadow-inner mb-6 animate-bounce-slow">
-                    <i class="fa-solid fa-boxes-packing"></i>
-                </div>
+                <div class="w-28 h-28 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center text-green-600 dark:text-green-400 text-6xl shadow-inner mb-6 animate-bounce-slow"><i class="fa-solid fa-boxes-packing"></i></div>
                 <h2 class="text-4xl font-black dark:text-white tracking-tight">Stock</h2>
                 <p class="text-gray-500 dark:text-gray-400 font-medium mt-1 text-lg">Cargar Inventario</p>
             </button>
-
-            <!-- Botón Catálogos -->
             <button onclick="loadCatalogs()" class="big-btn bg-white dark:bg-dark-card shadow-xl border-l-8 border-orange-500 dark:border-orange-500 group">
                 <div class="absolute right-0 top-0 w-56 h-56 bg-orange-500 opacity-5 rounded-bl-[100%] -mr-12 -mt-12 pointer-events-none group-active:scale-110 transition-transform duration-500"></div>
-                
-                <div class="w-28 h-28 bg-orange-50 dark:bg-orange-900/20 rounded-full flex items-center justify-center text-orange-600 dark:text-orange-400 text-6xl shadow-inner mb-6">
-                    <i class="fa-solid fa-book-open"></i>
-                </div>
+                <div class="w-28 h-28 bg-orange-50 dark:bg-orange-900/20 rounded-full flex items-center justify-center text-orange-600 dark:text-orange-400 text-6xl shadow-inner mb-6"><i class="fa-solid fa-book-open"></i></div>
                 <h2 class="text-4xl font-black dark:text-white tracking-tight">Catálogos</h2>
                 <p class="text-gray-500 dark:text-gray-400 font-medium mt-1 text-lg">Biblioteca PDF</p>
             </button>
-
         </div>
 
         <!-- VISTA: LISTADO -->
-        <div id="view-list" class="hidden slide-up px-4">
+        <div id="view-list" class="hidden px-4 animate-[slideUp_0.4s_ease-out]">
             <div id="list-container" class="space-y-3 pb-8"></div>
-            
-            <!-- Spinner Galaxy -->
             <div id="loader-list" class="hidden flex flex-col items-center justify-center mt-32">
                 <div class="galaxy-spinner mb-4"></div>
                 <span class="text-blue-600 dark:text-blue-400 font-bold text-sm tracking-wide animate-pulse">CONECTANDO...</span>
@@ -171,9 +200,8 @@
         </div>
 
         <!-- VISTA: EDITOR DE STOCK -->
-        <div id="view-editor" class="hidden slide-up px-4">
-            
-            <!-- Barra Agregar Item -->
+        <div id="view-editor" class="hidden px-4 animate-[slideUp_0.4s_ease-out]">
+            <!-- Botón Agregar Item -->
             <div onclick="openAddItemModal()" class="glass mb-6 p-5 rounded-3xl flex items-center justify-between cursor-pointer active:scale-95 transition-transform shadow-md border border-white/50 dark:border-white/10">
                 <div>
                     <h3 class="font-bold text-lg text-blue-600 dark:text-blue-400">✨ ¿Falta un producto?</h3>
@@ -186,7 +214,6 @@
 
             <div id="editor-container" class="space-y-4 pb-8"></div>
             
-            <!-- Spinner Galaxy Editor -->
             <div id="loader-editor" class="hidden flex flex-col items-center mt-32">
                 <div class="galaxy-spinner mb-4"></div>
                 <span class="text-gray-500 dark:text-gray-400 font-bold text-sm tracking-wide animate-pulse">ANALIZANDO HOJA...</span>
@@ -195,10 +222,19 @@
 
     </div>
 
-    <!-- FAB: GUARDAR (Flotante Fijo) -->
-    <button onclick="promptUserForSave()" id="fab-save" class="hidden fixed bottom-8 right-6 bg-gradient-to-tr from-green-600 to-green-400 text-white w-20 h-20 rounded-[2rem] shadow-2xl shadow-green-500/40 flex items-center justify-center text-3xl active:scale-90 transition-transform z-50">
-        <i class="fa-solid fa-check"></i>
-    </button>
+    <!-- BARRA INFERIOR DE CONFIRMACIÓN (DOCK) -->
+    <div id="bottom-dock" class="bottom-dock" onclick="promptUserForSave()">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white text-lg shadow-lg animate-pulse">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <div class="flex flex-col">
+                <span class="font-black text-sm tracking-wide uppercase text-gray-200">Confirmar Cambios</span>
+                <span class="text-xs font-medium text-green-400" id="changes-counter">0 modificaciones</span>
+            </div>
+        </div>
+        <i class="fa-solid fa-chevron-right text-gray-400"></i>
+    </div>
 
     <!-- MODAL INSTALAR APP -->
     <div id="install-modal" class="fixed inset-0 z-[100] flex flex-col items-center justify-center modal-overlay hidden px-6 text-center">
@@ -249,7 +285,7 @@
         </div>
     </div>
 
-    <!-- MODAL ALERTA IA (RANKING) -->
+    <!-- MODAL ALERTA IA (RANKING & TAREAS) -->
     <div id="ai-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-overlay hidden px-4">
         <div class="bg-white dark:bg-dark-card p-6 rounded-[2rem] shadow-2xl w-full max-w-md transform transition-all scale-100 border-2 border-indigo-100 dark:border-indigo-900 relative overflow-hidden">
             <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
@@ -257,10 +293,8 @@
                 <div id="ai-icon" class="text-6xl mb-4 animate-bounce">🤖</div>
                 <h3 id="ai-title" class="text-2xl font-black text-gray-800 dark:text-white mb-2">Hola</h3>
                 <p id="ai-msg" class="text-lg text-gray-600 dark:text-gray-300 mb-8 leading-relaxed font-medium">...</p>
-                
-                <div id="ai-action-container" class="mb-4"></div>
-                
-                <button onclick="closeAIModal()" class="text-gray-400 text-sm font-medium hover:text-gray-600 py-2">Cerrar</button>
+                <div id="ai-action-container" class="mb-4 space-y-3"></div>
+                <button onclick="handleAIAction(false)" class="text-gray-400 text-sm font-medium hover:text-gray-600 py-2">Cerrar (Ignorar)</button>
             </div>
         </div>
     </div>
@@ -287,10 +321,8 @@
     </div>
 
     <script>
-        // CONFIGURACIÓN
         const WORKER_URL = "https://broken-butterfly-3928.santamariapablodaniel.workers.dev/";
         
-        // ESTADO
         let currentView = 'home'; 
         let currentFileId = null; 
         let currentCatalogUrl = null; 
@@ -303,12 +335,10 @@
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            // Solo mostrar modal si no está instalada
             if (!window.matchMedia('(display-mode: standalone)').matches) {
                 setTimeout(() => document.getElementById('install-modal').classList.remove('hidden'), 2000);
             }
         });
-
         document.getElementById('install-btn').addEventListener('click', async () => {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
@@ -317,134 +347,119 @@
                 deferredPrompt = null;
             }
         });
-
         function closeInstallModal() { document.getElementById('install-modal').classList.add('hidden'); }
 
         // --- INICIO ---
         window.addEventListener('load', () => {
             silentLoadProviders();
             if ('serviceWorker' in navigator) {
+                // Fix para el error de URL protocol en entornos de desarrollo/preview
                 navigator.serviceWorker.register('service-worker.js')
-                .then(() => console.log('SW Listo'))
-                .catch(err => console.log('SW Error', err));
+                .then(reg => console.log('SW registrado', reg))
+                .catch(err => console.log('SW fallo (posiblemente por entorno preview):', err));
             }
         });
-        
-        function toggleTheme() { 
-            const h = document.documentElement; 
-            h.classList.toggle('dark'); h.classList.toggle('light'); 
-            document.getElementById('theme-icon').className = h.classList.contains('dark') ? 'fa-solid fa-sun' : 'fa-solid fa-moon'; 
-        }
+        function toggleTheme() { const h=document.documentElement; h.classList.toggle('dark'); h.classList.toggle('light'); document.getElementById('theme-icon').className=h.classList.contains('dark')?'fa-solid fa-sun':'fa-solid fa-moon'; }
 
         // --- NAVEGACIÓN ---
         function setView(view, title, subtitle) {
-            // Ocultar todas las vistas
             ['view-home', 'view-list', 'view-editor'].forEach(id => document.getElementById(id).classList.add('hidden'));
-            
-            // Mostrar nueva vista con animación
             const el = document.getElementById(`view-${view}`);
-            el.classList.remove('hidden'); 
-            el.classList.remove('slide-up'); 
-            void el.offsetWidth; // Trigger reflow
-            el.classList.add('slide-up');
+            el.classList.remove('hidden'); el.classList.remove('animate-[slideUp_0.4s_ease-out]'); void el.offsetWidth; el.classList.add('animate-[slideUp_0.4s_ease-out]');
             
-            // Header
             document.getElementById('header-title').innerText = title; 
             document.getElementById('header-subtitle').innerText = subtitle || '';
-            
-            // Botones Header
             const backBtn = document.getElementById('back-btn'); 
             const catBtn = document.getElementById('catalog-btn'); 
-            const fab = document.getElementById('fab-save');
-            
             backBtn.classList.toggle('hidden', view === 'home'); 
             catBtn.classList.add('hidden'); 
-            fab.classList.add('hidden');
+            document.getElementById('bottom-dock').classList.remove('visible'); // Ocultar dock al cambiar vista
             
             if (view === 'editor' && currentCatalogUrl) catBtn.classList.remove('hidden');
-            
             currentView = view;
         }
+        function goBack() { if (currentView === 'editor') setView('list', 'Proveedores', 'Estado del Stock'); else if (currentView === 'list') { setView('home', 'Depósito', 'Panel Central'); runRandomTaskAI(); } }
 
-        function goBack() { 
-            if (currentView === 'editor') setView('list', 'Proveedores', 'Estado del Stock'); 
-            else if (currentView === 'list') { setView('home', 'Depósito', 'Panel Central'); runRandomTaskAI(); } 
-        }
-
-        // --- IA AUTÓNOMA + RANKING ---
-        async function silentLoadProviders() { 
-            try { 
-                const res = await fetch(`${WORKER_URL}?action=getProviders`); 
-                const data = await res.json(); 
-                if(!data.error) { cachedProviders = data; runAutonomousAICheck(); } 
-            } catch(e) {} 
-        }
+        // --- IA AUTÓNOMA CON MEMORIA ---
+        async function silentLoadProviders() { try { const res=await fetch(`${WORKER_URL}?action=getProviders`); const d=await res.json(); if(!d.error) { cachedProviders=d; runAutonomousAICheck(); } } catch(e) {} }
         
         async function runAutonomousAICheck() { 
             if(aiCheckDone || !cachedProviders.length) return; 
             
-            // 1. Obtener Ranking (Top 20)
-            let rankingItems = [];
-            try {
-                const rRes = await fetch(`${WORKER_URL}?action=getRanking`);
-                const rJson = await rRes.json();
-                if(rJson.found) rankingItems = rJson.data; 
-            } catch(e) {}
+            // 1. Ranking
+            let rankingItems=[]; try{const r=await fetch(`${WORKER_URL}?action=getRanking`);const j=await r.json();if(j.found)rankingItems=j.data;}catch(e){}
 
             let alertData = null;
-
-            // 2. Prioridad: Alerta de Fechas (Si Romyl o Make están muy atrasados)
+            // 2. Fechas (Urgente)
             for(let p of cachedProviders) { 
                 const d = getDaysSince(p.lastUpdated); 
                 let th = (p.name.toLowerCase().includes('romyl')||p.name.toLowerCase().includes('make'))?30:7; 
                 if(d > th * 1.5){ 
                     alertData = {
-                        title: '¡Alerta de Stock! 🚨',
-                        msg: `Ojo, <strong>${p.name}</strong> lleva ${d} días sin actualizarse.`,
-                        icon: '🚨',
-                        action: `<button onclick="loadSheet('${p.id}', '${p.name}'); closeAIModal()" class="w-full bg-red-500 text-white py-3 rounded-xl font-bold shadow-lg shadow-red-500/30 active:scale-95 transition-transform">Ir a actualizar ahora</button>`
-                    };
-                    break; 
+                        title: '¡Alerta Stock! 🚨', msg: `Ojo, <strong>${p.name}</strong> lleva ${d} días sin control.`, icon: '🚨',
+                        action: `<button onclick="loadSheet('${p.id}', '${p.name}'); closeAIModal()" class="w-full bg-red-500 text-white py-3 rounded-xl font-bold shadow-lg">Ir a actualizar</button>`
+                    }; break; 
                 } 
             }
 
-            // 3. Si no hay alerta fecha, tirar dato de Ranking (Sutil)
-            if(!alertData && rankingItems.length > 0) {
-                // Elegir uno al azar del Top 10
-                const topItem = rankingItems[Math.floor(Math.random() * Math.min(10, rankingItems.length))]; 
-                
-                // 50% de probabilidad de mostrarlo para no ser molesto
-                if(topItem && Math.random() > 0.5) { 
-                    alertData = {
-                        title: '🔥 Artículo Muy Vendido',
-                        msg: `El producto <strong>${topItem.name}</strong> suele salir mucho.<br>¿Revisamos que haya stock suficiente?`,
-                        icon: '📈',
-                        // El botón solo cierra, el usuario navega manualmente
-                        action: `<button onclick="closeAIModal()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-blue-500/30 active:scale-95 transition-transform">Voy a revisar</button>`
+            // 3. Ranking o Tareas (Si no hay urgencia)
+            if(!alertData) {
+                if(rankingItems.length > 0 && Math.random() > 0.6) {
+                    const top = rankingItems[Math.floor(Math.random() * Math.min(10, rankingItems.length))]; 
+                    if(top) alertData = {
+                        title: '🔥 Top Ventas', msg: `El producto <strong>${top.name}</strong> sale mucho. ¿Hay stock?`, icon: '📈',
+                        action: `<button onclick="handleAIAction(true)" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg">Entendido, revisaré</button>`
                     };
+                } else {
+                    runRandomTaskAI();
+                    aiCheckDone = true;
+                    return;
                 }
             }
 
-            if(alertData) {
-                showAIModal(alertData.title, alertData.msg, alertData.icon, alertData.action);
-            } else {
-                runRandomTaskAI(); 
-            }
+            if(alertData) showAIModal(alertData.title, alertData.msg, alertData.icon, alertData.action);
             aiCheckDone = true; 
         }
 
         function runRandomTaskAI() { 
-            if(Math.random() > 0.3) return; 
+            if(Math.random() > 0.4) return; // No molestar siempre
+
+            // IA RENCOROSA: Revisa si la ignoraron antes
+            const ignoredCount = parseInt(localStorage.getItem('ai_tasks_ignored') || '0');
             const tasks = [
-                {t:"¡A brillar! ✨",m:"¿Barremos la vereda?",i:"🧹"},
+                {t:"¡Orden y Limpieza! ✨",m:"¿Barremos la vereda?",i:"🧹"},
                 {t:"Ojo al piojo 🧐",m:"Revisá el depósito de plásticos.",i:"♻️"},
                 {t:"Misión Ninja 🥷",m:"¿Planta Alta en orden?",i:"📦"},
-                {t:"Garage 🚗",m:"Un barrido rápido al garage no vendría mal.",i:"🚿"}
+                {t:"Mantenimiento 🚗",m:"Un barrido al garage no vendría mal.",i:"🚿"}
             ]; 
-            const x = tasks[Math.floor(Math.random()*tasks.length)]; 
-            showAIModal(x.t, x.m, x.i, `<button onclick="closeAIModal()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg active:scale-95 transition-transform">¡Anotado!</button>`); 
+            
+            let selected = tasks[Math.floor(Math.random()*tasks.length)];
+            let msg = selected.m;
+            let title = selected.t;
+
+            // Si ignoraron mucho, cambiar tono
+            if(ignoredCount >= 2) {
+                title = "🧐 IA Observando...";
+                msg = `He notado que ignoraron las últimas ${ignoredCount} sugerencias de orden. El depósito no se limpia solo... ¿Hacemos esta? <br><br><i>"${selected.m}"</i>`;
+            }
+
+            showAIModal(title, msg, selected.i, 
+                `<button onclick="handleAIAction(true)" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg active:scale-95 transition-transform">¡Anotado! Lo haré</button>`
+            );
         }
-        
+
+        function handleAIAction(accepted) {
+            if(accepted) {
+                localStorage.setItem('ai_tasks_ignored', '0'); // Resetear rencor
+                showToast("¡Genial! Manteniendo el orden 🚀");
+            } else {
+                // Incrementar contador de ignorados
+                let current = parseInt(localStorage.getItem('ai_tasks_ignored') || '0');
+                localStorage.setItem('ai_tasks_ignored', (current + 1).toString());
+            }
+            closeAIModal();
+        }
+
         function showAIModal(t,m,i,a) { 
             document.getElementById('ai-icon').innerText=i; 
             document.getElementById('ai-title').innerText=t; 
@@ -456,202 +471,101 @@
 
         // --- CARGA DE DATOS ---
         async function loadProviders() { 
-            setView('list', 'Proveedores', 'Cargando...'); 
-            const l = document.getElementById('loader-list'); 
-            const c = document.getElementById('list-container'); 
-            c.innerHTML = ''; l.classList.remove('hidden'); 
-            
+            setView('list', 'Proveedores', 'Cargando...'); const l=document.getElementById('loader-list');const c=document.getElementById('list-container'); c.innerHTML='';l.classList.remove('hidden'); 
             if(cachedProviders.length){ renderList(cachedProviders,'provider'); l.classList.add('hidden'); } 
-            else { 
-                try{ 
-                    const res = await fetch(`${WORKER_URL}?action=getProviders`); 
-                    const d = await res.json(); 
-                    cachedProviders = d; 
-                    renderList(d,'provider'); 
-                } catch(e){ showToast(e.message,true); } 
-                finally{ l.classList.add('hidden'); } 
-            } 
+            else { try{ const res=await fetch(`${WORKER_URL}?action=getProviders`); const d=await res.json(); cachedProviders=d; renderList(d,'provider'); } catch(e){showToast(e.message,true);} finally{l.classList.add('hidden');} } 
         }
-        
-        async function loadCatalogs() { 
-            setView('list', 'Catálogos', 'Cargando...'); 
-            const l = document.getElementById('loader-list'); 
-            const c = document.getElementById('list-container'); 
-            c.innerHTML = ''; l.classList.remove('hidden'); 
-            try{ 
-                const res = await fetch(`${WORKER_URL}?action=getCatalogs`); 
-                renderList(await res.json(),'catalog'); 
-            } catch(e){} 
-            finally{ l.classList.add('hidden'); } 
-        }
+        async function loadCatalogs() { setView('list', 'Catálogos', 'Cargando...'); const l=document.getElementById('loader-list');const c=document.getElementById('list-container'); c.innerHTML='';l.classList.remove('hidden'); try{const r=await fetch(`${WORKER_URL}?action=getCatalogs`); renderList(await r.json(),'catalog');}catch(e){}finally{l.classList.add('hidden');} }
 
         function renderList(items, type) {
-            const c = document.getElementById('list-container'); 
-            if(!items.length){ c.innerHTML='<div class="text-center opacity-50 mt-10">Vacío</div>'; return; }
-            
+            const c = document.getElementById('list-container'); if(!items.length){ c.innerHTML='<div class="text-center opacity-50 mt-10">Vacío</div>'; return; }
             if(type==='provider') items.sort((a,b)=>new Date(a.lastUpdated||0)-new Date(b.lastUpdated||0));
-            
             items.forEach((i,x)=>{
-                const d = document.createElement('div'); 
-                d.className="glass p-5 rounded-2xl shadow-sm flex items-center justify-between cursor-pointer active:scale-95 transition-transform mb-3 relative overflow-hidden slide-up"; 
-                d.style.animationDelay=`${x*0.05}s`;
-                
+                const d = document.createElement('div'); d.className="glass p-5 rounded-2xl shadow-sm flex items-center justify-between cursor-pointer active:scale-95 transition-transform mb-3 relative overflow-hidden animate-[slideUp_0.4s_ease-out]"; d.style.animationDelay=`${x*0.05}s`;
                 if(type==='provider'){
-                    const days=getDaysSince(i.lastUpdated); 
-                    let col='green', lbl='Al día'; 
-                    if(days>30){col='red';lbl='Atrasado';} else if(days>7){col='yellow';lbl='Revisar';}
-                    
-                    d.classList.add(`border-l-[6px]`,`border-${col}-500`); 
-                    d.onclick=()=>loadSheet(i.id,i.name);
-                    
-                    d.innerHTML=`
-                        <div class="flex items-center gap-4">
-                            <div class="w-14 h-14 rounded-2xl bg-${col}-100 dark:bg-${col}-900/30 text-${col}-600 dark:text-${col}-400 flex items-center justify-center font-black text-xl shadow-inner">${i.name.charAt(0)}</div>
-                            <div>
-                                <h3 class="font-bold text-gray-800 dark:text-gray-100 text-lg leading-tight">${i.name}</h3>
-                                <div class="flex items-center gap-2 mt-1.5">
-                                    <span class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-${col}-100 dark:bg-${col}-900/50 text-${col}-700 dark:text-${col}-300 font-bold">${lbl}</span>
-                                    <span class="text-xs text-gray-400 font-medium"><i class="fa-regular fa-clock mr-1"></i>${days}d</span>
-                                </div>
-                            </div>
-                        </div>
-                        <i class="fa-solid fa-chevron-right text-gray-300 dark:text-gray-600"></i>`;
+                    const days=getDaysSince(i.lastUpdated); let col='green', lbl='Al día'; if(days>30){col='red';lbl='Atrasado';} else if(days>7){col='yellow';lbl='Revisar';}
+                    d.classList.add(`border-l-[6px]`,`border-${col}-500`); d.onclick=()=>loadSheet(i.id,i.name);
+                    d.innerHTML=`<div class="flex items-center gap-4"><div class="w-14 h-14 rounded-2xl bg-${col}-100 dark:bg-${col}-900/30 text-${col}-600 dark:text-${col}-400 flex items-center justify-center font-black text-xl shadow-inner">${i.name.charAt(0)}</div><div><h3 class="font-bold text-gray-800 dark:text-gray-100 text-lg leading-tight">${i.name}</h3><div class="flex items-center gap-2 mt-1.5"><span class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-${col}-100 dark:bg-${col}-900/50 text-${col}-700 dark:text-${col}-300 font-bold">${lbl}</span><span class="text-xs text-gray-400 font-medium"><i class="fa-regular fa-clock mr-1"></i>Hace ${days} días</span></div></div></div><i class="fa-solid fa-chevron-right text-gray-300 dark:text-gray-600"></i>`;
                 } else { 
                     d.onclick=()=>openPdfViewer(i.url); 
-                    d.innerHTML=`
-                        <div class="flex items-center gap-4">
-                            <div class="w-14 h-14 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center shadow-inner"><i class="fa-solid fa-file-pdf text-2xl"></i></div>
-                            <h3 class="font-bold text-gray-800 dark:text-gray-100 text-lg">${i.name}</h3>
-                        </div>
-                        <i class="fa-solid fa-chevron-right text-gray-300 dark:text-gray-600"></i>`; 
+                    d.innerHTML=`<div class="flex items-center gap-4"><div class="w-14 h-14 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center shadow-inner"><i class="fa-solid fa-file-pdf text-2xl"></i></div><h3 class="font-bold text-gray-800 dark:text-gray-100 text-lg">${i.name}</h3></div><i class="fa-solid fa-chevron-right text-gray-300 dark:text-gray-600"></i>`; 
                 }
                 c.appendChild(d);
             });
         }
 
         async function loadSheet(id, name) { 
-            currentFileId=id; currentCatalogUrl=null; 
-            setView('editor',name,'Escaneando...'); 
-            const c=document.getElementById('editor-container'); 
-            const l=document.getElementById('loader-editor'); 
-            c.innerHTML=''; l.classList.remove('hidden'); 
-            try{ 
-                const res=await fetch(`${WORKER_URL}?action=getSheetData&fileId=${id}`); 
-                const d=await res.json(); 
-                if(d.catalogUrl){ currentCatalogUrl=d.catalogUrl; document.getElementById('catalog-btn').classList.remove('hidden'); } 
-                renderEditor(d.items); 
-                document.getElementById('fab-save').classList.remove('hidden'); 
-            } catch(e){ c.innerHTML=`<div class="bg-red-50 text-red-600 p-6 text-center rounded-xl font-bold">${e.message}</div>`; } 
-            finally{ l.classList.add('hidden'); } 
+            currentFileId=id; currentCatalogUrl=null; setView('editor',name,'Escaneando...'); const c=document.getElementById('editor-container'); const l=document.getElementById('loader-editor'); c.innerHTML=''; l.classList.remove('hidden'); 
+            try{ const res=await fetch(`${WORKER_URL}?action=getSheetData&fileId=${id}`); const d=await res.json(); if(d.catalogUrl){currentCatalogUrl=d.catalogUrl;document.getElementById('catalog-btn').classList.remove('hidden');} renderEditor(d.items); } catch(e){ c.innerHTML=`<div class="bg-red-50 text-red-600 p-6 text-center rounded-xl font-bold">${e.message}</div>`; } finally{ l.classList.add('hidden'); } 
         }
 
         function renderEditor(items) {
-            const c=document.getElementById('editor-container'); changes={}; 
-            if(!items.length){ c.innerHTML='<div class="text-center p-10 opacity-50 font-medium">Hoja vacía o no reconocida</div>'; return; }
-            
+            const c=document.getElementById('editor-container'); changes={}; if(!items.length){ c.innerHTML='<div class="text-center p-10 opacity-50 font-medium">Hoja vacía</div>'; return; }
             items.forEach(i=>{
-                const k=`${i.row}_${i.col}`; 
-                let raw=i.stock?i.stock.toString():"0"; 
-                let num=parseInt(raw.replace(/[^0-9]/g,''))||0; 
-                let typ=raw.toLowerCase().includes('b')?'b':'u';
-                
-                const d=document.createElement('div'); 
-                d.className="glass p-5 rounded-[1.5rem] flex flex-col gap-4 shadow-sm";
+                const k=`${i.row}_${i.col}`; let raw=i.stock?i.stock.toString():"0"; let num=parseInt(raw.replace(/[^0-9]/g,''))||0; let typ=raw.toLowerCase().includes('b')?'b':'u';
+                const d=document.createElement('div'); d.className="glass p-5 rounded-[1.5rem] flex flex-col gap-4 shadow-sm item-grid";
                 d.innerHTML=`
-                    <div class="flex justify-between items-start">
-                        <span class="font-bold text-gray-800 dark:text-gray-200 w-3/4 text-lg leading-snug">${i.name}</span>
-                        <div class="flex flex-col items-end">
-                             <div class="text-base font-black bg-white dark:bg-dark-bg px-4 py-1.5 rounded-full text-blue-600 dark:text-blue-400 party-box shadow-sm">
-                                 ${raw==='0'||raw==='x'?'0':raw}
-                             </div>
-                             <span class="text-[10px] text-gray-400 mt-1 font-medium">Anterior</span>
+                    <div class="flex flex-col gap-1">
+                        <span class="font-bold text-gray-800 dark:text-gray-200 text-lg leading-tight">${i.name}</span>
+                        <div class="flex items-center gap-2">
+                             <span class="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Stock Anterior:</span>
+                             <div class="text-xs font-black bg-gray-100 dark:bg-dark-bg px-2 py-0.5 rounded text-blue-600 dark:text-blue-400 party-box">${raw==='0'||raw==='x'?'0':raw}</div>
                         </div>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <div class="flex bg-gray-100 dark:bg-dark-border p-1.5 rounded-xl shrink-0">
-                            <button onclick="toggleType('${k}','u',this)" class="w-12 h-12 rounded-lg font-black transition-all ${typ==='u'?'bg-white dark:bg-dark-card shadow text-blue-600':'text-gray-400'}">U</button>
-                            <button onclick="toggleType('${k}','b',this)" class="w-12 h-12 rounded-lg font-black transition-all ${typ==='b'?'bg-white dark:bg-dark-card shadow text-blue-600':'text-gray-400'}">B</button>
+                    <div class="controls-grid">
+                        <div class="flex flex-col items-center">
+                             <div class="flex bg-gray-100 dark:bg-dark-border p-1 rounded-xl shrink-0 mb-1">
+                                <button onclick="toggleType('${k}','u',this)" class="w-10 h-10 rounded-lg font-black transition-all ${typ==='u'?'bg-white dark:bg-dark-card shadow text-blue-600':'text-gray-400'}">U</button>
+                                <button onclick="toggleType('${k}','b',this)" class="w-10 h-10 rounded-lg font-black transition-all ${typ==='b'?'bg-white dark:bg-dark-card shadow text-blue-600':'text-gray-400'}">B</button>
+                            </div>
+                            <span class="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Uni / Bultos</span>
                         </div>
-                        <input type="number" id="input_${k}" value="${num===0?'':num}" placeholder="0" class="flex-1 bg-transparent border-b-2 border-gray-200 dark:border-dark-border text-center text-3xl font-black focus:border-blue-500 outline-none text-gray-800 dark:text-white py-1" oninput="trackChange('${k}',${i.row},${i.col})" data-type="${typ}">
+                        <input type="number" id="input_${k}" value="${num===0?'':num}" placeholder="0" class="stock-input" oninput="trackChange('${k}',${i.row},${i.col})" data-type="${typ}">
                     </div>`;
                 c.appendChild(d);
             });
             c.appendChild(document.createElement('div')).className="h-24";
         }
 
-        function toggleType(k,t,b){ 
-            const p=b.parentElement; 
-            p.querySelectorAll('button').forEach(x=>x.className="w-12 h-12 rounded-lg font-black transition-all text-gray-400"); 
-            b.className="w-12 h-12 rounded-lg font-black transition-all bg-white dark:bg-dark-card shadow text-blue-600"; 
-            document.getElementById(`input_${k}`).dataset.type=t; 
-            const pt=k.split('_'); 
-            trackChange(k,parseInt(pt[0]),parseInt(pt[1])); 
-        }
+        function toggleType(k,t,b){ const p=b.parentElement; p.querySelectorAll('button').forEach(x=>x.className="w-10 h-10 rounded-lg font-black transition-all text-gray-400"); b.className="w-10 h-10 rounded-lg font-black transition-all bg-white dark:bg-dark-card shadow text-blue-600"; document.getElementById(`input_${k}`).dataset.type=t; const pt=k.split('_'); trackChange(k,parseInt(pt[0]),parseInt(pt[1])); }
         
         function trackChange(k,r,c){ 
-            const i=document.getElementById(`input_${k}`); 
-            let v=i.value; let t=i.dataset.type; 
-            let f=(v===""||v==="0")?"x":(t==='b'?v+"B":v); 
-            changes[k]={row:r,col:c,newStock:f}; 
+            const i=document.getElementById(`input_${k}`); let v=i.value; let t=i.dataset.type; let f=(v===""||v==="0")?"x":(t==='b'?v+"B":v); changes[k]={row:r,col:c,newStock:f}; 
+            
+            // Mostrar barra inferior (Dock)
+            const dock = document.getElementById('bottom-dock');
+            const count = Object.keys(changes).length;
+            if(count > 0) {
+                dock.classList.add('visible');
+                document.getElementById('changes-counter').innerText = `${count} cambios pendientes`;
+            } else {
+                dock.classList.remove('visible');
+            }
         }
 
-        // --- ADD ITEM ---
+        // --- FUNCIONES EXTRA ---
         function openAddItemModal() { document.getElementById('add-item-modal').classList.remove('hidden'); }
         function closeAddItemModal() { document.getElementById('add-item-modal').classList.add('hidden'); document.getElementById('new-item-name').value=''; }
-        
         async function confirmAddItem() {
-            const name = document.getElementById('new-item-name').value.trim();
-            if(!name) { showToast("Escribe un nombre", true); return; }
-            closeAddItemModal();
-            try {
-                showToast("Creando...", false);
-                const res = await fetch(WORKER_URL, { method: 'POST', body: JSON.stringify({ action: 'addItem', fileId: currentFileId, itemName: name, user: localStorage.getItem('depositoUserName')||'Anon' }) });
-                const d = await res.json();
-                if(d.error) throw new Error(d.error);
-                showToast("¡Creado! Recargando...");
-                loadSheet(currentFileId, document.getElementById('header-title').innerText); 
-            } catch(e) { showToast("Error: " + e.message, true); }
+            const name = document.getElementById('new-item-name').value.trim(); if(!name) return showToast("Falta nombre", true);
+            closeAddItemModal(); try { showToast("Creando...", false); const r = await fetch(WORKER_URL, { method: 'POST', body: JSON.stringify({ action: 'addItem', fileId: currentFileId, itemName: name, user: localStorage.getItem('depositoUserName')||'Anon' }) }); const d = await r.json(); if(d.error) throw new Error(d.error); showToast("¡Creado!"); loadSheet(currentFileId, document.getElementById('header-title').innerText); } catch(e) { showToast(e.message, true); }
         }
 
-        // --- SAVE ---
-        function promptUserForSave(){ 
-            if(!Object.keys(changes).length){showToast("No hay cambios");return;} 
-            document.getElementById('user-modal').classList.remove('hidden'); 
-            const s=localStorage.getItem('depositoUserName'); 
-            if(s)document.getElementById('username-input').value=s; 
-        }
+        function promptUserForSave(){ if(!Object.keys(changes).length) return; document.getElementById('user-modal').classList.remove('hidden'); const s=localStorage.getItem('depositoUserName'); if(s)document.getElementById('username-input').value=s; }
         function closeUserModal(){document.getElementById('user-modal').classList.add('hidden');}
-        
         async function confirmSave(){ 
-            const u=document.getElementById('username-input').value.trim(); 
-            if(!u){showToast("Ingresa tu nombre",true);return;} 
-            localStorage.setItem('depositoUserName',u); 
-            closeUserModal(); 
-            const p=Object.values(changes); 
-            const f=document.getElementById('fab-save'); 
-            const original = f.innerHTML;
-            f.innerHTML='<div class="galaxy-spinner w-8 h-8 border-2"></div>'; 
-            f.disabled=true; 
-            
-            try{ 
-                const res=await fetch(WORKER_URL,{method:'POST',body:JSON.stringify({action:'updateStock',fileId:currentFileId,items:p,user:u})}); 
-                const d=await res.json(); 
-                if(d.error)throw new Error(d.error); 
-                showToast("¡Guardado Exitoso!"); 
-                goBack(); 
-            } catch(e){ showToast("Error: "+e.message,true); } 
-            finally{ f.innerHTML=original; f.disabled=false; } 
+            const u=document.getElementById('username-input').value.trim(); if(!u){showToast("Falta nombre",true);return;} localStorage.setItem('depositoUserName',u); closeUserModal(); 
+            const dock = document.getElementById('bottom-dock'); dock.innerHTML = '<div class="galaxy-spinner w-6 h-6 border-2 mx-auto"></div>';
+            try{ const r=await fetch(WORKER_URL,{method:'POST',body:JSON.stringify({action:'updateStock',fileId:currentFileId,items:Object.values(changes),user:u})}); const d=await r.json(); if(d.error)throw new Error(d.error); showToast("¡Guardado Exitoso!"); goBack(); changes={}; } catch(e){ showToast("Error",true); dock.innerHTML='<span class="text-red-400">Error</span>'; setTimeout(()=>goBack(),2000); } 
         }
 
-        // UTILS
         function getDaysSince(d){if(!d)return 999;return Math.floor((new Date()-new Date(d))/(1000*60*60*24));}
         function openCurrentCatalog(){if(currentCatalogUrl)openPdfViewer(currentCatalogUrl);}
         function openPdfViewer(u){document.getElementById('pdf-frame').src=u.replace(/\/view.*/,'/preview').replace(/\/edit.*/,'/preview');document.getElementById('pdf-modal').classList.remove('hidden');document.getElementById('pdf-modal').classList.add('flex');}
         function closeCatalogModal(){document.getElementById('pdf-modal').classList.add('hidden');document.getElementById('pdf-modal').classList.remove('flex');document.getElementById('pdf-frame').src="";}
         
         function showToast(m,e){
-            const t=document.getElementById('toast');
-            document.getElementById('toast-msg').innerText=m;
+            const t=document.getElementById('toast'); document.getElementById('toast-msg').innerText=m;
             t.style.opacity='1'; t.style.transform = 'translate(-50%, 0) scale(1)';
             t.className = `fixed top-24 left-1/2 transform -translate-x-1/2 px-8 py-4 rounded-full shadow-2xl text-sm font-bold transition-all duration-300 z-[60] flex items-center gap-3 whitespace-nowrap backdrop-blur-md border ${e ? 'bg-red-500/90 border-red-400 text-white' : 'bg-gray-900/90 border-gray-700 text-white dark:bg-white/90 dark:text-gray-900'}`;
             setTimeout(() => { t.style.opacity='0'; t.style.transform = 'translate(-50%, -20px) scale(0.9)'; }, 3000);

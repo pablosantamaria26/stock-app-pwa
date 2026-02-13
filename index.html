@@ -95,14 +95,14 @@
         
         /* Input Numérico Estable y Gigante */
         .stock-input {
-            font-size: 2.5rem; /* MUCHO MÁS GRANDE */
+            font-size: 3.5rem; /* MUCHO MÁS GRANDE */
             font-weight: 900;
             text-align: center;
             background: transparent;
             width: 100%;
-            height: 60px;
+            height: 80px;
             outline: none;
-            border-bottom: 3px solid #e2e8f0;
+            border-bottom: 4px solid #e2e8f0;
             border-radius: 0;
             padding: 0;
             transition: border-color 0.2s;
@@ -133,22 +133,16 @@
         .bottom-dock.visible { transform: translateY(0); }
         .bottom-dock:active { transform: translateY(0) scale(0.98); }
 
-        .modal-overlay { background-color: rgba(0,0,0,0.7); backdrop-filter: blur(8px); }
+        .modal-overlay { background-color: rgba(0,0,0,0.8); backdrop-filter: blur(8px); }
         .party-box { border-width: 2px; border-style: solid; animation: partyRGB 4s linear infinite; }
         
         /* Grid para fila de editor - AHORA MÁS ALTO */
         .item-grid {
-            display: grid;
-            grid-template-columns: 1fr auto;
+            display: flex;
+            flex-direction: column;
             gap: 16px;
-            align-items: center;
-            min-height: 120px; /* Fila más alta para dedos */
-        }
-        .controls-grid {
-            display: grid;
-            grid-template-columns: auto 100px; /* Input más ancho */
-            gap: 16px;
-            align-items: center;
+            padding: 24px;
+            min-height: 120px; 
         }
 
         /* SVG Checkmark Animation */
@@ -564,32 +558,82 @@
         function renderEditor(items) {
             const c=document.getElementById('editor-container'); changes={}; if(!items.length){ c.innerHTML='<div class="text-center p-10 opacity-50 font-medium">Hoja vacía</div>'; return; }
             items.forEach(i=>{
-                const k=`${i.row}_${i.col}`; let raw=i.stock?i.stock.toString():"0"; let num=parseInt(raw.replace(/[^0-9]/g,''))||0; let typ=raw.toLowerCase().includes('b')?'b':'u';
-                const d=document.createElement('div'); d.className="glass p-6 rounded-[2rem] flex flex-col gap-6 shadow-sm item-grid"; // Padding aumentado y gap aumentado
+                const k=`${i.row}_${i.col}`; let raw=i.stock?i.stock.toString():"0"; let num=parseInt(raw.replace(/[^0-9]/g,''))||0; 
+                let isBulto = raw.toLowerCase().includes('b');
+                let typ = isBulto ? 'b' : 'u';
+                
+                // Lógica visual explicita para stock anterior
+                let prevLabel = "SIN STOCK";
+                let prevClass = "bg-gray-100 text-gray-500 border border-gray-200";
+                let prevIcon = "fa-circle-xmark";
+
+                if (raw !== "0" && raw !== "x") {
+                    if (isBulto) {
+                        prevLabel = `${num} BULTOS CERRADOS`;
+                        prevClass = "bg-purple-100 text-purple-700 border border-purple-200";
+                        prevIcon = "fa-box-open";
+                    } else {
+                        prevLabel = `${num} UNIDADES SUELTAS`;
+                        prevClass = "bg-blue-100 text-blue-700 border border-blue-200";
+                        prevIcon = "fa-cubes-stacked";
+                    }
+                }
+
+                const d=document.createElement('div'); 
+                d.className="glass rounded-[3rem] p-6 flex flex-col gap-6 mb-4 shadow-lg border border-gray-100 dark:border-gray-700";
                 d.innerHTML=`
-                    <div class="flex flex-col gap-2">
-                        <span class="font-black text-gray-800 dark:text-gray-100 text-2xl leading-tight">${i.name}</span>
-                        <div class="flex items-center gap-3">
-                             <span class="text-xs text-gray-400 font-bold uppercase tracking-wide">Anterior:</span>
-                             <div class="text-sm font-black bg-gray-100 dark:bg-dark-bg px-3 py-1 rounded-lg text-blue-600 dark:text-blue-400 party-box">${raw==='0'||raw==='x'?'0':raw}</div>
+                    <div class="text-center">
+                        <h3 class="font-black text-gray-800 dark:text-gray-100 text-3xl leading-tight mb-3">${i.name}</h3>
+                        
+                        <div class="flex flex-col items-center gap-1">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">STOCK REGISTRADO</span>
+                            <div class="inline-flex items-center gap-2 px-5 py-2 rounded-2xl font-black text-sm uppercase tracking-tight shadow-sm ${prevClass}">
+                                <i class="fa-solid ${prevIcon}"></i>
+                                <span>${prevLabel}</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="controls-grid">
-                        <div class="flex flex-col items-center">
-                             <div class="flex bg-gray-100 dark:bg-dark-border p-1.5 rounded-2xl shrink-0 mb-2">
-                                <button onclick="toggleType('${k}','u',this)" class="w-16 h-16 rounded-xl font-black text-xl transition-all ${typ==='u'?'bg-white dark:bg-dark-card shadow-md text-blue-600 transform scale-105':'text-gray-400'}">U</button>
-                                <button onclick="toggleType('${k}','b',this)" class="w-16 h-16 rounded-xl font-black text-xl transition-all ${typ==='b'?'bg-white dark:bg-dark-card shadow-md text-blue-600 transform scale-105':'text-gray-400'}">B</button>
-                            </div>
-                            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Uni / Bultos</span>
+                    
+                    <div class="flex flex-col gap-6 mt-2">
+                        <div class="flex justify-center bg-gray-100 dark:bg-dark-border p-2 rounded-3xl mx-auto w-fit shadow-inner">
+                            <button onclick="toggleType('${k}','u',this)" class="px-8 py-4 rounded-2xl font-black text-xl transition-all duration-300 flex flex-col items-center gap-1 ${typ==='u'?'bg-white dark:bg-dark-card shadow-lg text-blue-600 scale-105 ring-2 ring-blue-500/10':'text-gray-400 hover:text-gray-500'}">
+                                <span>UNIDADES</span>
+                                <i class="fa-solid fa-cubes-stacked text-xs opacity-50"></i>
+                            </button>
+                            <button onclick="toggleType('${k}','b',this)" class="px-8 py-4 rounded-2xl font-black text-xl transition-all duration-300 flex flex-col items-center gap-1 ${typ==='b'?'bg-white dark:bg-dark-card shadow-lg text-purple-600 scale-105 ring-2 ring-purple-500/10':'text-gray-400 hover:text-gray-500'}">
+                                <span>BULTOS</span>
+                                <i class="fa-solid fa-box-open text-xs opacity-50"></i>
+                            </button>
                         </div>
-                        <input type="number" id="input_${k}" value="${num===0?'':num}" placeholder="0" class="stock-input" oninput="trackChange('${k}',${i.row},${i.col})" data-type="${typ}">
+                        
+                        <div class="relative">
+                            <input type="number" id="input_${k}" value="${num===0?'':num}" placeholder="0" class="stock-input" oninput="trackChange('${k}',${i.row},${i.col})" data-type="${typ}">
+                            <div class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none text-2xl">
+                                <i class="fa-solid fa-pencil"></i>
+                            </div>
+                        </div>
                     </div>`;
                 c.appendChild(d);
             });
             c.appendChild(document.createElement('div')).className="h-24";
         }
 
-        function toggleType(k,t,b){ const p=b.parentElement; p.querySelectorAll('button').forEach(x=>x.className="w-16 h-16 rounded-xl font-black text-xl transition-all text-gray-400"); b.className="w-16 h-16 rounded-xl font-black text-xl transition-all bg-white dark:bg-dark-card shadow-md text-blue-600 transform scale-105"; document.getElementById(`input_${k}`).dataset.type=t; const pt=k.split('_'); trackChange(k,parseInt(pt[0]),parseInt(pt[1])); }
+        function toggleType(k,t,b){ 
+            const p=b.parentElement; 
+            p.querySelectorAll('button').forEach(x => {
+                x.className="px-8 py-4 rounded-2xl font-black text-xl transition-all duration-300 flex flex-col items-center gap-1 text-gray-400 hover:text-gray-500";
+            }); 
+            
+            if(t === 'u') {
+                b.className="px-8 py-4 rounded-2xl font-black text-xl transition-all duration-300 flex flex-col items-center gap-1 bg-white dark:bg-dark-card shadow-lg text-blue-600 scale-105 ring-2 ring-blue-500/10";
+            } else {
+                b.className="px-8 py-4 rounded-2xl font-black text-xl transition-all duration-300 flex flex-col items-center gap-1 bg-white dark:bg-dark-card shadow-lg text-purple-600 scale-105 ring-2 ring-purple-500/10";
+            }
+            
+            document.getElementById(`input_${k}`).dataset.type=t; 
+            const pt=k.split('_'); 
+            trackChange(k,parseInt(pt[0]),parseInt(pt[1])); 
+        }
         
         function trackChange(k,r,c){ 
             const i=document.getElementById(`input_${k}`); let v=i.value; let t=i.dataset.type; let f=(v===""||v==="0")?"x":(t==='b'?v+"B":v); changes[k]={row:r,col:c,newStock:f}; 

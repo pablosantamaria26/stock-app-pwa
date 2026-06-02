@@ -361,13 +361,17 @@
 
     <script>
         const WORKER_URL = "https://broken-butterfly-3928.santamariapablodaniel.workers.dev/";
-        
-        let currentView = 'home'; 
-        let currentFileId = null; 
-        let currentCatalogUrl = null; 
-        let changes = {}; 
-        let cachedProviders = []; 
-        let aiCheckDone = false; 
+        const SB_URL     = "https://gjeyvbidomxzofcdycya.supabase.co";
+        const SB_ANON    = "sb_publishable_CjdA8GwtCljm_PzT8pqk3g_QIhTmUHT";
+
+        let currentView = 'home';
+        let currentFileId = null;
+        let currentProvNombre = null;
+        let currentCatalogUrl = null;
+        let changes = {};
+        let cachedProviders = [];
+        let sbProveedores = {};  // nombre_lower -> id
+        let aiCheckDone = false;
         let deferredPrompt;
 
         // --- INSTALACIÓN PWA ---
@@ -391,12 +395,23 @@
         // --- INICIO ---
         window.addEventListener('load', () => {
             silentLoadProviders();
+            loadSbProveedores();
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('service-worker.js')
                 .then(reg => console.log('SW registrado', reg))
                 .catch(err => console.log('SW fallo (posiblemente por entorno preview):', err));
             }
         });
+
+        async function loadSbProveedores() {
+            try {
+                const r = await fetch(`${SB_URL}/rest/v1/proveedores?activo=eq.true&select=id,nombre`, {
+                    headers: { apikey: SB_ANON, Authorization: `Bearer ${SB_ANON}` }
+                });
+                const provs = await r.json();
+                provs.forEach(p => { sbProveedores[p.nombre.toLowerCase().trim()] = p.id; });
+            } catch(e) { console.log('SB proveedores no cargaron:', e); }
+        }
         function toggleTheme() { const h=document.documentElement; h.classList.toggle('dark'); h.classList.toggle('light'); document.getElementById('theme-icon').className=h.classList.contains('dark')?'fa-solid fa-sun':'fa-solid fa-moon'; }
 
         // --- NAVEGACIÓN ---
@@ -550,9 +565,10 @@
             });
         }
 
-        async function loadSheet(id, name) { 
-            currentFileId=id; currentCatalogUrl=null; setView('editor',name,'Escaneando...'); const c=document.getElementById('editor-container'); const l=document.getElementById('loader-editor'); c.innerHTML=''; l.classList.remove('hidden'); 
-            try{ const res=await fetch(`${WORKER_URL}?action=getSheetData&fileId=${id}`); const d=await res.json(); if(d.catalogUrl){currentCatalogUrl=d.catalogUrl;document.getElementById('catalog-btn').classList.remove('hidden');} renderEditor(d.items); } catch(e){ c.innerHTML=`<div class="bg-red-50 text-red-600 p-6 text-center rounded-xl font-bold">${e.message}</div>`; } finally{ l.classList.add('hidden'); } 
+        async function loadSheet(id, name) {
+            currentFileId=id; currentProvNombre=name; currentCatalogUrl=null;
+            setView('editor',name,'Escaneando...'); const c=document.getElementById('editor-container'); const l=document.getElementById('loader-editor'); c.innerHTML=''; l.classList.remove('hidden');
+            try{ const res=await fetch(`${WORKER_URL}?action=getSheetData&fileId=${id}`); const d=await res.json(); if(d.catalogUrl){currentCatalogUrl=d.catalogUrl;document.getElementById('catalog-btn').classList.remove('hidden');} renderEditor(d.items); } catch(e){ c.innerHTML=`<div class="bg-red-50 text-red-600 p-6 text-center rounded-xl font-bold">${e.message}</div>`; } finally{ l.classList.add('hidden'); }
         }
 
         function renderEditor(items) {
@@ -607,7 +623,7 @@
                         </div>
                         
                         <div class="relative">
-                            <input type="number" id="input_${k}" value="${num===0?'':num}" placeholder="0" class="stock-input" oninput="trackChange('${k}',${i.row},${i.col})" data-type="${typ}">
+                            <input type="number" id="input_${k}" value="${num===0?'':num}" placeholder="0" class="stock-input" oninput="trackChange('${k}',${i.row},${i.col},${JSON.stringify(i.name)})" data-type="${typ}">
                             <div class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none text-2xl">
                                 <i class="fa-solid fa-pencil"></i>
                             </div>
@@ -635,8 +651,8 @@
             trackChange(k,parseInt(pt[0]),parseInt(pt[1])); 
         }
         
-        function trackChange(k,r,c){ 
-            const i=document.getElementById(`input_${k}`); let v=i.value; let t=i.dataset.type; let f=(v===""||v==="0")?"x":(t==='b'?v+"B":v); changes[k]={row:r,col:c,newStock:f}; 
+        function trackChange(k,r,c,name){
+            const i=document.getElementById(`input_${k}`); let v=i.value; let t=i.dataset.type; let f=(v===""||v==="0")?"x":(t==='b'?v+"B":v); changes[k]={row:r,col:c,newStock:f,name:name||''};
             
             // Mostrar barra inferior (Dock)
             const dock = document.getElementById('bottom-dock');
@@ -678,16 +694,54 @@
                 document.getElementById('bottom-dock').classList.remove('visible');
             }, 1800);
 
-            // 3. Enviar datos en segundo plano (Fire & Forget visual)
+            // 3. Enviar datos en segundo plano
+            const changesSnapshot = Object.values(changes);
             fetch(WORKER_URL,{
                 method:'POST',
-                body:JSON.stringify({action:'updateStock',fileId:currentFileId,items:Object.values(changes),user:u})
+                body:JSON.stringify({action:'updateStock',fileId:currentFileId,items:changesSnapshot,user:u})
             }).then(r => r.json())
               .then(d => {
                   if(d.error) console.error("Error guardando en background:", d.error);
-                  else console.log("Guardado OK en background");
+                  else { console.log("Guardado OK en background"); syncToSupabase(changesSnapshot, u); }
               })
               .catch(e => console.error("Error de red en background:", e));
+        }
+
+        async function syncToSupabase(items, operador) {
+            const provId = sbProveedores[currentProvNombre?.toLowerCase().trim()];
+            if (!provId) { console.log('SB: proveedor no encontrado para', currentProvNombre); return; }
+
+            const rows = items
+                .filter(it => it.name)
+                .map(it => {
+                    const raw = it.newStock || 'x';
+                    const isBulto = raw.toUpperCase().endsWith('B') && raw.length > 1;
+                    const num = parseFloat(raw.replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
+                    return {
+                        proveedor_id: provId,
+                        articulo_original: it.name,
+                        stock_raw: raw,
+                        stock_unidades: raw === 'x' ? 0 : num,
+                        es_bulto: isBulto,
+                        operador: operador,
+                        fecha_conteo: new Date().toISOString()
+                    };
+                });
+
+            if (!rows.length) return;
+
+            try {
+                const r = await fetch(`${SB_URL}/rest/v1/stock_inventario`, {
+                    method: 'POST',
+                    headers: {
+                        apikey: SB_ANON, Authorization: `Bearer ${SB_ANON}`,
+                        'Content-Type': 'application/json', Prefer: 'return=minimal'
+                    },
+                    body: JSON.stringify(rows)
+                });
+                if (r.ok) console.log(`SB: ${rows.length} items sincronizados`);
+                else console.error('SB error:', await r.text());
+            } catch(e) { console.error('SB sync falló:', e); }
         }
 
         function getDaysSince(d){if(!d)return 999;return Math.floor((new Date()-new Date(d))/(1000*60*60*24));}

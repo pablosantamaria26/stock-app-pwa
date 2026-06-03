@@ -79,7 +79,7 @@
     .dark .nostk-btn.on{background:#dc2626;color:white;border-color:#dc2626;}
 
     /* Locked confirmation state */
-    .ctrl-locked{background:#f0fdf4;border-radius:14px;padding:12px 14px;cursor:pointer;touch-action:none;-webkit-user-select:none;user-select:none;}
+    .ctrl-locked{background:#f0fdf4;border-radius:14px;padding:12px 14px;cursor:pointer;touch-action:auto;-webkit-user-select:none;user-select:none;}
     .dark .ctrl-locked{background:#052e16;}
     .lockbar-wrap{height:4px;background:#bbf7d0;border-radius:2px;overflow:hidden;margin-top:10px;}
     .dark .lockbar-wrap{background:#064e3b;}
@@ -378,8 +378,10 @@
 
     // Lock timers per item key
     const lockTimers = {};
-    let _unlockKey  = null;
-    let _unlockIval = null;
+    let _unlockKey    = null;
+    let _unlockIval   = null;
+    let _unlockStartX = 0;
+    let _unlockStartY = 0;
 
     // ── THEME ────────────────────────────────────────────────────
     (function initTheme() {
@@ -726,8 +728,14 @@
 
         <!-- Locked confirmation display -->
         <div id="lock_${k}" class="ctrl-locked hidden"
-          ontouchstart="startUnlock('${k}',event)" ontouchend="cancelUnlock()"
-          ontouchcancel="cancelUnlock()" onmousedown="startUnlock('${k}',event)" onmouseup="cancelUnlock()">
+          ontouchstart="startUnlock('${k}',event)"
+          ontouchmove="checkUnlockMove(event)"
+          ontouchend="cancelUnlock()"
+          ontouchcancel="cancelUnlock()"
+          onmousedown="startUnlock('${k}',event)"
+          onmousemove="checkUnlockMove(event)"
+          onmouseup="cancelUnlock()"
+          onmouseleave="cancelUnlock()">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2.5">
               <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-sm shrink-0">✓</div>
@@ -844,8 +852,11 @@
     }
 
     function startUnlock(k, e) {
-      e.preventDefault();
+      // Do NOT call preventDefault — causes layout shift on Android Chrome/Samsung
       _unlockKey = k;
+      const pt = e.touches ? e.touches[0] : e;
+      _unlockStartX = pt.clientX;
+      _unlockStartY = pt.clientY;
       const bar = document.getElementById(`lockbar_${k}`);
       let pct = 0;
       clearInterval(_unlockIval);
@@ -854,6 +865,15 @@
         if (bar) bar.style.width = `${pct}%`;
         if (pct >= 100) { clearInterval(_unlockIval); unlockItem(k); }
       }, 100);
+    }
+
+    function checkUnlockMove(e) {
+      if (!_unlockKey) return;
+      const pt = e.touches ? e.touches[0] : e;
+      const dx = Math.abs(pt.clientX - _unlockStartX);
+      const dy = Math.abs(pt.clientY - _unlockStartY);
+      // If finger moved more than 10px the user is scrolling — cancel hold
+      if (dx > 10 || dy > 10) cancelUnlock();
     }
 
     function cancelUnlock() {

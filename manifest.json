@@ -1,6 +1,6 @@
 {
-  "name": "Depósito Pro",
-  "short_name": "Depósito",
+  "name": "Stock",
+  "short_name": "Stock",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#0f172a",

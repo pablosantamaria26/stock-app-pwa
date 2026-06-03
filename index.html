@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Stock Depósito Pro</title>
+  <title>Stock</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#2563eb">
   <link rel="apple-touch-icon" href="icon-192.png">
@@ -18,12 +18,12 @@
           colors: { dark: { bg: '#0f172a', card: '#1e293b', text: '#f8fafc', border: '#334155' } },
           animation: {
             'bounce-slow': 'bounce 3s infinite',
-            'slide-up': 'slideUp 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both',
-            'scale-in': 'scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) both',
+            'slide-up': 'slideUp 0.35s cubic-bezier(0.2,0.8,0.2,1) both',
+            'scale-in': 'scaleIn 0.3s cubic-bezier(0.175,0.885,0.32,1.275) both',
           },
           keyframes: {
-            slideUp: { from: { transform: 'translateY(22px)', opacity: '0' }, to: { transform: 'translateY(0)', opacity: '1' } },
-            scaleIn: { '0%': { transform: 'scale(0.85)', opacity: '0' }, '100%': { transform: 'scale(1)', opacity: '1' } },
+            slideUp: { from:{transform:'translateY(22px)',opacity:'0'}, to:{transform:'translateY(0)',opacity:'1'} },
+            scaleIn: { '0%':{transform:'scale(0.85)',opacity:'0'}, '100%':{transform:'scale(1)',opacity:'1'} },
           }
         }
       }
@@ -31,87 +31,95 @@
   </script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
-    html, body { height:100%; width:100%; overflow:hidden; position:fixed; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; -webkit-tap-highlight-color:transparent; user-select:none; }
-    #main-scroll-area { height:100%; width:100%; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; padding-top:64px; padding-bottom:96px; }
-    .glass { background:rgba(255,255,255,0.93); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); }
-    .dark .glass { background:rgba(15,23,42,0.93); }
-    .big-btn { height:40vh; display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:2.5rem; position:relative; overflow:hidden; transition:transform 0.1s; }
-    .big-btn:active { transform:scale(0.97); }
+    html,body{height:100%;width:100%;overflow:hidden;position:fixed;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-tap-highlight-color:transparent;user-select:none;}
+    #main-scroll-area{height:100%;width:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-top:64px;padding-bottom:100px;}
+    .glass{background:rgba(255,255,255,0.93);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+    .dark .glass{background:rgba(15,23,42,0.93);}
+    .big-btn{height:40vh;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:2.5rem;position:relative;overflow:hidden;transition:transform 0.1s;}
+    .big-btn:active{transform:scale(0.97);}
 
     /* Bottom dock */
-    .bottom-dock { position:fixed; bottom:14px; left:14px; right:14px; background:#1e293b; color:white; padding:14px 20px; border-radius:20px; box-shadow:0 10px 30px -5px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:space-between; z-index:50; transform:translateY(160%); transition:transform 0.3s cubic-bezier(0.4,0,0.2,1); }
-    .bottom-dock.visible { transform:translateY(0); }
-
-    .modal-overlay { background-color:rgba(0,0,0,0.72); backdrop-filter:blur(6px); }
+    .bottom-dock{position:fixed;bottom:14px;left:14px;right:14px;background:#1e293b;color:white;padding:14px 20px;border-radius:20px;box-shadow:0 10px 30px -5px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:space-between;z-index:50;transform:translateY(160%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);}
+    .bottom-dock.visible{transform:translateY(0);}
+    .modal-overlay{background-color:rgba(0,0,0,0.72);backdrop-filter:blur(6px);}
 
     /* Item card */
-    .item-card { background:white; border-radius:18px; padding:14px 16px; box-shadow:0 1px 6px rgba(0,0,0,0.06); border:1.5px solid #f1f5f9; transition:border-color 0.2s, background 0.2s; }
-    .dark .item-card { background:#1e293b; border-color:#334155; }
-    .item-card.counted { border-color:#3b82f6; background:#eff6ff; }
-    .dark .item-card.counted { border-color:#3b82f6; background:#1e3a5f; }
+    .item-card{background:white;border-radius:20px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1.5px solid #f1f5f9;transition:border-color 0.2s,background 0.2s;}
+    .dark .item-card{background:#1e293b;border-color:#334155;}
+    .item-card.counted{border-color:#22c55e;background:#f0fdf4;}
+    .dark .item-card.counted{border-color:#16a34a;background:#052e16;}
+
+    /* UNIDADES / BULTOS toggle */
+    .type-toggle{display:flex;background:#f1f5f9;border-radius:16px;padding:4px;gap:4px;}
+    .dark .type-toggle{background:#0f172a;}
+    .type-btn{flex:1;padding:10px 8px;border-radius:12px;font-weight:800;font-size:14px;text-align:center;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:3px;color:#94a3b8;}
+    .dark .type-btn{color:#475569;}
+    .type-btn.sel-u{background:white;color:#1d4ed8;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+    .dark .type-btn.sel-u{background:#1e293b;color:#60a5fa;}
+    .type-btn.sel-b{background:white;color:#7c3aed;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+    .dark .type-btn.sel-b{background:#1e293b;color:#a78bfa;}
+    .type-btn:active{transform:scale(0.96);}
 
     /* Qty controls */
-    .qty-wrap { display:flex; align-items:center; background:#f1f5f9; border-radius:14px; padding:3px; gap:0; }
-    .dark .qty-wrap { background:#0f172a; }
-    .qty-btn { width:52px; height:52px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:1.6rem; font-weight:900; color:#3b82f6; transition:all 0.1s; flex-shrink:0; }
-    .dark .qty-btn { color:#60a5fa; }
-    .qty-btn:active { background:#dbeafe; transform:scale(0.88); }
-    .dark .qty-btn:active { background:#1e3a5f; }
-    .qty-input { flex:1; min-width:0; height:52px; font-size:1.8rem; font-weight:900; text-align:center; background:transparent; outline:none; font-family:monospace; color:#1e293b; -webkit-appearance:none; -moz-appearance:textfield; }
-    .qty-input::-webkit-outer-spin-button, .qty-input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
-    .dark .qty-input { color:#f8fafc; }
+    .qty-wrap{display:flex;align-items:center;background:#f8fafc;border-radius:14px;padding:3px;gap:0;}
+    .dark .qty-wrap{background:#0f172a;}
+    .qty-btn{width:56px;height:56px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:900;color:#3b82f6;transition:all 0.1s;flex-shrink:0;}
+    .dark .qty-btn{color:#60a5fa;}
+    .qty-btn:active{background:#dbeafe;transform:scale(0.88);}
+    .dark .qty-btn:active{background:#1e3a5f;}
+    .qty-input{flex:1;min-width:0;height:56px;font-size:2rem;font-weight:900;text-align:center;background:transparent;outline:none;font-family:monospace;color:#1e293b;-webkit-appearance:none;-moz-appearance:textfield;}
+    .qty-input::-webkit-outer-spin-button,.qty-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+    .dark .qty-input{color:#f8fafc;}
 
-    /* Type chip */
-    .type-chip { padding:5px 11px; border-radius:9px; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; cursor:pointer; border:2px solid transparent; transition:all 0.15s; white-space:nowrap; }
-    .type-chip.active-u { background:#dbeafe; color:#1d4ed8; border-color:#93c5fd; }
-    .type-chip.active-b { background:#f3e8ff; color:#7c3aed; border-color:#c4b5fd; }
-    .type-chip.off { background:#f1f5f9; color:#94a3b8; }
-    .dark .type-chip.off { background:#334155; color:#64748b; }
+    /* Sin stock button */
+    .nostk-btn{width:100%;padding:12px;border-radius:12px;background:#fef2f2;color:#dc2626;font-weight:700;font-size:13px;border:1.5px solid #fecaca;transition:all 0.1s;text-align:center;}
+    .nostk-btn:active{transform:scale(0.97);}
+    .nostk-btn.on{background:#dc2626;color:white;border-color:#dc2626;}
+    .dark .nostk-btn{background:#450a0a;color:#fca5a5;border-color:#7f1d1d;}
+    .dark .nostk-btn.on{background:#dc2626;color:white;border-color:#dc2626;}
 
-    /* No-stock button */
-    .nostk-btn { padding:10px 14px; border-radius:11px; background:#fef2f2; color:#dc2626; font-weight:700; font-size:13px; border:1.5px solid #fecaca; transition:all 0.1s; flex-shrink:0; }
-    .nostk-btn:active { transform:scale(0.9); }
-    .nostk-btn.on { background:#dc2626; color:white; border-color:#dc2626; }
-    .dark .nostk-btn { background:#450a0a; color:#fca5a5; border-color:#7f1d1d; }
-    .dark .nostk-btn.on { background:#dc2626; color:white; border-color:#dc2626; }
+    /* Locked confirmation state */
+    .ctrl-locked{background:#f0fdf4;border-radius:14px;padding:12px 14px;cursor:pointer;touch-action:none;-webkit-user-select:none;user-select:none;}
+    .dark .ctrl-locked{background:#052e16;}
+    .lockbar-wrap{height:4px;background:#bbf7d0;border-radius:2px;overflow:hidden;margin-top:10px;}
+    .dark .lockbar-wrap{background:#064e3b;}
+    .lockbar{height:100%;background:#3b82f6;border-radius:2px;width:0%;transition:width 0.1s linear;}
 
     /* Progress bar */
-    .pbar { height:5px; background:#e2e8f0; border-radius:3px; overflow:hidden; }
-    .dark .pbar { background:#334155; }
-    .pfill { height:100%; background:linear-gradient(90deg,#3b82f6,#22c55e); border-radius:3px; transition:width 0.4s ease; }
+    .pbar{height:5px;background:#e2e8f0;border-radius:3px;overflow:hidden;}
+    .dark .pbar{background:#334155;}
+    .pfill{height:100%;background:linear-gradient(90deg,#3b82f6,#22c55e);border-radius:3px;transition:width 0.4s ease;}
 
     /* Connection pill */
-    .cpill { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:20px; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; transition:all 0.3s; }
-    .cpill.on { background:#dcfce7; color:#15803d; }
-    .cpill.off { background:#fee2e2; color:#b91c1c; }
-    .dark .cpill.on { background:#14532d; color:#86efac; }
-    .dark .cpill.off { background:#450a0a; color:#fca5a5; }
+    .cpill{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;transition:all 0.3s;}
+    .cpill.on{background:#dcfce7;color:#15803d;}
+    .cpill.off{background:#fee2e2;color:#b91c1c;}
+    .dark .cpill.on{background:#14532d;color:#86efac;}
+    .dark .cpill.off{background:#450a0a;color:#fca5a5;}
 
-    /* Checkmark animation */
-    .cmark { width:56px; height:56px; border-radius:50%; display:block; stroke-width:2; stroke:#fff; stroke-miterlimit:10; box-shadow:inset 0 0 0 #4bb71b; animation:cmfill .4s ease-in-out .4s forwards,cmscale .3s ease-in-out .9s both; }
-    .cmark__circle { stroke-dasharray:166; stroke-dashoffset:166; stroke-width:2; stroke-miterlimit:10; stroke:#4bb71b; fill:none; animation:cmstroke .6s cubic-bezier(.65,0,.45,1) forwards; }
-    .cmark__check { transform-origin:50% 50%; stroke-dasharray:48; stroke-dashoffset:48; animation:cmstroke .3s cubic-bezier(.65,0,.45,1) .8s forwards; }
-    @keyframes cmstroke { 100%{stroke-dashoffset:0} }
-    @keyframes cmscale { 0%,100%{transform:none} 50%{transform:scale3d(1.1,1.1,1)} }
-    @keyframes cmfill { 100%{box-shadow:inset 0 0 0 28px #4bb71b} }
+    /* Checkmark */
+    .cmark{width:56px;height:56px;border-radius:50%;display:block;stroke-width:2;stroke:#fff;stroke-miterlimit:10;box-shadow:inset 0 0 0 #4bb71b;animation:cmfill .4s ease-in-out .4s forwards,cmscale .3s ease-in-out .9s both;}
+    .cmark__circle{stroke-dasharray:166;stroke-dashoffset:166;stroke-width:2;stroke-miterlimit:10;stroke:#4bb71b;fill:none;animation:cmstroke .6s cubic-bezier(.65,0,.45,1) forwards;}
+    .cmark__check{transform-origin:50% 50%;stroke-dasharray:48;stroke-dashoffset:48;animation:cmstroke .3s cubic-bezier(.65,0,.45,1) .8s forwards;}
+    @keyframes cmstroke{100%{stroke-dashoffset:0}}
+    @keyframes cmscale{0%,100%{transform:none}50%{transform:scale3d(1.1,1.1,1)}}
+    @keyframes cmfill{100%{box-shadow:inset 0 0 0 28px #4bb71b}}
 
-    .spinner { width:38px; height:38px; border:3px solid rgba(59,130,246,.12); border-left-color:#3b82f6; border-radius:50%; animation:spin 1s linear infinite; }
-    @keyframes spin { 100%{transform:rotate(360deg)} }
-
-    /* Slide-up sheet animation for summary */
-    @keyframes slideUpSheet { from{transform:translateY(100%)} to{transform:translateY(0)} }
-    .slide-up-sheet { animation:slideUpSheet 0.32s cubic-bezier(0.2,0.8,0.2,1) both; }
+    .spinner{width:38px;height:38px;border:3px solid rgba(59,130,246,.12);border-left-color:#3b82f6;border-radius:50%;animation:spin 1s linear infinite;}
+    @keyframes spin{100%{transform:rotate(360deg)}}
+    @keyframes slideUpSheet{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    .slide-up-sheet{animation:slideUpSheet 0.32s cubic-bezier(0.2,0.8,0.2,1) both;}
   </style>
 </head>
 <body class="bg-gray-50 text-gray-800 dark:bg-dark-bg dark:text-dark-text">
 
-  <!-- ── HEADER ── -->
+  <!-- HEADER -->
   <header class="glass border-b border-gray-100 dark:border-dark-border fixed top-0 w-full z-40 px-4 h-16 flex items-center gap-3">
     <button onclick="goBack()" id="back-btn" class="hidden w-10 h-10 rounded-full bg-gray-100 dark:bg-dark-border flex items-center justify-center text-blue-600 dark:text-blue-400 active:scale-90 transition-transform shrink-0">
       <i class="fa-solid fa-arrow-left text-base"></i>
     </button>
     <div class="leading-tight flex-1 overflow-hidden">
-      <h1 class="font-black text-lg tracking-tight truncate" id="header-title">Depósito</h1>
+      <h1 class="font-black text-lg tracking-tight truncate" id="header-title">Stock</h1>
       <p class="text-[11px] text-gray-400 dark:text-gray-500 font-medium truncate" id="header-subtitle">Panel Central</p>
     </div>
     <span id="cpill" class="cpill on"><i class="fa-solid fa-wifi text-[9px]"></i> Online</span>
@@ -123,13 +131,11 @@
     </button>
   </header>
 
-  <!-- ── SCROLL AREA ── -->
+  <!-- SCROLL AREA -->
   <div id="main-scroll-area">
 
     <!-- HOME -->
     <div id="view-home" class="flex flex-col gap-4 px-4 animate-slide-up">
-
-      <!-- Pending alert -->
       <div id="pending-alert" class="hidden bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-2xl p-4 flex items-center gap-3">
         <div class="w-10 h-10 bg-amber-100 dark:bg-amber-900/40 rounded-full flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
           <i class="fa-solid fa-cloud-arrow-up"></i>
@@ -138,9 +144,7 @@
           <p class="font-bold text-amber-800 dark:text-amber-300 text-sm" id="pending-text">Registros pendientes</p>
           <p class="text-xs text-amber-600 dark:text-amber-500 mt-0.5">Se envían automáticamente al reconectar</p>
         </div>
-        <button onclick="drainQueue()" class="bg-amber-500 text-white px-3 py-2 rounded-xl text-xs font-bold active:scale-95 shrink-0">
-          Reintentar
-        </button>
+        <button onclick="drainQueue()" class="bg-amber-500 text-white px-3 py-2 rounded-xl text-xs font-bold active:scale-95 shrink-0">Reintentar</button>
       </div>
 
       <button onclick="loadProviders()" class="big-btn bg-white dark:bg-dark-card shadow-xl border-l-8 border-green-500 group">
@@ -180,8 +184,6 @@
 
     <!-- EDITOR -->
     <div id="view-editor" class="hidden px-4 animate-slide-up">
-
-      <!-- Sticky: search + progress -->
       <div class="sticky top-0 z-20 bg-gray-50 dark:bg-dark-bg pt-2 pb-3 space-y-2">
         <div class="relative">
           <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
@@ -189,14 +191,11 @@
             class="w-full pl-10 pr-4 py-2.5 rounded-xl border-none shadow-sm bg-white dark:bg-dark-card font-semibold text-sm outline-none focus:ring-2 focus:ring-blue-500/30 transition-all text-gray-800 dark:text-white">
         </div>
         <div class="flex items-center gap-2">
-          <div class="flex-1 pbar">
-            <div class="pfill" id="pfill" style="width:0%"></div>
-          </div>
+          <div class="flex-1 pbar"><div class="pfill" id="pfill" style="width:0%"></div></div>
           <span class="text-[11px] font-bold text-gray-400 whitespace-nowrap" id="ptext">0 / 0</span>
         </div>
       </div>
 
-      <!-- Add item -->
       <div onclick="openAddItemModal()" class="mb-4 p-4 rounded-2xl flex items-center justify-between cursor-pointer active:scale-95 transition-transform bg-white dark:bg-dark-card shadow-sm border border-dashed border-blue-200 dark:border-blue-800">
         <div>
           <p class="font-bold text-blue-600 dark:text-blue-400 text-sm">¿Falta un producto?</p>
@@ -216,7 +215,7 @@
 
   </div><!-- /scroll -->
 
-  <!-- ── DOCK ── -->
+  <!-- DOCK -->
   <div id="bottom-dock" class="bottom-dock" onclick="promptUserForSave()">
     <div class="flex items-center gap-3">
       <div class="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white animate-pulse shrink-0">
@@ -230,7 +229,7 @@
     <i class="fa-solid fa-chevron-right text-gray-400 text-lg mr-1"></i>
   </div>
 
-  <!-- ── MODAL: GUARDAR (estados: saving / success / offline) ── -->
+  <!-- MODAL: GUARDAR -->
   <div id="save-modal" class="fixed inset-0 z-[100] flex items-center justify-center modal-overlay hidden px-6">
     <div class="bg-white dark:bg-dark-card p-8 rounded-[2.5rem] shadow-2xl w-full max-w-sm text-center animate-scale-in">
       <div id="sv-saving">
@@ -257,7 +256,7 @@
     </div>
   </div>
 
-  <!-- ── MODAL: RESUMEN + CONFIRMAR (bottom sheet) ── -->
+  <!-- MODAL: RESUMEN + CONFIRMAR -->
   <div id="summary-modal" class="fixed inset-0 z-[90] flex flex-col justify-end modal-overlay hidden">
     <div class="bg-white dark:bg-dark-card w-full rounded-t-[2rem] shadow-2xl max-h-[88vh] flex flex-col slide-up-sheet">
       <div class="p-5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between shrink-0">
@@ -272,20 +271,16 @@
       <div id="sum-list" class="overflow-y-auto flex-1 p-4 space-y-2"></div>
       <div class="p-4 space-y-3 border-t border-gray-100 dark:border-gray-700 shrink-0">
         <input type="text" id="username-input" placeholder="Tu nombre..." autocomplete="name"
-          class="w-full p-4 bg-gray-50 dark:bg-dark-bg border-2 border-gray-100 dark:border-gray-700 rounded-2xl focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 text-center font-bold text-lg text-gray-800 dark:text-white">
+          class="w-full p-4 bg-gray-50 dark:bg-dark-bg border-2 border-gray-100 dark:border-gray-700 rounded-2xl focus:outline-none focus:border-blue-500 text-center font-bold text-lg text-gray-800 dark:text-white">
         <div class="flex gap-3">
-          <button onclick="closeSummaryModal()" class="flex-1 py-4 rounded-2xl font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-dark-border active:scale-95 transition-transform">
-            Seguir editando
-          </button>
-          <button onclick="confirmSave()" class="flex-1 py-4 rounded-2xl font-bold text-white bg-blue-600 shadow-lg shadow-blue-500/20 active:scale-95 transition-transform text-base">
-            Enviar 🚀
-          </button>
+          <button onclick="closeSummaryModal()" class="flex-1 py-4 rounded-2xl font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-dark-border active:scale-95 transition-transform">Seguir editando</button>
+          <button onclick="confirmSave()" class="flex-1 py-4 rounded-2xl font-bold text-white bg-blue-600 shadow-lg shadow-blue-500/20 active:scale-95 transition-transform text-base">Enviar 🚀</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ── MODAL: BORRADOR ── -->
+  <!-- MODAL: BORRADOR -->
   <div id="draft-modal" class="fixed inset-0 z-[95] flex items-center justify-center modal-overlay hidden px-4">
     <div class="bg-white dark:bg-dark-card p-6 rounded-[2rem] shadow-2xl w-full max-w-sm animate-scale-in">
       <div class="text-center mb-5">
@@ -296,17 +291,13 @@
         <p class="text-gray-500 dark:text-gray-400 text-sm mt-2 leading-relaxed" id="draft-msg">Tenías cambios sin enviar.</p>
       </div>
       <div class="flex gap-3">
-        <button onclick="discardDraft()" class="flex-1 py-3.5 rounded-2xl font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-dark-border active:scale-95 transition-transform text-sm">
-          Empezar de cero
-        </button>
-        <button onclick="recoverDraft()" class="flex-1 py-3.5 rounded-2xl font-bold text-white bg-blue-600 shadow-lg active:scale-95 transition-transform text-sm">
-          Continuar
-        </button>
+        <button onclick="discardDraft()" class="flex-1 py-3.5 rounded-2xl font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-dark-border active:scale-95 transition-transform text-sm">Empezar de cero</button>
+        <button onclick="recoverDraft()" class="flex-1 py-3.5 rounded-2xl font-bold text-white bg-blue-600 shadow-lg active:scale-95 transition-transform text-sm">Continuar</button>
       </div>
     </div>
   </div>
 
-  <!-- ── MODAL: INSTALAR ── -->
+  <!-- MODAL: INSTALAR -->
   <div id="install-modal" class="fixed inset-0 z-[100] flex items-center justify-center modal-overlay hidden px-6">
     <div class="bg-white dark:bg-dark-card p-8 rounded-[2.5rem] shadow-2xl w-full max-w-sm text-center">
       <div class="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-400 text-white rounded-3xl mx-auto mb-5 flex items-center justify-center text-4xl shadow-lg shadow-blue-500/30">
@@ -319,7 +310,7 @@
     </div>
   </div>
 
-  <!-- ── MODAL: NUEVO ARTÍCULO ── -->
+  <!-- MODAL: NUEVO ARTÍCULO -->
   <div id="add-item-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-overlay hidden px-4">
     <div class="bg-white dark:bg-dark-card p-6 rounded-[2rem] shadow-2xl w-full max-w-sm animate-scale-in">
       <div class="text-center mb-5">
@@ -327,7 +318,6 @@
           <i class="fa-solid fa-plus"></i>
         </div>
         <h3 class="text-xl font-black text-gray-800 dark:text-white">Nuevo Artículo</h3>
-        <p class="text-gray-400 text-xs mt-1">Se agrega al final de la lista</p>
       </div>
       <input type="text" id="new-item-name" placeholder="Ej: Jabón Líquido 5L"
         class="w-full p-4 bg-gray-50 dark:bg-dark-bg border-2 border-gray-100 dark:border-gray-700 rounded-2xl mb-4 focus:outline-none focus:border-purple-500 font-bold text-base text-center text-gray-800 dark:text-white">
@@ -338,7 +328,7 @@
     </div>
   </div>
 
-  <!-- ── MODAL: IA ── -->
+  <!-- MODAL: IA -->
   <div id="ai-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-overlay hidden px-4">
     <div class="bg-white dark:bg-dark-card p-6 rounded-[2rem] shadow-2xl w-full max-w-md border-2 border-indigo-100 dark:border-indigo-900 relative overflow-hidden animate-scale-in">
       <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
@@ -352,55 +342,51 @@
     </div>
   </div>
 
-  <!-- ── MODAL: PDF ── -->
+  <!-- MODAL: PDF -->
   <div id="pdf-modal" class="fixed inset-0 z-50 bg-black/95 hidden flex-col">
     <div class="flex justify-between items-center p-4 bg-gray-900 text-white h-14 shrink-0">
-      <div class="flex items-center gap-3">
-        <i class="fa-solid fa-file-pdf text-orange-500"></i>
-        <span class="font-bold">Catálogo</span>
-      </div>
-      <button onclick="closeCatalogModal()" class="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center active:bg-gray-700">
-        <i class="fa-solid fa-xmark text-lg"></i>
-      </button>
+      <div class="flex items-center gap-3"><i class="fa-solid fa-file-pdf text-orange-500"></i><span class="font-bold">Catálogo</span></div>
+      <button onclick="closeCatalogModal()" class="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center active:bg-gray-700"><i class="fa-solid fa-xmark text-lg"></i></button>
     </div>
-    <div class="flex-1 bg-white w-full overflow-hidden">
-      <iframe id="pdf-frame" class="w-full h-full border-0" src=""></iframe>
-    </div>
+    <div class="flex-1 bg-white w-full overflow-hidden"><iframe id="pdf-frame" class="w-full h-full border-0" src=""></iframe></div>
   </div>
 
-  <!-- ── TOAST ── -->
+  <!-- TOAST -->
   <div id="toast" class="fixed top-[72px] left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full shadow-2xl text-sm font-bold opacity-0 pointer-events-none transition-all duration-300 z-[60] flex items-center gap-2 whitespace-nowrap scale-90">
     <span id="toast-msg">Mensaje</span>
   </div>
 
   <script>
-    // ── CONSTANTS ──────────────────────────────────────────────
+    // ── CONSTANTS ────────────────────────────────────────────────
     const WORKER_URL = 'https://broken-butterfly-3928.santamariapablodaniel.workers.dev/';
     const SB_URL     = 'https://gjeyvbidomxzofcdycya.supabase.co';
     const SB_ANON    = 'sb_publishable_CjdA8GwtCljm_PzT8pqk3g_QIhTmUHT';
     const DRAFT_KEY  = 'stock_draft_v3';
     const QUEUE_KEY  = 'stock_queue_v2';
 
-    // ── STATE ──────────────────────────────────────────────────
-    let currentView      = 'home';
-    let currentFileId    = null;
-    let currentProvNombre= null;
-    let currentCatalogUrl= null;
-    let changes          = {};
-    let totalItems       = 0;
-    let allEditorItems   = [];
-    let cachedProviders  = [];
-    let sbProveedores    = {};
-    let aiCheckDone      = false;
+    // ── STATE ────────────────────────────────────────────────────
+    let currentView       = 'home';
+    let currentFileId     = null;
+    let currentProvNombre = null;
+    let currentCatalogUrl = null;
+    let changes           = {};
+    let totalItems        = 0;
+    let cachedProviders   = [];
+    let sbProveedores     = {};
+    let aiCheckDone       = false;
     let deferredPrompt;
 
-    // ── THEME ──────────────────────────────────────────────────
+    // Lock timers per item key
+    const lockTimers = {};
+    let _unlockKey  = null;
+    let _unlockIval = null;
+
+    // ── THEME ────────────────────────────────────────────────────
     (function initTheme() {
       const t = localStorage.getItem('theme') || 'light';
       document.documentElement.className = t;
       updateThemeIcon(t === 'dark');
     })();
-
     function toggleTheme() {
       const dark = document.documentElement.classList.toggle('dark');
       document.documentElement.classList.toggle('light', !dark);
@@ -412,48 +398,30 @@
       if (el) el.className = dark ? 'fa-solid fa-sun text-sm' : 'fa-solid fa-moon text-sm';
     }
 
-    // ── OFFLINE QUEUE ──────────────────────────────────────────
+    // ── OFFLINE QUEUE ────────────────────────────────────────────
     function loadQueue() { try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); } catch { return []; } }
     function saveQueue(q) { localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); }
-
-    function addToQueue(entry) {
-      const q = loadQueue();
-      q.push({ ...entry, ts: Date.now() });
-      saveQueue(q);
-      updatePendingAlert();
-    }
+    function addToQueue(entry) { const q = loadQueue(); q.push({...entry, ts: Date.now()}); saveQueue(q); updatePendingAlert(); }
 
     function updatePendingAlert() {
       const q = loadQueue();
-      const el = document.getElementById('pending-alert');
-      const txt = document.getElementById('pending-text');
-      if (q.length > 0) {
-        el.classList.remove('hidden');
-        txt.textContent = `${q.length} registro${q.length > 1 ? 's' : ''} pendiente${q.length > 1 ? 's' : ''} de envío`;
-      } else {
-        el.classList.add('hidden');
-      }
+      document.getElementById('pending-alert').classList.toggle('hidden', q.length === 0);
+      if (q.length) document.getElementById('pending-text').textContent = `${q.length} registro${q.length > 1 ? 's' : ''} pendiente${q.length > 1 ? 's' : ''} de envío`;
     }
 
     async function drainQueue() {
       const q = loadQueue();
       if (!q.length) return;
-      const remaining = [];
-      let sent = 0;
-      for (const entry of q) {
+      const remaining = []; let sent = 0;
+      for (const e of q) {
         try {
-          const r = await fetchWithRetry(WORKER_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'updateStock', fileId: entry.fileId, items: entry.items, user: entry.user })
-          }, 2);
+          const r = await fetchWithRetry(WORKER_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'updateStock',fileId:e.fileId,items:e.items,user:e.user}) }, 2);
           const d = await r.json();
-          if (d.error) { remaining.push(entry); }
-          else { sent++; syncToSupabase(entry.items, entry.user, entry.provName).catch(() => {}); }
-        } catch { remaining.push(entry); }
+          if (d.error) remaining.push(e);
+          else { sent++; syncToSupabase(e.items, e.user, e.provName).catch(() => {}); }
+        } catch { remaining.push(e); }
       }
-      saveQueue(remaining);
-      updatePendingAlert();
+      saveQueue(remaining); updatePendingAlert();
       if (sent > 0) showToast(`${sent} registro${sent > 1 ? 's' : ''} enviado${sent > 1 ? 's' : ''} ✓`);
     }
 
@@ -464,17 +432,13 @@
       const p = document.getElementById('cpill');
       if (!p) return;
       p.className = 'cpill ' + (online ? 'on' : 'off');
-      p.innerHTML  = online
-        ? '<i class="fa-solid fa-wifi text-[9px]"></i> Online'
-        : '<i class="fa-solid fa-wifi-slash text-[9px]"></i> Sin red';
+      p.innerHTML = online ? '<i class="fa-solid fa-wifi text-[9px]"></i> Online' : '<i class="fa-solid fa-wifi-slash text-[9px]"></i> Sin red';
     }
 
-    // ── DRAFT ──────────────────────────────────────────────────
+    // ── DRAFT ────────────────────────────────────────────────────
     function saveDraft() {
       if (!currentFileId || !Object.keys(changes).length) return;
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({
-        fileId: currentFileId, provName: currentProvNombre, changes, ts: Date.now()
-      }));
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({fileId:currentFileId, provName:currentProvNombre, changes, ts:Date.now()}));
     }
     function clearDraft() { localStorage.removeItem(DRAFT_KEY); }
     function loadDraftData() { try { return JSON.parse(localStorage.getItem(DRAFT_KEY)); } catch { return null; } }
@@ -485,8 +449,7 @@
       const mins = Math.round((Date.now() - d.ts) / 60000);
       const when = mins < 2 ? 'hace un momento' : mins < 60 ? `hace ${mins} min` : `hace ${Math.round(mins / 60)} hs`;
       const n = Object.keys(d.changes).length;
-      document.getElementById('draft-msg').textContent =
-        `Tenías ${n} cambio${n > 1 ? 's' : ''} sin enviar (${when}).`;
+      document.getElementById('draft-msg').textContent = `Tenías ${n} cambio${n > 1 ? 's' : ''} sin enviar (${when}).`;
       document.getElementById('draft-modal').classList.remove('hidden');
     }
 
@@ -502,15 +465,14 @@
         if (raw === 'x') {
           inp.value = '';
           document.getElementById(`nostk_${k}`)?.classList.add('on');
+          lockItem(k);
         } else {
           const isBulto = raw.toUpperCase().endsWith('B') && raw.length > 1;
-          const num = parseInt(raw.replace(/[^0-9]/g, '')) || 0;
+          const num = parseInt(raw.replace(/[^0-9]/g,'')) || 0;
           inp.value = num || '';
-          const t = isBulto ? 'b' : 'u';
-          inp.dataset.type = t;
-          const chip = document.getElementById(`chip_${k}`);
-          if (chip) { chip.className = `type-chip ${t === 'u' ? 'active-u' : 'active-b'}`; chip.textContent = t === 'u' ? 'UNID' : 'BULTO'; chip.setAttribute('onclick', `toggleType('${k}','${t === 'u' ? 'b' : 'u'}')`); }
+          setTypeVisual(k, isBulto ? 'b' : 'u');
           document.getElementById(`nostk_${k}`)?.classList.remove('on');
+          lockItem(k);
         }
         markCard(k, true);
       });
@@ -519,13 +481,12 @@
     }
 
     function discardDraft() {
-      clearDraft();
-      changes = {};
+      clearDraft(); changes = {};
       document.getElementById('draft-modal').classList.add('hidden');
       updateDockAndProgress();
     }
 
-    // ── NETWORK ────────────────────────────────────────────────
+    // ── NETWORK ──────────────────────────────────────────────────
     async function fetchWithRetry(url, options, retries = 3) {
       let lastErr;
       for (let i = 0; i < retries; i++) {
@@ -537,7 +498,7 @@
         try {
           const ctrl = new AbortController();
           const tid  = setTimeout(() => ctrl.abort(), 13000);
-          const res  = await fetch(url, { ...options, signal: ctrl.signal });
+          const res  = await fetch(url, {...options, signal: ctrl.signal});
           clearTimeout(tid);
           return res;
         } catch (e) { lastErr = e; }
@@ -545,14 +506,26 @@
       throw lastErr;
     }
 
-    // ── INIT ───────────────────────────────────────────────────
+    // ── INIT ─────────────────────────────────────────────────────
     window.addEventListener('load', () => {
       updateCpill(navigator.onLine);
       updatePendingAlert();
       if (navigator.onLine) drainQueue();
       silentLoadProviders();
       loadSbProveedores();
-      if ('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js').catch(() => {});
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js').then(reg => {
+          // Force reload when new SW activates — ensures installed PWA always gets latest version
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+                window.location.reload();
+              }
+            });
+          });
+        }).catch(() => {});
+      }
     });
 
     window.addEventListener('beforeinstallprompt', e => {
@@ -571,19 +544,17 @@
 
     async function loadSbProveedores() {
       try {
-        const r = await fetch(`${SB_URL}/rest/v1/proveedores?activo=eq.true&select=id,nombre`,
-          { headers: { apikey: SB_ANON, Authorization: `Bearer ${SB_ANON}` } });
+        const r = await fetch(`${SB_URL}/rest/v1/proveedores?activo=eq.true&select=id,nombre`, {headers:{apikey:SB_ANON,Authorization:`Bearer ${SB_ANON}`}});
         const data = await r.json();
         if (Array.isArray(data)) data.forEach(p => { sbProveedores[p.nombre.toLowerCase().trim()] = p.id; });
       } catch {}
     }
 
-    // ── NAVIGATION ─────────────────────────────────────────────
+    // ── NAVIGATION ───────────────────────────────────────────────
     function setView(view, title, subtitle) {
-      ['view-home', 'view-list', 'view-editor'].forEach(id => document.getElementById(id).classList.add('hidden'));
+      ['view-home','view-list','view-editor'].forEach(id => document.getElementById(id).classList.add('hidden'));
       const el = document.getElementById(`view-${view}`);
       el.classList.remove('hidden');
-      // Re-trigger animation
       el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
       document.getElementById('header-title').textContent = title;
       document.getElementById('header-subtitle').textContent = subtitle || '';
@@ -598,10 +569,10 @@
     function goBack() {
       if (currentView === 'editor' && Object.keys(changes).length > 0) saveDraft();
       if (currentView === 'editor') setView('list', 'Proveedores', 'Seleccioná un proveedor');
-      else if (currentView === 'list') { setView('home', 'Depósito', 'Panel Central'); runRandomTaskAI(); }
+      else if (currentView === 'list') { setView('home', 'Stock', 'Panel Central'); runRandomTaskAI(); }
     }
 
-    // ── DATA LOADING ───────────────────────────────────────────
+    // ── DATA LOADING ─────────────────────────────────────────────
     async function silentLoadProviders() {
       try {
         const res = await fetch(`${WORKER_URL}?action=getProviders`);
@@ -612,33 +583,25 @@
 
     async function loadProviders() {
       setView('list', 'Proveedores', 'Seleccioná un proveedor');
-      const l = document.getElementById('loader-list');
-      const c = document.getElementById('list-container');
+      const l = document.getElementById('loader-list'), c = document.getElementById('list-container');
       c.innerHTML = ''; l.classList.remove('hidden');
       if (cachedProviders.length) { renderList(cachedProviders, 'provider'); l.classList.add('hidden'); return; }
-      try {
-        const res = await fetch(`${WORKER_URL}?action=getProviders`);
-        const d = await res.json();
-        cachedProviders = d;
-        renderList(d, 'provider');
-      } catch (e) { showToast(e.message, true); }
+      try { const res = await fetch(`${WORKER_URL}?action=getProviders`); const d = await res.json(); cachedProviders = d; renderList(d, 'provider'); }
+      catch (e) { showToast(e.message, true); }
       finally { l.classList.add('hidden'); }
     }
 
     async function loadCatalogs() {
       setView('list', 'Catálogos', 'Biblioteca PDF');
-      const l = document.getElementById('loader-list');
-      const c = document.getElementById('list-container');
+      const l = document.getElementById('loader-list'), c = document.getElementById('list-container');
       c.innerHTML = ''; l.classList.remove('hidden');
       try { const r = await fetch(`${WORKER_URL}?action=getCatalogs`); renderList(await r.json(), 'catalog'); }
-      catch {}
-      finally { l.classList.add('hidden'); }
+      catch {} finally { l.classList.add('hidden'); }
     }
 
-    function filterProviders(query) {
+    function filterProviders(q) {
       if (!cachedProviders.length) return;
-      const term = query.toLowerCase();
-      renderList(cachedProviders.filter(p => p.name.toLowerCase().includes(term)), 'provider');
+      renderList(cachedProviders.filter(p => p.name.toLowerCase().includes(q.toLowerCase())), 'provider');
     }
 
     function renderList(items, type) {
@@ -646,28 +609,16 @@
       c.innerHTML = '';
       if (!items.length) { c.innerHTML = '<div class="text-center opacity-40 py-12 font-medium">Sin resultados</div>'; return; }
       if (type === 'provider') items = [...items].sort((a, b) => new Date(a.lastUpdated || 0) - new Date(b.lastUpdated || 0));
-      items.forEach((item, x) => {
+      items.forEach(item => {
         const d = document.createElement('div');
         d.className = 'bg-white dark:bg-dark-card p-4 rounded-2xl shadow-sm flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform border border-gray-50 dark:border-dark-border';
         if (type === 'provider') {
           const days = getDaysSince(item.lastUpdated);
           let col = 'green', lbl = 'Al día';
-          if (days > 30) { col = 'red'; lbl = 'Atrasado'; }
-          else if (days > 7) { col = 'yellow'; lbl = 'Revisar'; }
+          if (days > 30) { col = 'red'; lbl = 'Atrasado'; } else if (days > 7) { col = 'yellow'; lbl = 'Revisar'; }
           d.classList.add(`border-l-4`, `border-${col}-500`);
           d.onclick = () => loadSheet(item.id, item.name);
-          d.innerHTML = `
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 rounded-xl bg-${col}-100 dark:bg-${col}-900/30 text-${col}-700 dark:text-${col}-300 flex items-center justify-center font-black text-lg shrink-0">${item.name.charAt(0)}</div>
-              <div>
-                <h3 class="font-bold text-gray-800 dark:text-gray-100 text-base leading-tight">${item.name}</h3>
-                <div class="flex items-center gap-2 mt-1">
-                  <span class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-${col}-100 dark:bg-${col}-900/30 text-${col}-700 dark:text-${col}-300 font-bold">${lbl}</span>
-                  <span class="text-xs text-gray-400 font-medium"><i class="fa-regular fa-clock mr-1"></i>Hace ${days} días</span>
-                </div>
-              </div>
-            </div>
-            <i class="fa-solid fa-chevron-right text-gray-300 dark:text-gray-600 ml-2"></i>`;
+          d.innerHTML = `<div class="flex items-center gap-3"><div class="w-12 h-12 rounded-xl bg-${col}-100 dark:bg-${col}-900/30 text-${col}-700 dark:text-${col}-300 flex items-center justify-center font-black text-lg shrink-0">${item.name.charAt(0)}</div><div><h3 class="font-bold text-gray-800 dark:text-gray-100 text-base leading-tight">${item.name}</h3><div class="flex items-center gap-2 mt-1"><span class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-${col}-100 dark:bg-${col}-900/30 text-${col}-700 dark:text-${col}-300 font-bold">${lbl}</span><span class="text-xs text-gray-400 font-medium"><i class="fa-regular fa-clock mr-1"></i>Hace ${days} días</span></div></div></div><i class="fa-solid fa-chevron-right text-gray-300 dark:text-gray-600 ml-2"></i>`;
         } else {
           d.onclick = () => openPdfViewer(item.url);
           d.innerHTML = `<div class="flex items-center gap-3"><div class="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 text-orange-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-file-pdf text-xl"></i></div><h3 class="font-bold text-gray-800 dark:text-gray-100">${item.name}</h3></div><i class="fa-solid fa-chevron-right text-gray-300 dark:text-gray-600 ml-2"></i>`;
@@ -679,11 +630,9 @@
     async function loadSheet(id, name) {
       currentFileId = id; currentProvNombre = name; currentCatalogUrl = null;
       setView('editor', name, 'Cargando...');
-      const c = document.getElementById('editor-container');
-      const l = document.getElementById('loader-editor');
-      c.innerHTML = ''; l.classList.remove('hidden');
-      // Clear editor search
       document.getElementById('editor-search').value = '';
+      const c = document.getElementById('editor-container'), l = document.getElementById('loader-editor');
+      c.innerHTML = ''; l.classList.remove('hidden');
       try {
         const res = await fetchWithRetry(`${WORKER_URL}?action=getSheetData&fileId=${id}`, {});
         const d   = await res.json();
@@ -691,19 +640,16 @@
         const items = d.items || [];
         document.getElementById('header-subtitle').textContent = `${items.length} productos`;
         renderEditor(items);
-        // After render, check for draft
         checkDraftForSheet(id);
       } catch (e) {
         c.innerHTML = `<div class="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-6 text-center rounded-2xl font-bold text-sm">${e.message || 'Error al cargar'}</div>`;
       } finally { l.classList.add('hidden'); }
     }
 
-    // ── EDITOR ─────────────────────────────────────────────────
+    // ── EDITOR ───────────────────────────────────────────────────
     function renderEditor(items) {
       const c = document.getElementById('editor-container');
-      changes = {};
-      allEditorItems = items;
-      totalItems = items.length;
+      changes = {}; totalItems = items.length;
       c.innerHTML = '';
       if (!items.length) { c.innerHTML = '<div class="text-center p-10 opacity-50">Hoja vacía</div>'; return; }
       items.forEach(item => c.appendChild(buildItemCard(item)));
@@ -711,57 +657,109 @@
     }
 
     function buildItemCard(item) {
-      const k   = `${item.row}_${item.col}`;
-      const raw = item.stock ? item.stock.toString() : '0';
-      const num = parseInt(raw.replace(/[^0-9]/g, '')) || 0;
-      const isBulto = raw.toLowerCase().includes('b');
-      const typ = isBulto ? 'b' : 'u';
-      const noStock = (raw === 'x' || raw === '0' || num === 0) && raw !== 'x' ? false : raw === 'x';
+      const k      = `${item.row}_${item.col}`;
+      const raw    = item.stock ? item.stock.toString() : '0';
+      const num    = parseInt(raw.replace(/[^0-9]/g,'')) || 0;
+      const isBulto= raw.toLowerCase().includes('b');
+      const typ    = isBulto ? 'b' : 'u';
+      const isX    = raw === 'x';
 
-      let prevLabel = 'Sin stock';
-      let prevClass = 'bg-gray-100 dark:bg-gray-700/60 text-gray-500 dark:text-gray-400';
-      if (raw !== 'x' && raw !== '0' && num > 0) {
-        if (isBulto) { prevLabel = `${num} bulto${num > 1 ? 's' : ''}`; prevClass = 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'; }
+      let prevLabel = 'Sin stock', prevClass = 'bg-gray-100 dark:bg-gray-700/60 text-gray-500 dark:text-gray-400';
+      if (!isX && num > 0) {
+        if (isBulto) { prevLabel = `${num} bulto${num>1?'s':''}`; prevClass = 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'; }
         else { prevLabel = `${num} unid.`; prevClass = 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'; }
       }
 
-      const safeNameAttr = item.name.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-      const safeNameJS   = item.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      const safeAttr = item.name.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+      const safeJS   = item.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
 
       const div = document.createElement('div');
       div.className = 'item-card';
       div.id = `card_${k}`;
       div.setAttribute('data-name', item.name.toLowerCase());
+
       div.innerHTML = `
         <div class="flex items-start justify-between gap-2 mb-3">
           <h3 class="font-bold text-gray-800 dark:text-gray-100 text-base leading-snug flex-1">${item.name}</h3>
           <span class="text-[11px] px-2.5 py-1 rounded-full font-bold shrink-0 ${prevClass}">${prevLabel}</span>
         </div>
-        <div class="flex items-center gap-2">
-          <button id="chip_${k}" onclick="toggleType('${k}','${typ === 'u' ? 'b' : 'u'}')"
-            class="type-chip ${typ === 'u' ? 'active-u' : 'active-b'}">${typ === 'u' ? 'UNID' : 'BULTO'}</button>
-          <div class="qty-wrap flex-1">
-            <button class="qty-btn" onclick="stepQty('${k}',-1)">−</button>
-            <input type="number" id="input_${k}"
-              value="${num === 0 ? '' : num}"
-              placeholder="0"
-              min="0"
-              inputmode="numeric"
-              pattern="[0-9]*"
-              class="qty-input"
-              data-type="${typ}"
-              data-name="${safeNameAttr}"
-              data-prev="${raw}"
-              onfocus="this.select()"
-              oninput="trackChange('${k}',${item.row},${item.col},'${safeNameJS}')">
-            <button class="qty-btn" onclick="stepQty('${k}',1)">+</button>
+
+        <!-- Controls (edit mode) -->
+        <div id="ctrl_${k}">
+          <!-- UNIDADES / BULTOS toggle -->
+          <div class="type-toggle mb-3" id="toggle_${k}">
+            <button id="btn-u_${k}" onclick="setType('${k}','u')"
+              class="type-btn ${typ==='u'?'sel-u':''}">
+              <span>UNIDADES</span>
+              <i class="fa-solid fa-cubes-stacked text-xs opacity-60"></i>
+            </button>
+            <button id="btn-b_${k}" onclick="setType('${k}','b')"
+              class="type-btn ${typ==='b'?'sel-b':''}">
+              <span>BULTOS</span>
+              <i class="fa-solid fa-box-open text-xs opacity-60"></i>
+            </button>
           </div>
-          <button id="nostk_${k}"
-            onclick="setNoStock('${k}',${item.row},${item.col},'${safeNameJS}')"
-            class="nostk-btn ${noStock ? 'on' : ''}"
-            title="Sin stock">✕ Sin stock</button>
+          <!-- Quantity row -->
+          <div class="flex gap-2 items-stretch">
+            <div class="qty-wrap flex-1">
+              <button class="qty-btn" onclick="stepQty('${k}',-1)">−</button>
+              <input type="number" id="input_${k}"
+                value="${num===0?'':num}"
+                placeholder="0"
+                min="0"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                class="qty-input"
+                data-type="${typ}"
+                data-name="${safeAttr}"
+                data-prev="${raw}"
+                onfocus="this.select()"
+                oninput="trackChange('${k}',${item.row},${item.col},'${safeJS}')">
+              <button class="qty-btn" onclick="stepQty('${k}',1)">+</button>
+            </div>
+            <button id="nostk_${k}"
+              onclick="setNoStock('${k}',${item.row},${item.col},'${safeJS}')"
+              class="nostk-btn w-auto px-4 ${isX?'on':''}"
+              style="flex:0 0 auto">✕ Sin<br>stock</button>
+          </div>
+        </div>
+
+        <!-- Locked confirmation display -->
+        <div id="lock_${k}" class="ctrl-locked hidden"
+          ontouchstart="startUnlock('${k}',event)" ontouchend="cancelUnlock()"
+          ontouchcancel="cancelUnlock()" onmousedown="startUnlock('${k}',event)" onmouseup="cancelUnlock()">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-sm shrink-0">✓</div>
+              <div>
+                <span class="font-black text-green-700 dark:text-green-400 text-lg" id="lockval_${k}"></span>
+                <span class="text-xs text-green-600 dark:text-green-500 font-medium ml-1.5" id="locktype_${k}"></span>
+              </div>
+            </div>
+            <span class="text-xs text-gray-400 dark:text-gray-500 text-right leading-tight">Mantené<br>2s para editar</span>
+          </div>
+          <div class="lockbar-wrap"><div class="lockbar" id="lockbar_${k}"></div></div>
         </div>`;
+
       return div;
+    }
+
+    function setTypeVisual(k, t) {
+      const inp  = document.getElementById(`input_${k}`);
+      const btnU = document.getElementById(`btn-u_${k}`);
+      const btnB = document.getElementById(`btn-b_${k}`);
+      if (inp) inp.dataset.type = t;
+      if (btnU) btnU.className = `type-btn ${t==='u'?'sel-u':''}`;
+      if (btnB) btnB.className = `type-btn ${t==='b'?'sel-b':''}`;
+    }
+
+    function setType(k, t) {
+      setTypeVisual(k, t);
+      const inp = document.getElementById(`input_${k}`);
+      if (inp && inp.value) {
+        const [r, c] = k.split('_').map(Number);
+        trackChange(k, r, c, inp.dataset.name);
+      }
     }
 
     function filterEditorItems(query) {
@@ -780,36 +778,20 @@
       trackChange(k, r, c, inp.dataset.name);
     }
 
-    function toggleType(k, newType) {
-      const inp  = document.getElementById(`input_${k}`);
-      const chip = document.getElementById(`chip_${k}`);
-      inp.dataset.type = newType;
-      chip.className = `type-chip ${newType === 'u' ? 'active-u' : 'active-b'}`;
-      chip.textContent = newType === 'u' ? 'UNID' : 'BULTO';
-      chip.setAttribute('onclick', `toggleType('${k}','${newType === 'u' ? 'b' : 'u'}')`);
-      if (inp.value) {
-        const [r, c] = k.split('_').map(Number);
-        trackChange(k, r, c, inp.dataset.name);
-      }
-    }
-
     function setNoStock(k, r, c, name) {
       const inp = document.getElementById(`input_${k}`);
       const btn = document.getElementById(`nostk_${k}`);
       if (changes[k]?.newStock === 'x') {
-        // Undo
-        delete changes[k];
-        inp.value = '';
-        btn.classList.remove('on');
-        markCard(k, false);
-      } else {
-        inp.value = '';
-        changes[k] = { row: r, col: c, newStock: 'x', name, prevStock: inp.dataset.prev || '0' };
-        btn.classList.add('on');
-        markCard(k, true);
+        delete changes[k]; inp.value = ''; btn.classList.remove('on');
+        markCard(k, false); saveDraft(); updateDockAndProgress();
+        clearTimeout(lockTimers[k]);
+        return;
       }
-      saveDraft();
-      updateDockAndProgress();
+      inp.value = '';
+      changes[k] = {row:r, col:c, newStock:'x', name, prevStock: inp.dataset.prev||'0'};
+      btn.classList.add('on'); markCard(k, true); saveDraft(); updateDockAndProgress();
+      // Lock immediately on sin-stock
+      scheduleLock(k, 0);
     }
 
     function trackChange(k, r, c, name) {
@@ -819,55 +801,108 @@
       const btn = document.getElementById(`nostk_${k}`);
       if (!v || v === '0') {
         if (changes[k]?.newStock !== 'x') {
-          delete changes[k];
-          btn?.classList.remove('on');
-          markCard(k, false);
+          delete changes[k]; btn?.classList.remove('on'); markCard(k, false);
         }
+        clearTimeout(lockTimers[k]);
       } else {
-        changes[k] = { row: r, col: c, newStock: t === 'b' ? v + 'B' : v, name, prevStock: inp.dataset.prev || '0' };
-        btn?.classList.remove('on');
-        markCard(k, true);
+        changes[k] = {row:r, col:c, newStock: t==='b' ? v+'B' : v, name, prevStock: inp.dataset.prev||'0'};
+        btn?.classList.remove('on'); markCard(k, true);
+        scheduleLock(k, 1600);
       }
-      saveDraft();
-      updateDockAndProgress();
+      saveDraft(); updateDockAndProgress();
     }
 
     function markCard(k, counted) {
       document.getElementById(`card_${k}`)?.classList.toggle('counted', counted);
     }
 
-    function updateDockAndProgress() {
-      const n     = Object.keys(changes).length;
-      const dock  = document.getElementById('bottom-dock');
-      const fill  = document.getElementById('pfill');
-      const text  = document.getElementById('ptext');
-      const ctr   = document.getElementById('changes-counter');
-      dock.classList.toggle('visible', n > 0);
-      ctr.textContent = `${n} cambio${n !== 1 ? 's' : ''}`;
-      const pct = totalItems > 0 ? Math.round((n / totalItems) * 100) : 0;
-      fill.style.width = `${pct}%`;
-      text.textContent = `${n} / ${totalItems}`;
+    // ── LOCK / UNLOCK ────────────────────────────────────────────
+    function scheduleLock(k, delay) {
+      clearTimeout(lockTimers[k]);
+      lockTimers[k] = setTimeout(() => { if (changes[k]) lockItem(k); }, delay);
     }
 
-    // ── SAVE FLOW ──────────────────────────────────────────────
+    function lockItem(k) {
+      const ch    = changes[k];
+      const ctrl  = document.getElementById(`ctrl_${k}`);
+      const lock  = document.getElementById(`lock_${k}`);
+      const val   = document.getElementById(`lockval_${k}`);
+      const type  = document.getElementById(`locktype_${k}`);
+      if (!ctrl || !lock || !ch) return;
+
+      if (ch.newStock === 'x') {
+        val.textContent = 'SIN STOCK';
+        if (type) type.textContent = '';
+      } else {
+        const isBulto = ch.newStock.toUpperCase().endsWith('B') && ch.newStock.length > 1;
+        const n = parseInt(ch.newStock.replace(/[^0-9]/g,'')) || 0;
+        val.textContent = n;
+        if (type) type.textContent = isBulto ? 'BULTOS' : 'UNIDADES';
+      }
+      ctrl.classList.add('hidden');
+      lock.classList.remove('hidden');
+    }
+
+    function startUnlock(k, e) {
+      e.preventDefault();
+      _unlockKey = k;
+      const bar = document.getElementById(`lockbar_${k}`);
+      let pct = 0;
+      clearInterval(_unlockIval);
+      _unlockIval = setInterval(() => {
+        pct += 5;
+        if (bar) bar.style.width = `${pct}%`;
+        if (pct >= 100) { clearInterval(_unlockIval); unlockItem(k); }
+      }, 100);
+    }
+
+    function cancelUnlock() {
+      clearInterval(_unlockIval);
+      if (_unlockKey) {
+        const bar = document.getElementById(`lockbar_${_unlockKey}`);
+        if (bar) bar.style.width = '0%';
+      }
+      _unlockKey = null;
+    }
+
+    function unlockItem(k) {
+      clearTimeout(lockTimers[k]);
+      const ctrl = document.getElementById(`ctrl_${k}`);
+      const lock = document.getElementById(`lock_${k}`);
+      if (ctrl) ctrl.classList.remove('hidden');
+      if (lock) lock.classList.add('hidden');
+      const bar = document.getElementById(`lockbar_${k}`);
+      if (bar) bar.style.width = '0%';
+      _unlockKey = null;
+      setTimeout(() => document.getElementById(`input_${k}`)?.focus(), 80);
+    }
+
+    // ── DOCK + PROGRESS ──────────────────────────────────────────
+    function updateDockAndProgress() {
+      const n = Object.keys(changes).length;
+      document.getElementById('bottom-dock').classList.toggle('visible', n > 0);
+      document.getElementById('changes-counter').textContent = `${n} cambio${n!==1?'s':''}`;
+      const pct = totalItems > 0 ? Math.round((n / totalItems) * 100) : 0;
+      document.getElementById('pfill').style.width = `${pct}%`;
+      document.getElementById('ptext').textContent = `${n} / ${totalItems}`;
+    }
+
+    // ── SAVE FLOW ────────────────────────────────────────────────
     function promptUserForSave() {
       if (!Object.keys(changes).length) return;
+      const all = Object.values(changes);
+      document.getElementById('sum-subtitle').textContent = `${all.length} producto${all.length!==1?'s':''} modificado${all.length!==1?'s':''}`;
       const list = document.getElementById('sum-list');
       list.innerHTML = '';
-      const all = Object.values(changes);
-      document.getElementById('sum-subtitle').textContent =
-        `${all.length} producto${all.length !== 1 ? 's' : ''} modificado${all.length !== 1 ? 's' : ''}`;
       all.forEach(ch => {
         const div = document.createElement('div');
         div.className = 'flex items-center justify-between p-3 bg-gray-50 dark:bg-dark-bg rounded-xl gap-2';
-        const prev = fmtStock(ch.prevStock || '0');
-        const next = fmtStock(ch.newStock);
         div.innerHTML = `
           <span class="font-semibold text-gray-800 dark:text-gray-200 text-sm flex-1 leading-snug">${ch.name}</span>
           <div class="flex items-center gap-1.5 shrink-0 text-xs font-bold">
-            <span class="text-gray-400 line-through">${prev}</span>
+            <span class="text-gray-400 line-through">${fmtStock(ch.prevStock||'0')}</span>
             <i class="fa-solid fa-arrow-right text-gray-300 text-[10px]"></i>
-            <span class="${ch.newStock === 'x' ? 'text-red-500' : 'text-green-600'}">${next}</span>
+            <span class="${ch.newStock==='x'?'text-red-500':'text-green-600'}">${fmtStock(ch.newStock)}</span>
           </div>`;
         list.appendChild(div);
       });
@@ -881,8 +916,8 @@
     function fmtStock(raw) {
       if (!raw || raw === 'x' || raw === '0') return 'sin stock';
       const bulto = raw.toUpperCase().endsWith('B') && raw.length > 1;
-      const n = parseInt(raw.replace(/[^0-9]/g, '')) || 0;
-      return bulto ? `${n} bulto${n !== 1 ? 's' : ''}` : `${n} unid.`;
+      const n = parseInt(raw.replace(/[^0-9]/g,'')) || 0;
+      return bulto ? `${n} bulto${n!==1?'s':''}` : `${n} unid.`;
     }
 
     async function confirmSave() {
@@ -891,110 +926,83 @@
       localStorage.setItem('depositoUserName', u);
       closeSummaryModal();
 
-      const snap    = Object.values({ ...changes });
-      const fileId  = currentFileId;
-      const provName= currentProvNombre;
+      const snap     = Object.values({...changes});
+      const fileId   = currentFileId;
+      const provName = currentProvNombre;
 
       setSvState('saving');
       document.getElementById('save-modal').classList.remove('hidden');
 
       let saved = false;
       try {
-        const r = await fetchWithRetry(WORKER_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'updateStock', fileId, items: snap, user: u })
-        });
+        const r = await fetchWithRetry(WORKER_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'updateStock',fileId,items:snap,user:u})});
         const d = await r.json();
         if (d.error) throw new Error(d.error);
         saved = true;
         syncToSupabase(snap, u, provName).catch(() => {});
       } catch {}
 
-      clearDraft();
-      changes = {};
-      updateDockAndProgress();
+      clearDraft(); changes = {}; updateDockAndProgress();
 
       if (saved) {
         setSvState('success');
-        document.getElementById('sv-detail').textContent =
-          `${snap.length} producto${snap.length !== 1 ? 's' : ''} actualizado${snap.length !== 1 ? 's' : ''}`;
-        setTimeout(() => {
-          document.getElementById('save-modal').classList.add('hidden');
-          cachedProviders = [];
-          silentLoadProviders();
-          goBack();
-        }, 2200);
+        document.getElementById('sv-detail').textContent = `${snap.length} producto${snap.length!==1?'s':''} actualizado${snap.length!==1?'s':''}`;
+        setTimeout(() => { document.getElementById('save-modal').classList.add('hidden'); cachedProviders = []; silentLoadProviders(); goBack(); }, 2200);
       } else {
-        addToQueue({ fileId, items: snap, user: u, provName });
+        addToQueue({fileId, items:snap, user:u, provName});
         setSvState('offline');
         setTimeout(() => { document.getElementById('save-modal').classList.add('hidden'); goBack(); }, 3200);
       }
     }
 
     function setSvState(s) {
-      ['saving', 'success', 'offline'].forEach(st =>
-        document.getElementById(`sv-${st}`).classList.toggle('hidden', st !== s)
-      );
+      ['saving','success','offline'].forEach(st => document.getElementById(`sv-${st}`).classList.toggle('hidden', st!==s));
     }
 
-    // ── ADD ITEM ───────────────────────────────────────────────
+    // ── ADD ITEM ─────────────────────────────────────────────────
     function openAddItemModal() { document.getElementById('add-item-modal').classList.remove('hidden'); }
     function closeAddItemModal() { document.getElementById('add-item-modal').classList.add('hidden'); document.getElementById('new-item-name').value = ''; }
     async function confirmAddItem() {
       const name = document.getElementById('new-item-name').value.trim();
       if (!name) return showToast('Falta el nombre', true);
-      closeAddItemModal();
-      showToast('Creando...');
+      closeAddItemModal(); showToast('Creando...');
       try {
-        const r = await fetchWithRetry(WORKER_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'addItem', fileId: currentFileId, itemName: name, user: localStorage.getItem('depositoUserName') || 'Anon' })
-        }, 2);
+        const r = await fetchWithRetry(WORKER_URL, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'addItem',fileId:currentFileId,itemName:name,user:localStorage.getItem('depositoUserName')||'Anon'})}, 2);
         const d = await r.json();
         if (d.error) throw new Error(d.error);
-        showToast('¡Creado!');
-        loadSheet(currentFileId, currentProvNombre);
+        showToast('¡Creado!'); loadSheet(currentFileId, currentProvNombre);
       } catch (e) { showToast(e.message || 'Error', true); }
     }
 
-    // ── SUPABASE SYNC ──────────────────────────────────────────
+    // ── SUPABASE ─────────────────────────────────────────────────
     async function syncToSupabase(items, operador, provName) {
-      const key   = (provName || currentProvNombre || '').toLowerCase().trim();
+      const key = (provName || currentProvNombre || '').toLowerCase().trim();
       const provId = sbProveedores[key];
       if (!provId) return;
       const rows = items.filter(it => it.name).map(it => {
-        const raw    = it.newStock || 'x';
-        const isBulto= raw.toUpperCase().endsWith('B') && raw.length > 1;
-        const num    = parseFloat(raw.replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
-        return { proveedor_id: provId, articulo_original: it.name, stock_raw: raw, stock_unidades: raw === 'x' ? 0 : num, es_bulto: isBulto, operador, fecha_conteo: new Date().toISOString() };
+        const raw = it.newStock || 'x';
+        const isBulto = raw.toUpperCase().endsWith('B') && raw.length > 1;
+        const num = parseFloat(raw.replace(/[^0-9.,]/g,'').replace(',','.')) || 0;
+        return {proveedor_id:provId, articulo_original:it.name, stock_raw:raw, stock_unidades:raw==='x'?0:num, es_bulto:isBulto, operador, fecha_conteo:new Date().toISOString()};
       });
       if (!rows.length) return;
-      await fetch(`${SB_URL}/rest/v1/stock_inventario`, {
-        method: 'POST',
-        headers: { apikey: SB_ANON, Authorization: `Bearer ${SB_ANON}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-        body: JSON.stringify(rows)
-      });
+      await fetch(`${SB_URL}/rest/v1/stock_inventario`, {method:'POST', headers:{apikey:SB_ANON,Authorization:`Bearer ${SB_ANON}`,'Content-Type':'application/json',Prefer:'return=minimal'}, body:JSON.stringify(rows)});
     }
 
-    // ── AI ─────────────────────────────────────────────────────
+    // ── AI ───────────────────────────────────────────────────────
     async function runAutonomousAICheck() {
       if (aiCheckDone || !cachedProviders.length) return;
       let rankingItems = [];
-      try { const r = await fetch(`${WORKER_URL}?action=getRanking`); const j = await r.json(); if (j.found) rankingItems = j.data; } catch {}
+      try { const r = await fetch(`${WORKER_URL}?action=getRanking`); const j = await r.json(); if(j.found) rankingItems = j.data; } catch {}
       let alertData = null;
       for (const p of cachedProviders) {
         const days = getDaysSince(p.lastUpdated);
         const th = (p.name.toLowerCase().includes('romyl') || p.name.toLowerCase().includes('make')) ? 30 : 7;
-        if (days > th * 1.5) {
-          alertData = { title: '¡Alerta Stock! 🚨', msg: `Ojo, <strong>${p.name}</strong> lleva ${days} días sin control.`, icon: '🚨', action: `<button onclick="loadSheet('${p.id}','${p.name}');closeAIModal()" class="w-full bg-red-500 text-white py-3 rounded-xl font-bold active:scale-95">Ir a actualizar</button>` };
-          break;
-        }
+        if (days > th * 1.5) { alertData = {title:'¡Alerta Stock! 🚨', msg:`Ojo, <strong>${p.name}</strong> lleva ${days} días sin control.`, icon:'🚨', action:`<button onclick="loadSheet('${p.id}','${p.name}');closeAIModal()" class="w-full bg-red-500 text-white py-3 rounded-xl font-bold active:scale-95">Ir a actualizar</button>`}; break; }
       }
       if (!alertData && rankingItems.length && Math.random() > 0.6) {
         const top = rankingItems[Math.floor(Math.random() * Math.min(10, rankingItems.length))];
-        if (top) alertData = { title: '🔥 Top Ventas', msg: `<strong>${top.name}</strong> sale mucho. ¿Hay stock?`, icon: '📈', action: `<button onclick="handleAIAction(true)" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold active:scale-95">Entendido</button>` };
+        if (top) alertData = {title:'🔥 Top Ventas', msg:`<strong>${top.name}</strong> sale mucho. ¿Hay stock?`, icon:'📈', action:`<button onclick="handleAIAction(true)" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold active:scale-95">Entendido</button>`};
       }
       if (!alertData) { runRandomTaskAI(); aiCheckDone = true; return; }
       showAIModal(alertData.title, alertData.msg, alertData.icon, alertData.action);
@@ -1004,12 +1012,7 @@
     function runRandomTaskAI() {
       if (Math.random() > 0.4) return;
       const ignored = parseInt(localStorage.getItem('ai_tasks_ignored') || '0');
-      const tasks = [
-        { t: '¡Orden y Limpieza! ✨', m: '¿Barremos la vereda?', i: '🧹' },
-        { t: 'Ojo al piojo 🧐', m: 'Revisá el depósito de plásticos.', i: '♻️' },
-        { t: 'Misión Ninja 🥷', m: '¿Planta Alta en orden?', i: '📦' },
-        { t: 'Mantenimiento 🚗', m: 'Un barrido al garage no vendría mal.', i: '🚿' }
-      ];
+      const tasks = [{t:'¡Orden y Limpieza! ✨',m:'¿Barremos la vereda?',i:'🧹'},{t:'Ojo al piojo 🧐',m:'Revisá el depósito de plásticos.',i:'♻️'},{t:'Misión Ninja 🥷',m:'¿Planta Alta en orden?',i:'📦'},{t:'Mantenimiento 🚗',m:'Un barrido al garage no vendría mal.',i:'🚿'}];
       const sel = tasks[Math.floor(Math.random() * tasks.length)];
       let title = sel.t, msg = sel.m;
       if (ignored >= 2) { title = '🧐 IA Observando...'; msg = `He notado que ignoraron las últimas ${ignored} sugerencias de orden.<br><br><i>"${sel.m}"</i>`; }
@@ -1017,28 +1020,28 @@
     }
 
     function handleAIAction(accepted) {
-      if (accepted) { localStorage.setItem('ai_tasks_ignored', '0'); showToast('¡Genial! Manteniendo el orden 🚀'); }
-      else { localStorage.setItem('ai_tasks_ignored', String(parseInt(localStorage.getItem('ai_tasks_ignored') || '0') + 1)); }
+      if (accepted) { localStorage.setItem('ai_tasks_ignored','0'); showToast('¡Genial! 🚀'); }
+      else localStorage.setItem('ai_tasks_ignored', String(parseInt(localStorage.getItem('ai_tasks_ignored')||'0')+1));
       closeAIModal();
     }
-    function showAIModal(t, m, i, a) { document.getElementById('ai-icon').textContent = i; document.getElementById('ai-title').textContent = t; document.getElementById('ai-msg').innerHTML = m; document.getElementById('ai-action-container').innerHTML = a; document.getElementById('ai-modal').classList.remove('hidden'); }
-    function closeAIModal() { document.getElementById('ai-modal').classList.add('hidden'); }
+    function showAIModal(t,m,i,a){document.getElementById('ai-icon').textContent=i;document.getElementById('ai-title').textContent=t;document.getElementById('ai-msg').innerHTML=m;document.getElementById('ai-action-container').innerHTML=a;document.getElementById('ai-modal').classList.remove('hidden');}
+    function closeAIModal(){document.getElementById('ai-modal').classList.add('hidden');}
 
-    // ── PDF ────────────────────────────────────────────────────
-    function openCurrentCatalog() { if (currentCatalogUrl) openPdfViewer(currentCatalogUrl); }
-    function openPdfViewer(u) { document.getElementById('pdf-frame').src = u.replace(/\/view.*/,'/preview').replace(/\/edit.*/,'/preview'); document.getElementById('pdf-modal').classList.remove('hidden'); document.getElementById('pdf-modal').classList.add('flex'); }
-    function closeCatalogModal() { document.getElementById('pdf-modal').classList.add('hidden'); document.getElementById('pdf-modal').classList.remove('flex'); document.getElementById('pdf-frame').src = ''; }
+    // ── PDF ──────────────────────────────────────────────────────
+    function openCurrentCatalog(){if(currentCatalogUrl)openPdfViewer(currentCatalogUrl);}
+    function openPdfViewer(u){document.getElementById('pdf-frame').src=u.replace(/\/view.*/,'/preview').replace(/\/edit.*/,'/preview');document.getElementById('pdf-modal').classList.remove('hidden');document.getElementById('pdf-modal').classList.add('flex');}
+    function closeCatalogModal(){document.getElementById('pdf-modal').classList.add('hidden');document.getElementById('pdf-modal').classList.remove('flex');document.getElementById('pdf-frame').src='';}
 
-    // ── UTILS ──────────────────────────────────────────────────
-    function getDaysSince(d) { if (!d) return 999; return Math.floor((new Date() - new Date(d)) / 86400000); }
+    // ── UTILS ────────────────────────────────────────────────────
+    function getDaysSince(d){if(!d)return 999;return Math.floor((new Date()-new Date(d))/86400000);}
 
     function showToast(msg, error) {
       const t = document.getElementById('toast');
       document.getElementById('toast-msg').textContent = msg;
-      t.style.opacity = '1'; t.style.transform = 'translate(-50%, 0) scale(1)';
-      t.className = `fixed top-[72px] left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full shadow-2xl text-sm font-bold transition-all duration-300 z-[60] flex items-center gap-2 whitespace-nowrap backdrop-blur-md ${error ? 'bg-red-500/90 text-white' : 'bg-gray-900/90 text-white dark:bg-white/90 dark:text-gray-900'}`;
+      t.style.opacity = '1'; t.style.transform = 'translate(-50%,0) scale(1)';
+      t.className = `fixed top-[72px] left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full shadow-2xl text-sm font-bold transition-all duration-300 z-[60] flex items-center gap-2 whitespace-nowrap backdrop-blur-md ${error?'bg-red-500/90 text-white':'bg-gray-900/90 text-white dark:bg-white/90 dark:text-gray-900'}`;
       clearTimeout(t._tid);
-      t._tid = setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -14px) scale(0.9)'; }, 3200);
+      t._tid = setTimeout(() => {t.style.opacity='0';t.style.transform='translate(-50%,-14px) scale(0.9)';}, 3200);
     }
   </script>
 </body>

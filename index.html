@@ -781,7 +781,7 @@
       const inp = document.getElementById(`input_${k}`);
       let val = parseInt(inp.value) || 0;
       val = Math.max(0, val + delta);
-      inp.value = val === 0 ? '' : val;
+      inp.value = val; // Mantener el 0 visible — 0 = sin stock, vacío = no contado
       const [r, c] = k.split('_').map(Number);
       trackChange(k, r, c, inp.dataset.name);
     }
@@ -807,12 +807,19 @@
       const v   = inp.value.trim();
       const t   = inp.dataset.type || 'u';
       const btn = document.getElementById(`nostk_${k}`);
-      if (!v || v === '0') {
+      if (!v) {
+        // Campo vacío = no contado todavía, quitar de cambios
         if (changes[k]?.newStock !== 'x') {
           delete changes[k]; btn?.classList.remove('on'); markCard(k, false);
         }
         clearTimeout(lockTimers[k]);
+      } else if (v === '0') {
+        // 0 explícito = sin stock (igual que el botón ✕)
+        changes[k] = {row:r, col:c, newStock:'x', name, prevStock: inp.dataset.prev||'0'};
+        btn?.classList.add('on'); markCard(k, true);
+        scheduleLock(k, 1600);
       } else {
+        // Cantidad > 0
         changes[k] = {row:r, col:c, newStock: t==='b' ? v+'B' : v, name, prevStock: inp.dataset.prev||'0'};
         btn?.classList.remove('on'); markCard(k, true);
         scheduleLock(k, 1600);

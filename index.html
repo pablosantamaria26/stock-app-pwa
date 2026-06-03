@@ -72,7 +72,7 @@
     .dark .qty-input{color:#f8fafc;}
 
     /* Sin stock button */
-    .nostk-btn{width:100%;padding:12px;border-radius:12px;background:#fef2f2;color:#dc2626;font-weight:700;font-size:13px;border:1.5px solid #fecaca;transition:all 0.1s;text-align:center;}
+    .nostk-btn{padding:12px;border-radius:12px;background:#fef2f2;color:#dc2626;font-weight:700;font-size:13px;border:1.5px solid #fecaca;transition:all 0.1s;text-align:center;}
     .nostk-btn:active{transform:scale(0.97);}
     .nostk-btn.on{background:#dc2626;color:white;border-color:#dc2626;}
     .dark .nostk-btn{background:#450a0a;color:#fca5a5;border-color:#7f1d1d;}
@@ -744,7 +744,7 @@
                 <span class="text-xs text-green-600 dark:text-green-500 font-medium ml-1.5" id="locktype_${k}"></span>
               </div>
             </div>
-            <span class="text-xs text-gray-400 dark:text-gray-500 text-right leading-tight">Mantené<br>2s para editar</span>
+            <span class="text-xs text-gray-400 dark:text-gray-500 text-right leading-tight">Mantené<br>1.5s para editar</span>
           </div>
           <div class="lockbar-wrap"><div class="lockbar" id="lockbar_${k}"></div></div>
         </div>`;
@@ -864,7 +864,7 @@
         pct += 5;
         if (bar) bar.style.width = `${pct}%`;
         if (pct >= 100) { clearInterval(_unlockIval); unlockItem(k); }
-      }, 100);
+      }, 75); // 75ms × 20 pasos = 1500ms (1.5s)
     }
 
     function checkUnlockMove(e) {
@@ -894,7 +894,8 @@
       const bar = document.getElementById(`lockbar_${k}`);
       if (bar) bar.style.width = '0%';
       _unlockKey = null;
-      setTimeout(() => document.getElementById(`input_${k}`)?.focus(), 80);
+      // preventScroll evita que Android haga scroll/shift del viewport al enfocar el input
+      setTimeout(() => document.getElementById(`input_${k}`)?.focus({ preventScroll: true }), 80);
     }
 
     // ── DOCK + PROGRESS ──────────────────────────────────────────

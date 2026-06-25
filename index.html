@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Stock</title>
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#2563eb">
+  <meta name="theme-color" content="#0D7B68">
   <link rel="apple-touch-icon" href="icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -44,7 +44,7 @@
     .glass{background:rgba(255,255,255,0.93);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
     .dark .glass{background:rgba(15,23,42,0.93);}
     /* ── HOME REDESIGN ────────────────────────────────────── */
-    .home-hero{background:linear-gradient(135deg,#4338CA 0%,#6D28D9 55%,#9333EA 100%);border-radius:2.5rem;padding:28px 24px 24px;position:relative;overflow:hidden;margin:12px 16px 0;}
+    .home-hero{background:linear-gradient(135deg,#0D7B68 0%,#0F9B86 55%,#14B8A6 100%);border-radius:2.5rem;padding:28px 24px 24px;position:relative;overflow:hidden;margin:12px 16px 0;}
     .home-hero::before{content:'';position:absolute;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.07);top:-50px;right:-40px;}
     .home-hero::after{content:'';position:absolute;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.05);bottom:-40px;left:-30px;}
     .home-action{display:flex;align-items:center;gap:16px;background:white;border-radius:24px;padding:18px 16px;border:1px solid rgba(241,245,249,0.9);box-shadow:0 2px 10px rgba(0,0,0,0.05);cursor:pointer;transition:transform 0.12s,box-shadow 0.12s;width:100%;text-align:left;}
@@ -58,11 +58,11 @@
     .sel-row{display:flex;align-items:center;gap:12px;padding:15px 16px;border-bottom:1px solid #F1F5F9;cursor:pointer;transition:background 0.12s;-webkit-tap-highlight-color:transparent;}
     .dark .sel-row{border-color:#1e293b;}
     .sel-row:last-child{border-bottom:none;}
-    .sel-row.selected{background:#EEF2FF;}
-    .dark .sel-row.selected{background:#1e1b4b;}
+    .sel-row.selected{background:#ECFDF5;}
+    .dark .sel-row.selected{background:#022c22;}
     .sel-circle{width:26px;height:26px;border-radius:50%;border:2px solid #CBD5E1;transition:all 0.15s;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
     .dark .sel-circle{border-color:#475569;}
-    .sel-row.selected .sel-circle{background:#4F46E5;border-color:#4F46E5;}
+    .sel-row.selected .sel-circle{background:#0D7B68;border-color:#0D7B68;}
 
     /* ── QUANTITY ROWS (paso 2 cantidades) ───────────────── */
     .qty-row{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid #F1F5F9;}
@@ -72,9 +72,9 @@
     .step-btn:active{transform:scale(0.86);}
     .step-minus{background:#F1F5F9;color:#64748B;}
     .dark .step-minus{background:#334155;color:#94A3B8;}
-    .step-plus{background:linear-gradient(135deg,#4F46E5,#7C3AED);color:white;}
-    .step-num{min-width:44px;text-align:center;font-size:1.35rem;font-weight:900;color:#4F46E5;}
-    .dark .step-num{color:#818CF8;}
+    .step-plus{background:linear-gradient(135deg,#F5A623,#D97706);color:white;}
+    .step-num{min-width:44px;text-align:center;font-size:1.35rem;font-weight:900;color:#0D7B68;}
+    .dark .step-num{color:#34d399;}
 
     /* Bottom dock — respeta la barra de navegación de Android */
     .bottom-dock{position:fixed;bottom:calc(14px + env(safe-area-inset-bottom, 0px));left:14px;right:14px;background:#1e293b;color:white;padding:14px 20px;border-radius:20px;box-shadow:0 10px 30px -5px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:space-between;z-index:50;transform:translateY(160%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);}
@@ -154,18 +154,18 @@
     .mgr-row:last-child{border-bottom:none;}
     .mgr-check{width:26px;height:26px;border-radius:8px;border:2px solid #cbd5e1;appearance:none;-webkit-appearance:none;cursor:pointer;transition:all 0.15s;flex-shrink:0;background:white;}
     .dark .mgr-check{background:#1e293b;border-color:#475569;}
-    .mgr-check:checked{background:#7c3aed;border-color:#7c3aed;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='white' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'/%3E%3C/svg%3E");}
+    .mgr-check:checked{background:#0D7B68;border-color:#0D7B68;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='white' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'/%3E%3C/svg%3E");}
     .mgr-qty{width:100%;height:42px;border-radius:10px;border:1.5px solid #e2e8f0;text-align:center;font-size:1.1rem;font-weight:700;background:#f8fafc;color:#1e293b;outline:none;-webkit-appearance:none;-moz-appearance:textfield;transition:border-color 0.15s,opacity 0.15s;}
     .dark .mgr-qty{background:#0f172a;border-color:#334155;color:#f8fafc;}
     .mgr-qty:focus{border-color:#7c3aed;}
     .mgr-qty::-webkit-outer-spin-button,.mgr-qty::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
     .pin-dot{width:14px;height:14px;border-radius:50%;background:#e2e8f0;transition:background 0.15s;}
     .dark .pin-dot{background:#334155;}
-    .pin-dot.filled{background:#7c3aed;}
+    .pin-dot.filled{background:#0D7B68;}
     .pin-key{width:100%;aspect-ratio:1;border-radius:18px;background:white;font-size:1.5rem;font-weight:700;color:#1e293b;box-shadow:0 2px 8px rgba(0,0,0,0.08);display:flex;align-items:center;justify-content:center;transition:all 0.1s;border:1.5px solid #f1f5f9;}
     .dark .pin-key{background:#1e293b;color:#f8fafc;border-color:#334155;}
-    .pin-key:active{transform:scale(0.88);background:#ede9fe;color:#7c3aed;}
-    .dark .pin-key:active{background:#2e1065;color:#c4b5fd;}
+    .pin-key:active{transform:scale(0.88);background:#d1fae5;color:#0D7B68;}
+    .dark .pin-key:active{background:#064e3b;color:#34d399;}
     @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
     .shake{animation:shake 0.4s ease;}
   </style>
@@ -258,7 +258,7 @@
         </button>
 
         <!-- Panel de Gestión -->
-        <button onclick="openPinModal()" class="home-action" style="background:linear-gradient(135deg,#4338CA,#7C3AED);border-color:transparent;">
+        <button onclick="openPinModal()" class="home-action" style="background:linear-gradient(135deg,#0D7B68,#0F9B86);border-color:transparent;">
           <div class="action-icon" style="background:rgba(255,255,255,0.15);">
             <i class="fa-solid fa-lock text-white text-xl"></i>
           </div>
@@ -332,8 +332,8 @@
       </div>
       <div id="mgr-list-container" class="space-y-3 pb-8"></div>
       <div id="loader-mgr" class="hidden flex flex-col items-center mt-32">
-        <div class="spinner mb-4" style="border-left-color:#7c3aed;"></div>
-        <span class="text-purple-500 font-bold text-sm animate-pulse">CARGANDO...</span>
+        <div class="spinner mb-4" style="border-left-color:#0D7B68;"></div>
+        <span class="font-bold text-sm animate-pulse" style="color:#0D7B68;">CARGANDO...</span>
       </div>
     </div>
 
@@ -342,8 +342,8 @@
       <!-- Paso indicator -->
       <div class="flex items-center gap-3 mb-3 mt-1 px-1">
         <div class="flex items-center gap-2">
-          <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black text-white" style="background:#4F46E5;">1</div>
-          <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400">Seleccioná artículos</span>
+          <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black text-white" style="background:#0D7B68;">1</div>
+          <span class="text-xs font-bold" style="color:#0D7B68;">Seleccioná artículos</span>
         </div>
         <div class="flex-1 h-px bg-gray-200 dark:bg-dark-border"></div>
         <div class="flex items-center gap-2 opacity-40">
@@ -355,18 +355,23 @@
         <div class="relative">
           <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
           <input type="text" id="order-search" oninput="filterOrderSearch(this.value)" placeholder="Buscar producto..."
-            class="w-full pl-10 pr-4 py-2.5 rounded-xl border-none shadow-sm bg-white dark:bg-dark-card font-semibold text-sm outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all text-gray-800 dark:text-white">
+            class="w-full pl-10 pr-4 py-2.5 rounded-xl border-none shadow-sm bg-white dark:bg-dark-card font-semibold text-sm outline-none transition-all text-gray-800 dark:text-white">
         </div>
         <div class="flex gap-2">
-          <button onclick="filterOrderMode('all')" id="ofilter-all" class="flex-1 py-2 rounded-xl text-xs font-bold text-white transition-all" style="background:#4F46E5;">Todos</button>
+          <button onclick="filterOrderMode('all')" id="ofilter-all" class="flex-1 py-2 rounded-xl text-xs font-bold text-white transition-all" style="background:#0D7B68;">Todos</button>
           <button onclick="filterOrderMode('sinstock')" id="ofilter-sinstock" class="flex-1 py-2 rounded-xl text-xs font-bold bg-gray-100 dark:bg-dark-border text-gray-500 dark:text-gray-400 transition-all">Sin stock</button>
           <button onclick="filterOrderMode('selected')" id="ofilter-selected" class="flex-1 py-2 rounded-xl text-xs font-bold bg-gray-100 dark:bg-dark-border text-gray-500 dark:text-gray-400 transition-all">Marcados</button>
         </div>
+        <!-- Subir lista PDF para análisis de bultos -->
+        <button onclick="openGeminiUpload()" class="w-full py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-95" style="background:#FFF7ED;color:#D97706;border:1.5px solid #FED7AA;">
+          <i class="fa-solid fa-file-pdf text-xs"></i> Subir lista PDF · ver bultos por artículo
+        </button>
+        <input type="file" id="gemini-file-input" accept="application/pdf" class="hidden" onchange="processListaPDF(this.files[0])">
       </div>
       <div id="order-container" class="bg-white dark:bg-dark-card rounded-2xl shadow-sm overflow-hidden mb-28"></div>
       <div id="loader-order" class="hidden flex flex-col items-center mt-32">
-        <div class="spinner mb-4" style="border-left-color:#4F46E5;"></div>
-        <span class="font-bold text-sm animate-pulse" style="color:#4F46E5;">CARGANDO PRODUCTOS...</span>
+        <div class="spinner mb-4" style="border-left-color:#0D7B68;"></div>
+        <span class="font-bold text-sm animate-pulse" style="color:#0D7B68;">CARGANDO PRODUCTOS...</span>
       </div>
     </div>
 
@@ -378,30 +383,73 @@
           <div class="w-6 h-6 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-xs font-black text-white">1</div>
           <span class="text-xs font-bold text-gray-400">Selección</span>
         </div>
-        <div class="flex-1 h-px" style="background:#4F46E5;"></div>
+        <div class="flex-1 h-px" style="background:#0D7B68;"></div>
         <div class="flex items-center gap-2">
-          <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black text-white" style="background:#4F46E5;">2</div>
-          <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400">Cantidades</span>
+          <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black text-white" style="background:#0D7B68;">2</div>
+          <span class="text-xs font-bold" style="color:#0D7B68;">Cantidades</span>
         </div>
       </div>
-      <div class="rounded-2xl p-3 mb-3 flex items-center gap-3" style="background:#EEF2FF;">
-        <i class="fa-solid fa-boxes-stacked text-xs" style="color:#4F46E5;"></i>
-        <p class="text-xs font-semibold" style="color:#4338CA;">¿Cuántos bultos pedís de cada artículo?</p>
+      <div class="rounded-2xl p-3 mb-3 flex items-center gap-3" style="background:#ECFDF5;">
+        <i class="fa-solid fa-boxes-stacked text-xs" style="color:#0D7B68;"></i>
+        <p class="text-xs font-semibold" style="color:#065f46;">¿Cuántos bultos pedís de cada artículo?</p>
       </div>
       <div id="quantities-container" class="bg-white dark:bg-dark-card rounded-2xl shadow-sm overflow-hidden mb-28"></div>
     </div>
 
   </div><!-- /scroll -->
 
+  <!-- MODAL: GEMINI ANÁLISIS PDF -->
+  <div id="gemini-modal" class="fixed inset-0 z-[100] flex items-center justify-center modal-overlay hidden px-4">
+    <div class="bg-white dark:bg-dark-card p-6 rounded-[2rem] shadow-2xl w-full max-w-sm animate-scale-in">
+      <!-- Loading -->
+      <div id="gemini-state-loading">
+        <div class="flex flex-col items-center py-4">
+          <div class="spinner mb-4" style="border-left-color:#F5A623;"></div>
+          <h3 class="text-lg font-black text-gray-800 dark:text-white mb-1">Analizando lista...</h3>
+          <p class="text-sm text-gray-400 text-center">Gemini está leyendo el PDF y buscando unidades por bulto</p>
+        </div>
+      </div>
+      <!-- Success -->
+      <div id="gemini-state-success" class="hidden">
+        <div class="flex flex-col items-center py-2">
+          <div class="w-20 h-20 rounded-full flex items-center justify-center mb-4" style="background:#d1fae5;">
+            <div class="w-16 h-16 rounded-full flex items-center justify-center" style="background:#0D7B68;">
+              <i class="fa-solid fa-check text-white text-2xl"></i>
+            </div>
+          </div>
+          <h3 class="text-xl font-black text-gray-800 dark:text-white mb-1">¡Listo!</h3>
+          <p class="text-sm text-gray-400 text-center mb-1">Se encontraron <span id="gemini-found-count" class="font-black" style="color:#0D7B68;">0</span> artículos con info de bultos</p>
+          <p class="text-xs text-gray-400 text-center">Ahora en el Paso 2 vas a ver las unidades por bulto de cada artículo</p>
+        </div>
+        <button onclick="closeGeminiModal()" class="w-full mt-5 py-3.5 rounded-2xl font-bold text-white active:scale-95" style="background:#0D7B68;">Entendido</button>
+      </div>
+      <!-- Error -->
+      <div id="gemini-state-error" class="hidden">
+        <div class="flex flex-col items-center py-2">
+          <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4 text-3xl text-red-500">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <h3 class="text-lg font-black text-gray-800 dark:text-white mb-2">Error al analizar</h3>
+          <p id="gemini-error-msg" class="text-xs text-gray-400 text-center mb-4">Error desconocido</p>
+          <p class="text-xs text-amber-600 bg-amber-50 rounded-xl p-3 text-center">Verificá que la API key de Gemini sea correcta. La podés cambiar tocando el botón de abajo.</p>
+        </div>
+        <div class="flex gap-3 mt-4">
+          <button onclick="closeGeminiModal()" class="flex-1 py-3.5 rounded-2xl font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-dark-border active:scale-95 text-sm">Cerrar</button>
+          <button onclick="changeGeminiKey()" class="flex-1 py-3.5 rounded-2xl font-bold text-white active:scale-95 text-sm" style="background:#F5A623;">Cambiar key</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- DOCK GESTIÓN (dinámico: paso 1 = continuar, paso 2 = generar) -->
   <div id="order-dock" class="bottom-dock" onclick="onOrderDockTap()">
     <div class="flex items-center gap-3">
-      <div id="order-dock-icon" class="w-10 h-10 rounded-full flex items-center justify-center text-white shrink-0" style="background:#4F46E5;">
+      <div id="order-dock-icon" class="w-10 h-10 rounded-full flex items-center justify-center text-white shrink-0" style="background:#0D7B68;">
         <i class="fa-solid fa-arrow-right text-base"></i>
       </div>
       <div>
         <span class="font-black text-sm uppercase tracking-wide text-gray-200" id="order-dock-title">Continuar</span>
-        <p class="text-xs mt-0.5" style="color:#a5b4fc;" id="order-counter">0 artículos</p>
+        <p class="text-xs mt-0.5" style="color:#6ee7b7;" id="order-counter">0 artículos</p>
       </div>
     </div>
     <i class="fa-solid fa-chevron-right text-gray-400 text-lg mr-1"></i>
@@ -506,16 +554,16 @@
   <div id="add-item-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-overlay hidden px-4">
     <div class="bg-white dark:bg-dark-card p-6 rounded-[2rem] shadow-2xl w-full max-w-sm animate-scale-in">
       <div class="text-center mb-5">
-        <div class="w-14 h-14 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl">
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl text-white" style="background:#0D7B68;">
           <i class="fa-solid fa-plus"></i>
         </div>
         <h3 class="text-xl font-black text-gray-800 dark:text-white">Nuevo Artículo</h3>
       </div>
       <input type="text" id="new-item-name" placeholder="Ej: Jabón Líquido 5L"
-        class="w-full p-4 bg-gray-50 dark:bg-dark-bg border-2 border-gray-100 dark:border-gray-700 rounded-2xl mb-4 focus:outline-none focus:border-purple-500 font-bold text-base text-center text-gray-800 dark:text-white">
+        class="w-full p-4 bg-gray-50 dark:bg-dark-bg border-2 border-gray-100 dark:border-gray-700 rounded-2xl mb-4 focus:outline-none font-bold text-base text-center text-gray-800 dark:text-white">
       <div class="flex gap-3">
         <button onclick="closeAddItemModal()" class="flex-1 py-3.5 rounded-2xl font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-dark-border active:scale-95">Cancelar</button>
-        <button onclick="confirmAddItem()" class="flex-1 py-3.5 rounded-2xl font-bold text-white bg-purple-600 shadow-lg active:scale-95">Crear ✨</button>
+        <button onclick="confirmAddItem()" class="flex-1 py-3.5 rounded-2xl font-bold text-white shadow-lg active:scale-95" style="background:#0D7B68;">Crear ✨</button>
       </div>
     </div>
   </div>
@@ -546,7 +594,7 @@
   <!-- MODAL: PIN GESTIÓN -->
   <div id="pin-modal" class="fixed inset-0 z-[100] flex items-center justify-center modal-overlay hidden px-6">
     <div id="pin-card" class="bg-white dark:bg-dark-card p-6 rounded-[2.5rem] shadow-2xl w-full max-w-xs text-center animate-scale-in">
-      <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-4xl" style="background:#ede9fe;">🔐</div>
+      <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-4xl" style="background:#d1fae5;">🔐</div>
       <h2 class="text-xl font-black text-gray-800 dark:text-white mb-1">Gestión</h2>
       <p class="text-sm text-gray-400 mb-5">Ingresá el PIN</p>
       <div class="flex justify-center gap-4 mb-5">
@@ -586,10 +634,10 @@
         </button>
       </div>
       <!-- Header empresa -->
-      <div class="mx-4 mt-4 rounded-2xl p-4 shrink-0" style="background:#ede9fe;">
-        <p class="font-black text-sm" style="color:#4c1d95;">📦 MERCADO LIMPIO</p>
-        <p class="text-xs mt-0.5" style="color:#6d28d9;">Languenheim 1095, Longchamps</p>
-        <p class="text-xs" style="color:#6d28d9;">Lun a Vie de 7 a 15hs</p>
+      <div class="mx-4 mt-4 rounded-2xl p-4 shrink-0" style="background:#ECFDF5;">
+        <p class="font-black text-sm" style="color:#065f46;">📦 MERCADO LIMPIO</p>
+        <p class="text-xs mt-0.5" style="color:#0D7B68;">Languenheim 1095, Longchamps</p>
+        <p class="text-xs" style="color:#0D7B68;">Lun a Vie de 7 a 15hs</p>
       </div>
       <p class="text-xs font-bold text-gray-400 uppercase tracking-wider px-5 mt-3 mb-1 shrink-0" id="export-prov-label">Pedido a: —</p>
       <div id="export-preview" class="overflow-y-auto flex-1 px-4 pb-2 space-y-1"></div>
@@ -1418,7 +1466,7 @@
         d.onclick = () => loadOrderSheet(prov.id, prov.name);
         d.innerHTML = `
           <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg shrink-0" style="background:#ede9fe;color:#7c3aed;">${prov.name.charAt(0)}</div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg shrink-0" style="background:#d1fae5;color:#0D7B68;">${prov.name.charAt(0)}</div>
             <div class="flex-1 min-w-0">
               <h3 class="font-bold text-gray-800 dark:text-gray-100 text-base leading-tight truncate">${prov.name}</h3>
               <div class="flex items-center gap-2 mt-1">
@@ -1426,7 +1474,7 @@
                 <span class="text-xs text-gray-400 font-medium">Tocar para armar pedido</span>
               </div>
             </div>
-            <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background:#ede9fe;color:#7c3aed;">
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background:#d1fae5;color:#0D7B68;">
               <i class="fa-solid fa-cart-plus text-sm"></i>
             </div>
           </div>`;
@@ -1526,7 +1574,7 @@
         if (!btn) return;
         const active = m === mode;
         btn.className = `flex-1 py-2 rounded-xl text-xs font-bold transition-all ${active ? 'text-white' : 'bg-gray-100 dark:bg-dark-border text-gray-500 dark:text-gray-400'}`;
-        btn.style.background = active ? '#4F46E5' : '';
+        btn.style.background = active ? '#0D7B68' : '';
       });
       document.querySelectorAll('#order-container .sel-row').forEach(row => {
         row.style.display = rowMatchesMode(row) ? '' : 'none';
@@ -1575,17 +1623,32 @@
     function renderQuantitiesItems(items) {
       const c = document.getElementById('quantities-container');
       c.innerHTML = '';
+      const bultosData = getBultosData(currentOrderProv?.name || '');
       items.forEach(item => {
         const k = Object.keys(orderSelections).find(key => orderSelections[key] === item);
         const raw = item.stock;
         const noStock = raw === 'x' || raw === '0' || !raw;
         const stockLabel = noStock ? '❌ Sin stock' : fmtStockMgr(raw);
+        // Buscar unidades por bulto para este artículo
+        const nameLower = item.name.toLowerCase().trim();
+        let udPorBulto = null;
+        for (const [n, u] of Object.entries(bultosData)) {
+          if (nameLower.includes(n) || n.includes(nameLower.substring(0, Math.min(nameLower.length, 12)))) {
+            udPorBulto = u; break;
+          }
+        }
+        const bultoBadge = udPorBulto
+          ? `<span class="text-[10px] px-1.5 py-0.5 rounded-full font-bold" style="background:#d1fae5;color:#065f46;">${udPorBulto} ud/bulto</span>`
+          : '';
         const row = document.createElement('div');
         row.className = 'qty-row';
         row.innerHTML = `
           <div class="flex-1 min-w-0">
             <p class="font-semibold text-gray-800 dark:text-gray-100 text-sm leading-snug">${item.name}</p>
-            <p class="text-xs mt-0.5 font-medium ${noStock ? 'text-red-500' : 'text-gray-400'}">${stockLabel}</p>
+            <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+              <p class="text-xs font-medium ${noStock ? 'text-red-500' : 'text-gray-400'}">${stockLabel}</p>
+              ${bultoBadge}
+            </div>
           </div>
           <div class="flex items-center gap-2 shrink-0">
             <button onclick="stepOrderQty('${k}',-1)" class="step-btn step-minus">−</button>
@@ -1619,7 +1682,7 @@
         div.className = `flex items-center justify-between px-3 py-2.5 rounded-xl ${i % 2 === 0 ? 'bg-gray-50 dark:bg-dark-bg' : ''}`;
         div.innerHTML = `
           <span class="font-medium text-gray-800 dark:text-gray-200 text-sm flex-1 leading-snug">${item.name}</span>
-          <span class="font-black text-sm ml-3 shrink-0" style="color:#4F46E5;">${item.qty || 1} bulto${(item.qty || 1) !== 1 ? 's' : ''}</span>`;
+          <span class="font-black text-sm ml-3 shrink-0" style="color:#0D7B68;">${item.qty || 1} bulto${(item.qty || 1) !== 1 ? 's' : ''}</span>`;
         preview.appendChild(div);
       });
       document.getElementById('order-export-modal').classList.remove('hidden');
@@ -1687,12 +1750,12 @@
         const S = {
           h1:  { font: { bold: true, sz: 18, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '1E3A5F' } }, alignment: { horizontal: 'center', vertical: 'center' } },
           h2:  { font: { sz: 11, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '2563EB' } }, alignment: { horizontal: 'center' } },
-          ped: { font: { bold: true, sz: 13, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '7C3AED' } }, alignment: { horizontal: 'left' } },
-          pedR:{ font: { sz: 11, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '7C3AED' } }, alignment: { horizontal: 'right' } },
+          ped: { font: { bold: true, sz: 13, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '0D7B68' } }, alignment: { horizontal: 'left' } },
+          pedR:{ font: { sz: 11, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '0D7B68' } }, alignment: { horizontal: 'right' } },
           col: { font: { bold: true, sz: 11, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '1E293B' } }, alignment: { horizontal: 'center' } },
           ev:  { fill: { fgColor: { rgb: 'F8FAFC' } }, font: { sz: 10 } },
           od:  { fill: { fgColor: { rgb: 'FFFFFF' } }, font: { sz: 10 } },
-          qty: (bg) => ({ fill: { fgColor: { rgb: bg } }, font: { bold: true, sz: 11, color: { rgb: '7C3AED' } }, alignment: { horizontal: 'center' } }),
+          qty: (bg) => ({ fill: { fgColor: { rgb: bg } }, font: { bold: true, sz: 11, color: { rgb: '0D7B68' } }, alignment: { horizontal: 'center' } }),
           tot: { font: { bold: true, sz: 11 }, alignment: { horizontal: 'left' } },
         };
 
@@ -1737,6 +1800,100 @@
       selected.forEach(item => { msg += `• ${item.name}: *${item.qty || 1} bulto${(item.qty || 1) !== 1 ? 's' : ''}*\n`; });
       msg += `\n📍 Languenheim 1095, Longchamps\n🕐 Entrega Lun-Vie de 7 a 15hs`;
       window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    // ── GEMINI: ANÁLISIS DE LISTA PDF ────────────────────────────
+    function getGeminiKey() { return localStorage.getItem('gemini_api_key') || ''; }
+    function setGeminiKey(k) { localStorage.setItem('gemini_api_key', k.trim()); }
+    function getBultosData(provName) {
+      try { return JSON.parse(localStorage.getItem('bultos_' + provName) || '{}'); } catch { return {}; }
+    }
+
+    function openGeminiUpload() {
+      const key = getGeminiKey();
+      if (!key) {
+        const k = prompt('Ingresá tu Gemini API Key (la misma que usás en el Worker):');
+        if (!k || !k.trim()) return;
+        setGeminiKey(k);
+      }
+      const inp = document.getElementById('gemini-file-input');
+      inp.value = '';
+      inp.click();
+    }
+
+    function changeGeminiKey() {
+      closeGeminiModal();
+      const k = prompt('Nueva Gemini API Key:');
+      if (k && k.trim()) { setGeminiKey(k); showToast('API key actualizada ✓'); }
+    }
+
+    function closeGeminiModal() {
+      document.getElementById('gemini-modal').classList.add('hidden');
+    }
+
+    async function processListaPDF(file) {
+      if (!file) return;
+      const key = getGeminiKey();
+      if (!key) { showToast('Configurá la API key primero', true); return; }
+      // Mostrar modal en estado loading
+      const modal = document.getElementById('gemini-modal');
+      modal.classList.remove('hidden');
+      document.getElementById('gemini-state-loading').classList.remove('hidden');
+      document.getElementById('gemini-state-success').classList.add('hidden');
+      document.getElementById('gemini-state-error').classList.add('hidden');
+      try {
+        const base64 = await fileToBase64(file);
+        const provName = currentOrderProv?.name || 'proveedor';
+        const prompt = `Esta es una lista de precios del proveedor "${provName}". Analizá el PDF y extraé para cada artículo la cantidad de unidades que vienen por bulto o caja. Puede aparecer como "x12", "por 12", "caja x 24", "unid./bulto", "cont.", "x", etc. Devolvé SOLO un JSON válido con este formato exacto (sin texto adicional ni markdown):\n{"articulos":[{"nombre":"Nombre del producto","unidadesPorBulto":12},{"nombre":"Otro producto","unidadesPorBulto":null}]}\nSi no podés determinar las unidades de un artículo ponelo como null. Incluí todos los artículos del PDF.`;
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [
+              { inline_data: { mime_type: 'application/pdf', data: base64 } },
+              { text: prompt }
+            ]}]})
+          }
+        );
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody?.error?.message || `HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('Gemini no devolvió un JSON válido');
+        const result = JSON.parse(jsonMatch[0]);
+        const articulos = result.articulos || [];
+        // Guardar mapa nombre→unidades en localStorage
+        const map = {};
+        articulos.forEach(a => {
+          if (a.nombre && a.unidadesPorBulto) map[a.nombre.toLowerCase().trim()] = a.unidadesPorBulto;
+        });
+        localStorage.setItem('bultos_' + provName, JSON.stringify(map));
+        const found = Object.keys(map).length;
+        document.getElementById('gemini-found-count').textContent = found;
+        document.getElementById('gemini-state-loading').classList.add('hidden');
+        document.getElementById('gemini-state-success').classList.remove('hidden');
+        // Si ya estamos en paso 2, refrescar
+        if (currentView === 'quantities') {
+          renderQuantitiesItems(Object.values(orderSelections).filter(s => s.selected));
+        }
+      } catch (e) {
+        document.getElementById('gemini-state-loading').classList.add('hidden');
+        document.getElementById('gemini-state-error').classList.remove('hidden');
+        document.getElementById('gemini-error-msg').textContent = e.message || 'Error desconocido';
+      }
+    }
+
+    function fileToBase64(file) {
+      return new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result.split(',')[1]);
+        r.onerror = rej;
+        r.readAsDataURL(file);
+      });
     }
 
     function getDaysSince(d){if(!d)return 999;return Math.floor((new Date()-new Date(d))/86400000);}

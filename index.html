@@ -433,10 +433,7 @@
           <p id="gemini-error-msg" class="text-xs text-gray-400 text-center mb-4">Error desconocido</p>
           <p class="text-xs text-amber-600 bg-amber-50 rounded-xl p-3 text-center">Verificá que la API key de Gemini sea correcta. La podés cambiar tocando el botón de abajo.</p>
         </div>
-        <div class="flex gap-3 mt-4">
-          <button onclick="closeGeminiModal()" class="flex-1 py-3.5 rounded-2xl font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-dark-border active:scale-95 text-sm">Cerrar</button>
-          <button onclick="changeGeminiKey()" class="flex-1 py-3.5 rounded-2xl font-bold text-white active:scale-95 text-sm" style="background:#F5A623;">Cambiar key</button>
-        </div>
+        <button onclick="closeGeminiModal()" class="w-full mt-4 py-3.5 rounded-2xl font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-dark-border active:scale-95 text-sm">Cerrar</button>
       </div>
     </div>
   </div>
@@ -1802,29 +1799,15 @@
       window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
-    // ── GEMINI: ANÁLISIS DE LISTA PDF ────────────────────────────
-    function getGeminiKey() { return localStorage.getItem('gemini_api_key') || ''; }
-    function setGeminiKey(k) { localStorage.setItem('gemini_api_key', k.trim()); }
+    // ── GEMINI: ANÁLISIS DE LISTA PDF (via Worker) ───────────────
     function getBultosData(provName) {
       try { return JSON.parse(localStorage.getItem('bultos_' + provName) || '{}'); } catch { return {}; }
     }
 
     function openGeminiUpload() {
-      const key = getGeminiKey();
-      if (!key) {
-        const k = prompt('Ingresá tu Gemini API Key (la misma que usás en el Worker):');
-        if (!k || !k.trim()) return;
-        setGeminiKey(k);
-      }
       const inp = document.getElementById('gemini-file-input');
       inp.value = '';
       inp.click();
-    }
-
-    function changeGeminiKey() {
-      closeGeminiModal();
-      const k = prompt('Nueva Gemini API Key:');
-      if (k && k.trim()) { setGeminiKey(k); showToast('API key actualizada ✓'); }
     }
 
     function closeGeminiModal() {
@@ -1833,9 +1816,6 @@
 
     async function processListaPDF(file) {
       if (!file) return;
-      const key = getGeminiKey();
-      if (!key) { showToast('Configurá la API key primero', true); return; }
-      // Mostrar modal en estado loading
       const modal = document.getElementById('gemini-modal');
       modal.classList.remove('hidden');
       document.getElementById('gemini-state-loading').classList.remove('hidden');
@@ -1844,39 +1824,26 @@
       try {
         const base64 = await fileToBase64(file);
         const provName = currentOrderProv?.name || 'proveedor';
-        const prompt = `Esta es una lista de precios del proveedor "${provName}". Analizá el PDF y extraé para cada artículo la cantidad de unidades que vienen por bulto o caja. Puede aparecer como "x12", "por 12", "caja x 24", "unid./bulto", "cont.", "x", etc. Devolvé SOLO un JSON válido con este formato exacto (sin texto adicional ni markdown):\n{"articulos":[{"nombre":"Nombre del producto","unidadesPorBulto":12},{"nombre":"Otro producto","unidadesPorBulto":null}]}\nSi no podés determinar las unidades de un artículo ponelo como null. Incluí todos los artículos del PDF.`;
-        const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [
-              { inline_data: { mime_type: 'application/pdf', data: base64 } },
-              { text: prompt }
-            ]}]})
-          }
-        );
+        const res = await fetch(WORKER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'analizarListaPDF', pdfBase64: base64, provName })
+        });
         if (!res.ok) {
           const errBody = await res.json().catch(() => ({}));
-          throw new Error(errBody?.error?.message || `HTTP ${res.status}`);
+          throw new Error(errBody?.error?.message || `Error del servidor: HTTP ${res.status}`);
         }
         const data = await res.json();
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error('Gemini no devolvió un JSON válido');
-        const result = JSON.parse(jsonMatch[0]);
-        const articulos = result.articulos || [];
-        // Guardar mapa nombre→unidades en localStorage
+        if (data.error) throw new Error(data.error);
+        const articulos = data.articulos || [];
         const map = {};
         articulos.forEach(a => {
           if (a.nombre && a.unidadesPorBulto) map[a.nombre.toLowerCase().trim()] = a.unidadesPorBulto;
         });
         localStorage.setItem('bultos_' + provName, JSON.stringify(map));
-        const found = Object.keys(map).length;
-        document.getElementById('gemini-found-count').textContent = found;
+        document.getElementById('gemini-found-count').textContent = Object.keys(map).length;
         document.getElementById('gemini-state-loading').classList.add('hidden');
         document.getElementById('gemini-state-success').classList.remove('hidden');
-        // Si ya estamos en paso 2, refrescar
         if (currentView === 'quantities') {
           renderQuantitiesItems(Object.values(orderSelections).filter(s => s.selected));
         }

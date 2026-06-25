@@ -431,7 +431,7 @@
           </div>
           <h3 class="text-lg font-black text-gray-800 dark:text-white mb-2">Error al analizar</h3>
           <p id="gemini-error-msg" class="text-xs text-gray-400 text-center mb-4">Error desconocido</p>
-          <p class="text-xs text-amber-600 bg-amber-50 rounded-xl p-3 text-center">Verificá que la API key de Gemini sea correcta. La podés cambiar tocando el botón de abajo.</p>
+          <p class="text-xs text-amber-600 bg-amber-50 rounded-xl p-3 text-center">El error detallado aparece arriba. Verificá que la GEMINI_API_KEY esté bien configurada en el Worker de Cloudflare.</p>
         </div>
         <button onclick="closeGeminiModal()" class="w-full mt-4 py-3.5 rounded-2xl font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-dark-border active:scale-95 text-sm">Cerrar</button>
       </div>
@@ -1831,7 +1831,8 @@
         });
         if (!res.ok) {
           const errBody = await res.json().catch(() => ({}));
-          throw new Error(errBody?.error?.message || `Error del servidor: HTTP ${res.status}`);
+          const msg = typeof errBody?.error === 'string' ? errBody.error : (errBody?.error?.message || `HTTP ${res.status}`);
+          throw new Error(msg);
         }
         const data = await res.json();
         if (data.error) throw new Error(data.error);

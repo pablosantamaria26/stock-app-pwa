@@ -117,6 +117,27 @@
     @keyframes spin{100%{transform:rotate(360deg)}}
     @keyframes slideUpSheet{from{transform:translateY(100%)}to{transform:translateY(0)}}
     .slide-up-sheet{animation:slideUpSheet 0.32s cubic-bezier(0.2,0.8,0.2,1) both;}
+
+    /* ── MODO GESTIÓN ──────────────────────────────────────── */
+    .mgr-row{display:grid;grid-template-columns:1fr 68px 30px;gap:10px;align-items:center;padding:14px 16px;border-bottom:1px solid #f1f5f9;}
+    .dark .mgr-row{border-color:#334155;}
+    .mgr-row:last-child{border-bottom:none;}
+    .mgr-check{width:26px;height:26px;border-radius:8px;border:2px solid #cbd5e1;appearance:none;-webkit-appearance:none;cursor:pointer;transition:all 0.15s;flex-shrink:0;background:white;}
+    .dark .mgr-check{background:#1e293b;border-color:#475569;}
+    .mgr-check:checked{background:#7c3aed;border-color:#7c3aed;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='white' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'/%3E%3C/svg%3E");}
+    .mgr-qty{width:100%;height:42px;border-radius:10px;border:1.5px solid #e2e8f0;text-align:center;font-size:1.1rem;font-weight:700;background:#f8fafc;color:#1e293b;outline:none;-webkit-appearance:none;-moz-appearance:textfield;transition:border-color 0.15s,opacity 0.15s;}
+    .dark .mgr-qty{background:#0f172a;border-color:#334155;color:#f8fafc;}
+    .mgr-qty:focus{border-color:#7c3aed;}
+    .mgr-qty::-webkit-outer-spin-button,.mgr-qty::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+    .pin-dot{width:14px;height:14px;border-radius:50%;background:#e2e8f0;transition:background 0.15s;}
+    .dark .pin-dot{background:#334155;}
+    .pin-dot.filled{background:#7c3aed;}
+    .pin-key{width:100%;aspect-ratio:1;border-radius:18px;background:white;font-size:1.5rem;font-weight:700;color:#1e293b;box-shadow:0 2px 8px rgba(0,0,0,0.08);display:flex;align-items:center;justify-content:center;transition:all 0.1s;border:1.5px solid #f1f5f9;}
+    .dark .pin-key{background:#1e293b;color:#f8fafc;border-color:#334155;}
+    .pin-key:active{transform:scale(0.88);background:#ede9fe;color:#7c3aed;}
+    .dark .pin-key:active{background:#2e1065;color:#c4b5fd;}
+    @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+    .shake{animation:shake 0.4s ease;}
   </style>
 </head>
 <body class="bg-gray-50 text-gray-800 dark:bg-dark-bg dark:text-dark-text">
@@ -172,6 +193,13 @@
         <h2 class="text-4xl font-black dark:text-white tracking-tight">Catálogos</h2>
         <p class="text-gray-400 font-medium mt-1">Biblioteca PDF</p>
       </button>
+
+      <!-- Botón acceso gestión -->
+      <div class="flex justify-center pb-2 pt-1">
+        <button onclick="openPinModal()" class="flex items-center gap-2 text-gray-300 dark:text-gray-600 text-xs font-semibold py-2 px-5 rounded-full active:scale-95 transition-transform">
+          <i class="fa-solid fa-lock text-[10px]"></i> Gestión
+        </button>
+      </div>
     </div>
 
     <!-- LIST -->
@@ -221,7 +249,58 @@
       </div>
     </div>
 
+    <!-- MANAGER LIST (modo propietario) -->
+    <div id="view-manager" class="hidden px-4 animate-slide-up">
+      <div class="sticky top-0 z-20 bg-gray-50 dark:bg-dark-bg pt-2 pb-3">
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+          <input type="text" id="mgr-search" oninput="filterMgrProviders(this.value)" placeholder="Buscar proveedor..."
+            class="w-full pl-11 pr-4 py-3.5 rounded-2xl border-none shadow-md bg-white dark:bg-dark-card font-bold text-base outline-none focus:ring-4 focus:ring-purple-500/20 transition-all text-gray-800 dark:text-white">
+        </div>
+      </div>
+      <div id="mgr-list-container" class="space-y-3 pb-8"></div>
+      <div id="loader-mgr" class="hidden flex flex-col items-center mt-32">
+        <div class="spinner mb-4" style="border-left-color:#7c3aed;"></div>
+        <span class="text-purple-500 font-bold text-sm animate-pulse">CARGANDO...</span>
+      </div>
+    </div>
+
+    <!-- ORDER VIEW (armar pedido por proveedor) -->
+    <div id="view-order" class="hidden px-4 animate-slide-up">
+      <div class="sticky top-0 z-20 bg-gray-50 dark:bg-dark-bg pt-2 pb-3 space-y-2">
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+          <input type="text" id="order-search" oninput="filterOrderSearch(this.value)" placeholder="Buscar producto..."
+            class="w-full pl-10 pr-4 py-2.5 rounded-xl border-none shadow-sm bg-white dark:bg-dark-card font-semibold text-sm outline-none focus:ring-2 focus:ring-purple-500/30 transition-all text-gray-800 dark:text-white">
+        </div>
+        <div class="flex gap-2">
+          <button onclick="filterOrderMode('all')" id="ofilter-all" class="flex-1 py-2 rounded-xl text-xs font-bold bg-purple-600 text-white transition-all">Todos</button>
+          <button onclick="filterOrderMode('sinstock')" id="ofilter-sinstock" class="flex-1 py-2 rounded-xl text-xs font-bold bg-gray-100 dark:bg-dark-border text-gray-500 dark:text-gray-400 transition-all">Sin stock</button>
+          <button onclick="filterOrderMode('checked')" id="ofilter-checked" class="flex-1 py-2 rounded-xl text-xs font-bold bg-gray-100 dark:bg-dark-border text-gray-500 dark:text-gray-400 transition-all">Marcados</button>
+        </div>
+      </div>
+      <div id="order-container" class="bg-white dark:bg-dark-card rounded-2xl shadow-sm overflow-hidden mb-28"></div>
+      <div id="loader-order" class="hidden flex flex-col items-center mt-32">
+        <div class="spinner mb-4" style="border-left-color:#7c3aed;"></div>
+        <span class="text-purple-400 font-bold text-sm animate-pulse">CARGANDO PRODUCTOS...</span>
+      </div>
+    </div>
+
   </div><!-- /scroll -->
+
+  <!-- DOCK GESTIÓN (pedido) -->
+  <div id="order-dock" class="bottom-dock" style="background:#4c1d95;" onclick="openOrderExportModal()">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full flex items-center justify-center text-white shrink-0" style="background:#7c3aed;">
+        <i class="fa-solid fa-cart-shopping text-lg"></i>
+      </div>
+      <div>
+        <span class="font-black text-sm uppercase tracking-wide text-gray-200">Generar Pedido</span>
+        <p class="text-xs mt-0.5" style="color:#c4b5fd;" id="order-counter">0 artículos</p>
+      </div>
+    </div>
+    <i class="fa-solid fa-chevron-right text-gray-400 text-lg mr-1"></i>
+  </div>
 
   <!-- DOCK -->
   <div id="bottom-dock" class="bottom-dock" onclick="promptUserForSave()">
@@ -357,6 +436,67 @@
       <button onclick="closeCatalogModal()" class="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center active:bg-gray-700"><i class="fa-solid fa-xmark text-lg"></i></button>
     </div>
     <div class="flex-1 bg-white w-full overflow-hidden"><iframe id="pdf-frame" class="w-full h-full border-0" src=""></iframe></div>
+  </div>
+
+  <!-- MODAL: PIN GESTIÓN -->
+  <div id="pin-modal" class="fixed inset-0 z-[100] flex items-center justify-center modal-overlay hidden px-6">
+    <div id="pin-card" class="bg-white dark:bg-dark-card p-6 rounded-[2.5rem] shadow-2xl w-full max-w-xs text-center animate-scale-in">
+      <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-4xl" style="background:#ede9fe;">🔐</div>
+      <h2 class="text-xl font-black text-gray-800 dark:text-white mb-1">Gestión</h2>
+      <p class="text-sm text-gray-400 mb-5">Ingresá el PIN</p>
+      <div class="flex justify-center gap-4 mb-5">
+        <div class="pin-dot" id="dot-0"></div>
+        <div class="pin-dot" id="dot-1"></div>
+        <div class="pin-dot" id="dot-2"></div>
+        <div class="pin-dot" id="dot-3"></div>
+      </div>
+      <div id="pin-error" class="hidden text-red-500 text-sm font-bold mb-3">PIN incorrecto ❌</div>
+      <div class="grid grid-cols-3 gap-3 mb-3">
+        <button onclick="pinKey('1')" class="pin-key">1</button>
+        <button onclick="pinKey('2')" class="pin-key">2</button>
+        <button onclick="pinKey('3')" class="pin-key">3</button>
+        <button onclick="pinKey('4')" class="pin-key">4</button>
+        <button onclick="pinKey('5')" class="pin-key">5</button>
+        <button onclick="pinKey('6')" class="pin-key">6</button>
+        <button onclick="pinKey('7')" class="pin-key">7</button>
+        <button onclick="pinKey('8')" class="pin-key">8</button>
+        <button onclick="pinKey('9')" class="pin-key">9</button>
+        <button onclick="pinKey('del')" class="pin-key text-2xl" style="color:#94a3b8;">⌫</button>
+        <button onclick="pinKey('0')" class="pin-key">0</button>
+        <button onclick="closePinModal()" class="pin-key text-sm" style="color:#94a3b8;">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: EXPORT PEDIDO -->
+  <div id="order-export-modal" class="fixed inset-0 z-[90] flex flex-col justify-end modal-overlay hidden">
+    <div class="bg-white dark:bg-dark-card w-full rounded-t-[2rem] shadow-2xl max-h-[85vh] flex flex-col slide-up-sheet">
+      <div class="p-5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between shrink-0">
+        <div>
+          <h3 class="text-xl font-black text-gray-800 dark:text-white">Pedido listo ✅</h3>
+          <p class="text-sm text-gray-400 mt-0.5" id="export-subtitle">Revisá antes de enviar</p>
+        </div>
+        <button onclick="closeOrderExportModal()" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-dark-border text-gray-500 flex items-center justify-center active:scale-90">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <!-- Header empresa -->
+      <div class="mx-4 mt-4 rounded-2xl p-4 shrink-0" style="background:#ede9fe;">
+        <p class="font-black text-sm" style="color:#4c1d95;">📦 MERCADO LIMPIO</p>
+        <p class="text-xs mt-0.5" style="color:#6d28d9;">Languenheim 1095, Longchamps</p>
+        <p class="text-xs" style="color:#6d28d9;">Lun a Vie de 7 a 15hs</p>
+      </div>
+      <p class="text-xs font-bold text-gray-400 uppercase tracking-wider px-5 mt-3 mb-1 shrink-0" id="export-prov-label">Pedido a: —</p>
+      <div id="export-preview" class="overflow-y-auto flex-1 px-4 pb-2 space-y-1"></div>
+      <div class="p-4 space-y-3 border-t border-gray-100 dark:border-gray-700 shrink-0">
+        <button onclick="generateExcelAndDownload()" class="w-full py-4 rounded-2xl font-bold text-white active:scale-95 transition-transform flex items-center justify-center gap-2" style="background:#16a34a;">
+          <i class="fa-solid fa-file-excel"></i> Descargar Excel
+        </button>
+        <button onclick="openWhatsAppOrder()" class="w-full py-4 rounded-2xl font-bold text-white active:scale-95 transition-transform flex items-center justify-center gap-2" style="background:#25D366;">
+          <i class="fa-brands fa-whatsapp"></i> Compartir por WhatsApp
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- TOAST -->
@@ -562,7 +702,9 @@
 
     // ── NAVIGATION ───────────────────────────────────────────────
     function setView(view, title, subtitle) {
-      ['view-home','view-list','view-editor'].forEach(id => document.getElementById(id).classList.add('hidden'));
+      ['view-home','view-list','view-editor','view-manager','view-order'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.classList.add('hidden');
+      });
       const el = document.getElementById(`view-${view}`);
       el.classList.remove('hidden');
       el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
@@ -571,12 +713,31 @@
       document.getElementById('back-btn').classList.toggle('hidden', view === 'home');
       document.getElementById('catalog-btn').classList.add('hidden');
       document.getElementById('bottom-dock').classList.remove('visible');
+      document.getElementById('order-dock').classList.remove('visible');
       if (view === 'editor' && currentCatalogUrl) document.getElementById('catalog-btn').classList.remove('hidden');
       if (view === 'list') { document.getElementById('provider-search').value = ''; filterProviders(''); }
       currentView = view;
     }
 
+    function setMgrView(view, title, subtitle) {
+      ['view-home','view-list','view-editor','view-manager','view-order'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.classList.add('hidden');
+      });
+      const el = document.getElementById(`view-${view}`);
+      el.classList.remove('hidden');
+      el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
+      document.getElementById('header-title').textContent = title;
+      document.getElementById('header-subtitle').textContent = subtitle || '';
+      document.getElementById('back-btn').classList.remove('hidden');
+      document.getElementById('catalog-btn').classList.add('hidden');
+      document.getElementById('bottom-dock').classList.remove('visible');
+      document.getElementById('order-dock').classList.remove('visible');
+      currentView = view;
+    }
+
     function goBack() {
+      if (currentView === 'order') { setMgrView('manager', '🔐 Gestión', 'Modo propietario'); renderMgrList(cachedProviders); return; }
+      if (currentView === 'manager') { setView('home', 'Stock', 'Panel Central'); return; }
       if (currentView === 'editor' && Object.keys(changes).length > 0) saveDraft();
       if (currentView === 'editor') setView('list', 'Proveedores', 'Seleccioná un proveedor');
       else if (currentView === 'list') { setView('home', 'Stock', 'Panel Central'); runRandomTaskAI(); }
@@ -1069,6 +1230,358 @@
     function closeCatalogModal(){document.getElementById('pdf-modal').classList.add('hidden');document.getElementById('pdf-modal').classList.remove('flex');document.getElementById('pdf-frame').src='';}
 
     // ── UTILS ────────────────────────────────────────────────────
+    // ── MODO GESTIÓN ─────────────────────────────────────────────
+
+    const MANAGER_PIN = '2817';
+    let pinBuffer = '';
+    let currentOrderProv = null;   // {id, name}
+    let orderItems = [];           // items cargados del sheet
+    let orderSelections = {};      // {key: {name, stock, checked, qty}}
+    let orderFilterMode = 'all';
+
+    // ── PIN ──────────────────────────────────────────────────────
+    function openPinModal() {
+      pinBuffer = '';
+      updatePinDots();
+      document.getElementById('pin-error').classList.add('hidden');
+      document.getElementById('pin-modal').classList.remove('hidden');
+    }
+    function closePinModal() {
+      document.getElementById('pin-modal').classList.add('hidden');
+      pinBuffer = '';
+    }
+    function pinKey(k) {
+      if (k === 'del') { pinBuffer = pinBuffer.slice(0, -1); updatePinDots(); return; }
+      if (pinBuffer.length >= 4) return;
+      pinBuffer += k;
+      updatePinDots();
+      if (pinBuffer.length === 4) {
+        setTimeout(() => {
+          if (pinBuffer === MANAGER_PIN) {
+            closePinModal();
+            loadManagerProviders();
+          } else {
+            document.getElementById('pin-error').classList.remove('hidden');
+            const card = document.getElementById('pin-card');
+            card.classList.remove('shake');
+            void card.offsetWidth;
+            card.classList.add('shake');
+            pinBuffer = '';
+            updatePinDots();
+          }
+        }, 80);
+      }
+    }
+    function updatePinDots() {
+      for (let i = 0; i < 4; i++)
+        document.getElementById(`dot-${i}`)?.classList.toggle('filled', i < pinBuffer.length);
+    }
+
+    // ── MANAGER LIST ─────────────────────────────────────────────
+    async function loadManagerProviders() {
+      setMgrView('manager', '🔐 Gestión', 'Modo propietario');
+      const l = document.getElementById('loader-mgr');
+      l.classList.remove('hidden');
+      if (!cachedProviders.length) {
+        try {
+          const res = await fetch(`${WORKER_URL}?action=getProviders`);
+          const d = await res.json();
+          if (!d.error) cachedProviders = d;
+        } catch {}
+      }
+      l.classList.add('hidden');
+      document.getElementById('mgr-search').value = '';
+      renderMgrList(cachedProviders);
+    }
+
+    function filterMgrProviders(q) {
+      renderMgrList(cachedProviders.filter(p => p.name.toLowerCase().includes(q.toLowerCase())));
+    }
+
+    function renderMgrList(providers) {
+      const c = document.getElementById('mgr-list-container');
+      c.innerHTML = '';
+      if (!providers.length) { c.innerHTML = '<div class="text-center opacity-40 py-12 font-medium">Sin resultados</div>'; return; }
+      const sorted = [...providers].sort((a, b) => new Date(a.lastUpdated || 0) - new Date(b.lastUpdated || 0));
+      sorted.forEach(prov => {
+        const days = getDaysSince(prov.lastUpdated);
+        let col = 'green';
+        if (days > 30) col = 'red'; else if (days > 7) col = 'yellow';
+        const d = document.createElement('div');
+        d.className = `bg-white dark:bg-dark-card p-4 rounded-2xl shadow-sm cursor-pointer active:scale-[0.98] transition-transform border border-gray-50 dark:border-dark-border border-l-4 border-${col}-500`;
+        d.onclick = () => loadOrderSheet(prov.id, prov.name);
+        d.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg shrink-0" style="background:#ede9fe;color:#7c3aed;">${prov.name.charAt(0)}</div>
+            <div class="flex-1 min-w-0">
+              <h3 class="font-bold text-gray-800 dark:text-gray-100 text-base leading-tight truncate">${prov.name}</h3>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-${col}-100 dark:bg-${col}-900/30 text-${col}-700 dark:text-${col}-300 font-bold">Hace ${days}d</span>
+                <span class="text-xs text-gray-400 font-medium">Tocar para armar pedido</span>
+              </div>
+            </div>
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background:#ede9fe;color:#7c3aed;">
+              <i class="fa-solid fa-cart-plus text-sm"></i>
+            </div>
+          </div>`;
+        c.appendChild(d);
+      });
+    }
+
+    // ── ORDER SHEET ───────────────────────────────────────────────
+    async function loadOrderSheet(id, name) {
+      currentOrderProv = { id, name };
+      orderSelections = {};
+      orderFilterMode = 'all';
+      setMgrView('order', name, 'Armar pedido');
+      document.getElementById('order-search').value = '';
+      filterOrderMode('all');
+      const c = document.getElementById('order-container');
+      const l = document.getElementById('loader-order');
+      c.innerHTML = ''; l.classList.remove('hidden');
+      try {
+        const res = await fetchWithRetry(`${WORKER_URL}?action=getSheetData&fileId=${id}`, {});
+        const d = await res.json();
+        orderItems = d.items || [];
+        orderItems.forEach(item => {
+          const k = `${item.row}_${item.col}`;
+          const raw = item.stock ? item.stock.toString() : 'x';
+          const noStock = raw === 'x' || raw === '0' || !raw;
+          orderSelections[k] = { name: item.name, stock: raw, checked: noStock, qty: noStock ? 1 : 0 };
+        });
+        document.getElementById('header-subtitle').textContent = `${orderItems.length} productos`;
+        renderOrderItems(orderItems);
+        updateOrderDock();
+      } catch (e) {
+        c.innerHTML = `<div class="p-6 text-center font-bold text-sm text-red-500">${e.message || 'Error al cargar'}</div>`;
+      } finally { l.classList.add('hidden'); }
+    }
+
+    function renderOrderItems(items) {
+      const c = document.getElementById('order-container');
+      c.innerHTML = '';
+      if (!items.length) { c.innerHTML = '<div class="p-8 text-center opacity-40 font-medium">Sin productos</div>'; return; }
+      items.forEach(item => {
+        const k = `${item.row}_${item.col}`;
+        const sel = orderSelections[k];
+        const raw = item.stock ? item.stock.toString() : 'x';
+        const noStock = raw === 'x' || raw === '0' || !raw;
+        const stockLabel = noStock ? '❌ Sin stock' : fmtStockMgr(raw);
+        const row = document.createElement('div');
+        row.className = 'mgr-row';
+        row.id = `orow_${k}`;
+        row.setAttribute('data-name', item.name.toLowerCase());
+        row.setAttribute('data-nostock', noStock ? '1' : '0');
+        row.innerHTML = `
+          <div class="flex flex-col min-w-0">
+            <span class="font-semibold text-gray-800 dark:text-gray-100 text-sm leading-snug">${item.name}</span>
+            <span class="text-xs mt-0.5 font-medium ${noStock ? 'text-red-500' : 'text-gray-400'}">${stockLabel}</span>
+          </div>
+          <input type="number"
+            id="oqty_${k}"
+            value="${sel.qty || ''}"
+            min="1"
+            placeholder="0"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            class="mgr-qty ${sel.checked ? '' : 'opacity-30'}"
+            ${sel.checked ? '' : 'disabled'}
+            oninput="updateOrderQty('${k}',this.value)">
+          <input type="checkbox"
+            id="ochk_${k}"
+            class="mgr-check"
+            ${sel.checked ? 'checked' : ''}
+            onchange="toggleOrderItem('${k}',this.checked)">`;
+        c.appendChild(row);
+      });
+    }
+
+    function fmtStockMgr(raw) {
+      if (!raw || raw === 'x' || raw === '0') return 'Sin stock';
+      const bulto = raw.toUpperCase().endsWith('B') && raw.length > 1;
+      const n = parseInt(raw.replace(/[^0-9]/g, '')) || 0;
+      return bulto ? `${n} bulto${n !== 1 ? 's' : ''}` : `${n} unid.`;
+    }
+
+    function filterOrderSearch(q) {
+      const term = q.toLowerCase().trim();
+      document.querySelectorAll('#order-container .mgr-row').forEach(row => {
+        const nameOk = !term || row.getAttribute('data-name').includes(term);
+        const modeOk = rowMatchesMode(row);
+        row.style.display = nameOk && modeOk ? '' : 'none';
+      });
+    }
+
+    function filterOrderMode(mode) {
+      orderFilterMode = mode;
+      ['all', 'sinstock', 'checked'].forEach(m => {
+        const btn = document.getElementById(`ofilter-${m}`);
+        if (!btn) return;
+        btn.className = `flex-1 py-2 rounded-xl text-xs font-bold transition-all ${m === mode ? 'text-white' : 'bg-gray-100 dark:bg-dark-border text-gray-500 dark:text-gray-400'}`;
+        if (m === mode) btn.style.background = '#7c3aed';
+        else btn.style.background = '';
+      });
+      document.querySelectorAll('#order-container .mgr-row').forEach(row => {
+        row.style.display = rowMatchesMode(row) ? '' : 'none';
+      });
+    }
+
+    function rowMatchesMode(row) {
+      if (orderFilterMode === 'all') return true;
+      if (orderFilterMode === 'sinstock') return row.getAttribute('data-nostock') === '1';
+      if (orderFilterMode === 'checked') {
+        const k = row.id.replace('orow_', '');
+        return !!(orderSelections[k]?.checked);
+      }
+      return true;
+    }
+
+    function toggleOrderItem(k, checked) {
+      if (!orderSelections[k]) return;
+      orderSelections[k].checked = checked;
+      const qty = document.getElementById(`oqty_${k}`);
+      if (qty) {
+        qty.disabled = !checked;
+        qty.className = `mgr-qty ${checked ? '' : 'opacity-30'}`;
+        if (checked && (!qty.value || qty.value === '0')) { qty.value = '1'; orderSelections[k].qty = 1; }
+        else if (!checked) orderSelections[k].qty = 0;
+        else orderSelections[k].qty = parseInt(qty.value) || 1;
+      }
+      updateOrderDock();
+    }
+
+    function updateOrderQty(k, val) {
+      if (!orderSelections[k]) return;
+      orderSelections[k].qty = parseInt(val) || 0;
+      updateOrderDock();
+    }
+
+    function updateOrderDock() {
+      const checked = Object.values(orderSelections).filter(s => s.checked);
+      const dock = document.getElementById('order-dock');
+      dock.classList.toggle('visible', checked.length > 0);
+      document.getElementById('order-counter').textContent = `${checked.length} artículo${checked.length !== 1 ? 's' : ''} seleccionado${checked.length !== 1 ? 's' : ''}`;
+    }
+
+    // ── EXPORT MODAL ──────────────────────────────────────────────
+    function openOrderExportModal() {
+      const selected = Object.values(orderSelections).filter(s => s.checked);
+      if (!selected.length) return;
+      const prov = currentOrderProv?.name || '';
+      document.getElementById('export-subtitle').textContent = `${selected.length} artículo${selected.length !== 1 ? 's' : ''} — ${prov}`;
+      document.getElementById('export-prov-label').textContent = `Pedido a: ${prov}`;
+      const preview = document.getElementById('export-preview');
+      preview.innerHTML = '';
+      selected.forEach((item, i) => {
+        const div = document.createElement('div');
+        div.className = `flex items-center justify-between px-3 py-2.5 rounded-xl ${i % 2 === 0 ? 'bg-gray-50 dark:bg-dark-bg' : ''}`;
+        div.innerHTML = `
+          <span class="font-medium text-gray-800 dark:text-gray-200 text-sm flex-1 leading-snug">${item.name}</span>
+          <span class="font-black text-sm ml-3 shrink-0" style="color:#7c3aed;">${item.qty || '—'} ud.</span>`;
+        preview.appendChild(div);
+      });
+      document.getElementById('order-export-modal').classList.remove('hidden');
+    }
+    function closeOrderExportModal() { document.getElementById('order-export-modal').classList.add('hidden'); }
+
+    // ── EXCEL GENERATION ─────────────────────────────────────────
+    async function loadSheetJS() {
+      if (window.XLSX) return;
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://unpkg.com/xlsx/dist/xlsx.full.min.js';
+        s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+
+    async function generateExcelAndDownload() {
+      const selected = Object.values(orderSelections).filter(s => s.checked);
+      if (!selected.length) return showToast('Sin artículos seleccionados', true);
+      showToast('Generando Excel...');
+      try {
+        await loadSheetJS();
+        const wb = XLSX.utils.book_new();
+        const prov = currentOrderProv?.name || 'Proveedor';
+        const today = new Date().toLocaleDateString('es-AR');
+
+        const rows = [
+          ['MERCADO LIMPIO'],
+          ['Languenheim 1095, Longchamps'],
+          ['Horario: Lunes a Viernes de 7 a 15hs'],
+          [''],
+          [`PEDIDO A: ${prov.toUpperCase()}`, '', today],
+          [''],
+          ['ARTÍCULO', 'CANTIDAD A PEDIR', 'OBSERVACIONES'],
+        ];
+        selected.forEach(item => rows.push([item.name, item.qty || 1, '']));
+        rows.push(['']);
+        rows.push([`Total: ${selected.length} artículo${selected.length !== 1 ? 's' : ''}`, '', '']);
+
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        ws['!cols'] = [{ wch: 52 }, { wch: 18 }, { wch: 22 }];
+        ws['!merges'] = [
+          { s: { r: 0, c: 0 }, e: { r: 0, c: 2 } },
+          { s: { r: 1, c: 0 }, e: { r: 1, c: 2 } },
+          { s: { r: 2, c: 0 }, e: { r: 2, c: 2 } },
+          { s: { r: 4, c: 0 }, e: { r: 4, c: 1 } },
+        ];
+
+        const S = {
+          h1:  { font: { bold: true, sz: 18, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '1E3A5F' } }, alignment: { horizontal: 'center', vertical: 'center' } },
+          h2:  { font: { sz: 11, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '2563EB' } }, alignment: { horizontal: 'center' } },
+          ped: { font: { bold: true, sz: 13, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '7C3AED' } }, alignment: { horizontal: 'left' } },
+          pedR:{ font: { sz: 11, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '7C3AED' } }, alignment: { horizontal: 'right' } },
+          col: { font: { bold: true, sz: 11, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '1E293B' } }, alignment: { horizontal: 'center' } },
+          ev:  { fill: { fgColor: { rgb: 'F8FAFC' } }, font: { sz: 10 } },
+          od:  { fill: { fgColor: { rgb: 'FFFFFF' } }, font: { sz: 10 } },
+          qty: (bg) => ({ fill: { fgColor: { rgb: bg } }, font: { bold: true, sz: 11, color: { rgb: '7C3AED' } }, alignment: { horizontal: 'center' } }),
+          tot: { font: { bold: true, sz: 11 }, alignment: { horizontal: 'left' } },
+        };
+
+        const c = (r, col) => XLSX.utils.encode_cell({ r, c: col });
+        ['A1','B1','C1'].forEach(x => { if (ws[x]) ws[x].s = S.h1; });
+        ['A2','B2','C2'].forEach(x => { if (ws[x]) ws[x].s = S.h2; });
+        ['A3','B3','C3'].forEach(x => { if (ws[x]) ws[x].s = S.h2; });
+        if (ws['A5']) ws['A5'].s = S.ped;
+        if (ws['B5']) ws['B5'].s = S.ped;
+        if (ws['C5']) ws['C5'].s = S.pedR;
+        ['A7','B7','C7'].forEach(x => { if (ws[x]) ws[x].s = S.col; });
+        selected.forEach((_, i) => {
+          const r = 7 + i;
+          const bg = i % 2 === 0 ? 'F8FAFC' : 'FFFFFF';
+          const na = c(r, 0), qa = c(r, 1), oa = c(r, 2);
+          if (ws[na]) ws[na].s = { ...( i % 2 === 0 ? S.ev : S.od ) };
+          if (ws[qa]) ws[qa].s = S.qty(bg);
+          if (ws[oa]) ws[oa].s = i % 2 === 0 ? S.ev : S.od;
+        });
+        const totRow = 8 + selected.length;
+        if (ws[c(totRow, 0)]) ws[c(totRow, 0)].s = S.tot;
+
+        ws['!rows'] = [{ hpt: 38 }, { hpt: 22 }, { hpt: 22 }, { hpt: 8 }, { hpt: 28 }, { hpt: 8 }, { hpt: 24 }];
+        selected.forEach(() => ws['!rows'].push({ hpt: 20 }));
+
+        XLSX.utils.book_append_sheet(wb, ws, 'Pedido');
+        const fname = `Pedido_${prov.replace(/\s+/g, '_')}_${today.replace(/\//g, '-')}.xlsx`;
+        XLSX.writeFile(wb, fname);
+        showToast('Excel descargado ✓');
+        closeOrderExportModal();
+      } catch (e) { showToast('Error al generar Excel', true); console.error(e); }
+    }
+
+    // ── WHATSAPP EXPORT ──────────────────────────────────────────
+    function openWhatsAppOrder() {
+      const selected = Object.values(orderSelections).filter(s => s.checked);
+      if (!selected.length) return;
+      const prov = currentOrderProv?.name || 'Proveedor';
+      const today = new Date().toLocaleDateString('es-AR');
+      let msg = `*PEDIDO MERCADO LIMPIO*\n📅 ${today}\n\n`;
+      msg += `Hola! Les hacemos el siguiente pedido:\n\n`;
+      selected.forEach(item => { msg += `• ${item.name}: *${item.qty || 1} ud.*\n`; });
+      msg += `\n📍 Languenheim 1095, Longchamps\n🕐 Entrega Lun-Vie de 7 a 15hs`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
     function getDaysSince(d){if(!d)return 999;return Math.floor((new Date()-new Date(d))/86400000);}
 
     function showToast(msg, error) {

@@ -1503,6 +1503,18 @@
         document.getElementById('header-subtitle').textContent = `${orderItems.length} productos`;
         renderOrderItems(orderItems);
         updateOrderDock();
+        // Indicador de bultos guardados
+        const bultosGuardados = Object.keys(getBultosData(name)).length;
+        const btn = document.querySelector('[onclick="openGeminiUpload()"]');
+        if (btn) {
+          if (bultosGuardados > 0) {
+            btn.innerHTML = `<i class="fa-solid fa-circle-check text-xs"></i> Lista cargada (${bultosGuardados} artículos con info de bultos)`;
+            btn.style.cssText = 'background:#ECFDF5;color:#0D7B68;border:1.5px solid #A7F3D0;';
+          } else {
+            btn.innerHTML = `<i class="fa-solid fa-file-pdf text-xs"></i> Subir lista PDF · ver bultos por artículo`;
+            btn.style.cssText = 'background:#FFF7ED;color:#D97706;border:1.5px solid #FED7AA;';
+          }
+        }
       } catch (e) {
         c.innerHTML = `<div class="p-6 text-center font-bold text-sm text-red-500">${e.message || 'Error al cargar'}</div>`;
       } finally { l.classList.add('hidden'); }
@@ -1669,7 +1681,7 @@
     function openOrderExportModal() {
       const selected = Object.values(orderSelections).filter(s => s.selected);
       if (!selected.length) return;
-      const prov = currentOrderProv?.name || '';
+      const prov = cleanProvName(currentOrderProv?.name || '');
       document.getElementById('export-subtitle').textContent = `${selected.length} artículo${selected.length !== 1 ? 's' : ''} — ${prov}`;
       document.getElementById('export-prov-label').textContent = `Pedido a: ${prov}`;
       const preview = document.getElementById('export-preview');
@@ -1719,7 +1731,7 @@
       try {
         await loadSheetJS();
         const wb = XLSX.utils.book_new();
-        const prov = currentOrderProv?.name || 'Proveedor';
+        const prov = cleanProvName(currentOrderProv?.name || 'Proveedor');
         const today = new Date().toLocaleDateString('es-AR');
 
         const rows = [
@@ -1787,15 +1799,25 @@
     }
 
     // ── WHATSAPP EXPORT ──────────────────────────────────────────
+    function cleanProvName(name) {
+      return (name || '').replace(/\s*stock\s*/gi, '').trim();
+    }
+
     function openWhatsAppOrder() {
       const selected = Object.values(orderSelections).filter(s => s.selected);
       if (!selected.length) return;
-      const prov = currentOrderProv?.name || 'Proveedor';
+      const prov = cleanProvName(currentOrderProv?.name || 'Proveedor');
       const today = new Date().toLocaleDateString('es-AR');
-      let msg = `*PEDIDO MERCADO LIMPIO*\n📅 ${today}\n\n`;
+      let msg = `*PEDIDO DE MERCADO LIMPIO*\n`;
+      msg += `Fecha: ${today}\n\n`;
+      msg += `*Pedido a: ${prov.toUpperCase()}*\n\n`;
       msg += `Hola! Les hacemos el siguiente pedido:\n\n`;
-      selected.forEach(item => { msg += `• ${item.name}: *${item.qty || 1} bulto${(item.qty || 1) !== 1 ? 's' : ''}*\n`; });
-      msg += `\n📍 Languenheim 1095, Longchamps\n🕐 Entrega Lun-Vie de 7 a 15hs`;
+      selected.forEach(item => {
+        const qty = item.qty || 1;
+        msg += `• ${item.name}: *${qty} BULTO${qty !== 1 ? 'S' : ''}*\n`;
+      });
+      msg += `\nLugar: Languenheim 1095, Longchamps`;
+      msg += `\nEntrega: Lun-Vie de 7 a 15hs`;
       window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
@@ -1842,9 +1864,16 @@
           if (a.nombre && a.unidadesPorBulto) map[a.nombre.toLowerCase().trim()] = a.unidadesPorBulto;
         });
         localStorage.setItem('bultos_' + provName, JSON.stringify(map));
-        document.getElementById('gemini-found-count').textContent = Object.keys(map).length;
+        const found = Object.keys(map).length;
+        document.getElementById('gemini-found-count').textContent = found;
         document.getElementById('gemini-state-loading').classList.add('hidden');
         document.getElementById('gemini-state-success').classList.remove('hidden');
+        // Actualizar botón a estado "cargado"
+        const btn = document.querySelector('[onclick="openGeminiUpload()"]');
+        if (btn) {
+          btn.innerHTML = `<i class="fa-solid fa-circle-check text-xs"></i> Lista cargada (${found} artículos con info de bultos)`;
+          btn.style.cssText = 'background:#ECFDF5;color:#0D7B68;border:1.5px solid #A7F3D0;';
+        }
         if (currentView === 'quantities') {
           renderQuantitiesItems(Object.values(orderSelections).filter(s => s.selected));
         }

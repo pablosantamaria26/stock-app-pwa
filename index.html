@@ -43,8 +43,38 @@
     }
     .glass{background:rgba(255,255,255,0.93);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
     .dark .glass{background:rgba(15,23,42,0.93);}
-    .big-btn{height:40vh;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:2.5rem;position:relative;overflow:hidden;transition:transform 0.1s;}
-    .big-btn:active{transform:scale(0.97);}
+    /* ── HOME REDESIGN ────────────────────────────────────── */
+    .home-hero{background:linear-gradient(135deg,#4338CA 0%,#6D28D9 55%,#9333EA 100%);border-radius:2.5rem;padding:28px 24px 24px;position:relative;overflow:hidden;margin:12px 16px 0;}
+    .home-hero::before{content:'';position:absolute;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.07);top:-50px;right:-40px;}
+    .home-hero::after{content:'';position:absolute;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.05);bottom:-40px;left:-30px;}
+    .home-action{display:flex;align-items:center;gap:16px;background:white;border-radius:24px;padding:18px 16px;border:1px solid rgba(241,245,249,0.9);box-shadow:0 2px 10px rgba(0,0,0,0.05);cursor:pointer;transition:transform 0.12s,box-shadow 0.12s;width:100%;text-align:left;}
+    .dark .home-action{background:#1e293b;border-color:#334155;}
+    .home-action:active{transform:scale(0.97);box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+    .action-icon{width:54px;height:54px;border-radius:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .action-chevron{width:32px;height:32px;border-radius:12px;background:#F8FAFC;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .dark .action-chevron{background:#334155;}
+
+    /* ── SELECTION ROWS (paso 1 pedido) ──────────────────── */
+    .sel-row{display:flex;align-items:center;gap:12px;padding:15px 16px;border-bottom:1px solid #F1F5F9;cursor:pointer;transition:background 0.12s;-webkit-tap-highlight-color:transparent;}
+    .dark .sel-row{border-color:#1e293b;}
+    .sel-row:last-child{border-bottom:none;}
+    .sel-row.selected{background:#EEF2FF;}
+    .dark .sel-row.selected{background:#1e1b4b;}
+    .sel-circle{width:26px;height:26px;border-radius:50%;border:2px solid #CBD5E1;transition:all 0.15s;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+    .dark .sel-circle{border-color:#475569;}
+    .sel-row.selected .sel-circle{background:#4F46E5;border-color:#4F46E5;}
+
+    /* ── QUANTITY ROWS (paso 2 cantidades) ───────────────── */
+    .qty-row{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid #F1F5F9;}
+    .dark .qty-row{border-color:#1e293b;}
+    .qty-row:last-child{border-bottom:none;}
+    .step-btn{width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:900;transition:transform 0.1s;flex-shrink:0;}
+    .step-btn:active{transform:scale(0.86);}
+    .step-minus{background:#F1F5F9;color:#64748B;}
+    .dark .step-minus{background:#334155;color:#94A3B8;}
+    .step-plus{background:linear-gradient(135deg,#4F46E5,#7C3AED);color:white;}
+    .step-num{min-width:44px;text-align:center;font-size:1.35rem;font-weight:900;color:#4F46E5;}
+    .dark .step-num{color:#818CF8;}
 
     /* Bottom dock — respeta la barra de navegación de Android */
     .bottom-dock{position:fixed;bottom:calc(14px + env(safe-area-inset-bottom, 0px));left:14px;right:14px;background:#1e293b;color:white;padding:14px 20px;border-radius:20px;box-shadow:0 10px 30px -5px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:space-between;z-index:50;transform:translateY(160%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);}
@@ -164,41 +194,83 @@
   <div id="main-scroll-area">
 
     <!-- HOME -->
-    <div id="view-home" class="flex flex-col gap-4 px-4 animate-slide-up">
-      <div id="pending-alert" class="hidden bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-2xl p-4 flex items-center gap-3">
-        <div class="w-10 h-10 bg-amber-100 dark:bg-amber-900/40 rounded-full flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
-          <i class="fa-solid fa-cloud-arrow-up"></i>
+    <div id="view-home" class="flex flex-col animate-slide-up pb-8">
+
+      <!-- Hero card -->
+      <div class="home-hero">
+        <p class="text-white/50 text-[11px] font-bold tracking-[0.15em] uppercase mb-2">Panel de Control</p>
+        <h1 class="text-white text-[2rem] font-black leading-none tracking-tight">Mercado<br>Limpio</h1>
+        <p class="text-white/40 text-xs mt-2 font-medium">Languenheim 1095 · Longchamps</p>
+        <div class="flex items-center gap-2 mt-5 flex-wrap">
+          <div class="flex items-center gap-2 rounded-2xl px-3.5 py-2" style="background:rgba(255,255,255,0.14);">
+            <i class="fa-solid fa-store text-white/70 text-xs"></i>
+            <span class="text-white font-black text-sm" id="home-prov-count">—</span>
+            <span class="text-white/60 text-xs font-medium">proveedores</span>
+          </div>
+          <div id="home-alert-chip" class="hidden items-center gap-1.5 rounded-2xl px-3.5 py-2" style="background:rgba(251,113,133,0.25);">
+            <i class="fa-solid fa-triangle-exclamation text-red-200 text-xs"></i>
+            <span class="text-red-100 text-xs font-bold" id="home-alert-text">revisar</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pending alert -->
+      <div id="pending-alert" class="hidden mx-4 mt-3 rounded-2xl p-4 flex items-center gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700">
+        <div class="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+          <i class="fa-solid fa-cloud-arrow-up text-sm"></i>
         </div>
         <div class="flex-1 min-w-0">
           <p class="font-bold text-amber-800 dark:text-amber-300 text-sm" id="pending-text">Registros pendientes</p>
-          <p class="text-xs text-amber-600 dark:text-amber-500 mt-0.5">Se envían automáticamente al reconectar</p>
+          <p class="text-xs text-amber-600 dark:text-amber-500 mt-0.5">Se envían al reconectar</p>
         </div>
         <button onclick="drainQueue()" class="bg-amber-500 text-white px-3 py-2 rounded-xl text-xs font-bold active:scale-95 shrink-0">Reintentar</button>
       </div>
 
-      <button onclick="loadProviders()" class="big-btn bg-white dark:bg-dark-card shadow-xl border-l-8 border-green-500 group">
-        <div class="absolute right-0 top-0 w-52 h-52 bg-green-500 opacity-5 rounded-bl-[100%] -mr-10 -mt-10 pointer-events-none"></div>
-        <div class="w-24 h-24 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center text-green-600 dark:text-green-400 text-5xl shadow-inner mb-5 animate-bounce-slow">
-          <i class="fa-solid fa-boxes-packing"></i>
-        </div>
-        <h2 class="text-4xl font-black dark:text-white tracking-tight">Stock</h2>
-        <p class="text-gray-400 font-medium mt-1">Cargar Inventario</p>
-      </button>
+      <!-- Action cards -->
+      <div class="flex flex-col gap-3 px-4 mt-4">
 
-      <button onclick="loadCatalogs()" class="big-btn bg-white dark:bg-dark-card shadow-xl border-l-8 border-orange-500 group">
-        <div class="absolute right-0 top-0 w-52 h-52 bg-orange-500 opacity-5 rounded-bl-[100%] -mr-10 -mt-10 pointer-events-none"></div>
-        <div class="w-24 h-24 bg-orange-50 dark:bg-orange-900/20 rounded-full flex items-center justify-center text-orange-600 dark:text-orange-400 text-5xl shadow-inner mb-5">
-          <i class="fa-solid fa-book-open"></i>
-        </div>
-        <h2 class="text-4xl font-black dark:text-white tracking-tight">Catálogos</h2>
-        <p class="text-gray-400 font-medium mt-1">Biblioteca PDF</p>
-      </button>
-
-      <!-- Botón acceso gestión -->
-      <div class="flex justify-center pb-2 pt-1">
-        <button onclick="openPinModal()" class="flex items-center gap-2 text-gray-300 dark:text-gray-600 text-xs font-semibold py-2 px-5 rounded-full active:scale-95 transition-transform">
-          <i class="fa-solid fa-lock text-[10px]"></i> Gestión
+        <!-- Stock Depósito -->
+        <button onclick="loadProviders()" class="home-action">
+          <div class="action-icon" style="background:linear-gradient(135deg,#10B981,#059669);">
+            <i class="fa-solid fa-boxes-packing text-white text-xl"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="font-black text-gray-900 dark:text-white text-base leading-tight">Stock Depósito</p>
+            <p class="text-gray-400 dark:text-gray-500 text-xs mt-0.5">Actualizar inventario</p>
+          </div>
+          <div class="action-chevron">
+            <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+          </div>
         </button>
+
+        <!-- Catálogos -->
+        <button onclick="loadCatalogs()" class="home-action">
+          <div class="action-icon" style="background:linear-gradient(135deg,#F59E0B,#D97706);">
+            <i class="fa-solid fa-book-open text-white text-xl"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="font-black text-gray-900 dark:text-white text-base leading-tight">Catálogos</p>
+            <p class="text-gray-400 dark:text-gray-500 text-xs mt-0.5">Biblioteca de PDFs</p>
+          </div>
+          <div class="action-chevron">
+            <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+          </div>
+        </button>
+
+        <!-- Panel de Gestión -->
+        <button onclick="openPinModal()" class="home-action" style="background:linear-gradient(135deg,#4338CA,#7C3AED);border-color:transparent;">
+          <div class="action-icon" style="background:rgba(255,255,255,0.15);">
+            <i class="fa-solid fa-lock text-white text-xl"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="font-black text-white text-base leading-tight">Panel de Gestión</p>
+            <p class="text-white/55 text-xs mt-0.5">Pedidos · Análisis de stock</p>
+          </div>
+          <div class="action-chevron" style="background:rgba(255,255,255,0.15);">
+            <i class="fa-solid fa-chevron-right text-white/50 text-xs"></i>
+          </div>
+        </button>
+
       </div>
     </div>
 
@@ -265,38 +337,71 @@
       </div>
     </div>
 
-    <!-- ORDER VIEW (armar pedido por proveedor) -->
+    <!-- ORDER VIEW — Paso 1: Seleccioná artículos -->
     <div id="view-order" class="hidden px-4 animate-slide-up">
-      <div class="sticky top-0 z-20 bg-gray-50 dark:bg-dark-bg pt-2 pb-3 space-y-2">
+      <!-- Paso indicator -->
+      <div class="flex items-center gap-3 mb-3 mt-1 px-1">
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black text-white" style="background:#4F46E5;">1</div>
+          <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400">Seleccioná artículos</span>
+        </div>
+        <div class="flex-1 h-px bg-gray-200 dark:bg-dark-border"></div>
+        <div class="flex items-center gap-2 opacity-40">
+          <div class="w-6 h-6 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-xs font-black text-white">2</div>
+          <span class="text-xs font-bold text-gray-400">Cantidades</span>
+        </div>
+      </div>
+      <div class="sticky top-0 z-20 bg-gray-50 dark:bg-dark-bg pb-3 space-y-2">
         <div class="relative">
           <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
           <input type="text" id="order-search" oninput="filterOrderSearch(this.value)" placeholder="Buscar producto..."
-            class="w-full pl-10 pr-4 py-2.5 rounded-xl border-none shadow-sm bg-white dark:bg-dark-card font-semibold text-sm outline-none focus:ring-2 focus:ring-purple-500/30 transition-all text-gray-800 dark:text-white">
+            class="w-full pl-10 pr-4 py-2.5 rounded-xl border-none shadow-sm bg-white dark:bg-dark-card font-semibold text-sm outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all text-gray-800 dark:text-white">
         </div>
         <div class="flex gap-2">
-          <button onclick="filterOrderMode('all')" id="ofilter-all" class="flex-1 py-2 rounded-xl text-xs font-bold bg-purple-600 text-white transition-all">Todos</button>
+          <button onclick="filterOrderMode('all')" id="ofilter-all" class="flex-1 py-2 rounded-xl text-xs font-bold text-white transition-all" style="background:#4F46E5;">Todos</button>
           <button onclick="filterOrderMode('sinstock')" id="ofilter-sinstock" class="flex-1 py-2 rounded-xl text-xs font-bold bg-gray-100 dark:bg-dark-border text-gray-500 dark:text-gray-400 transition-all">Sin stock</button>
-          <button onclick="filterOrderMode('checked')" id="ofilter-checked" class="flex-1 py-2 rounded-xl text-xs font-bold bg-gray-100 dark:bg-dark-border text-gray-500 dark:text-gray-400 transition-all">Marcados</button>
+          <button onclick="filterOrderMode('selected')" id="ofilter-selected" class="flex-1 py-2 rounded-xl text-xs font-bold bg-gray-100 dark:bg-dark-border text-gray-500 dark:text-gray-400 transition-all">Marcados</button>
         </div>
       </div>
       <div id="order-container" class="bg-white dark:bg-dark-card rounded-2xl shadow-sm overflow-hidden mb-28"></div>
       <div id="loader-order" class="hidden flex flex-col items-center mt-32">
-        <div class="spinner mb-4" style="border-left-color:#7c3aed;"></div>
-        <span class="text-purple-400 font-bold text-sm animate-pulse">CARGANDO PRODUCTOS...</span>
+        <div class="spinner mb-4" style="border-left-color:#4F46E5;"></div>
+        <span class="font-bold text-sm animate-pulse" style="color:#4F46E5;">CARGANDO PRODUCTOS...</span>
       </div>
+    </div>
+
+    <!-- QUANTITIES VIEW — Paso 2: Cantidades de bultos -->
+    <div id="view-quantities" class="hidden px-4 animate-slide-up">
+      <!-- Paso indicator -->
+      <div class="flex items-center gap-3 mb-3 mt-1 px-1">
+        <div class="flex items-center gap-2 opacity-40">
+          <div class="w-6 h-6 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-xs font-black text-white">1</div>
+          <span class="text-xs font-bold text-gray-400">Selección</span>
+        </div>
+        <div class="flex-1 h-px" style="background:#4F46E5;"></div>
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black text-white" style="background:#4F46E5;">2</div>
+          <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400">Cantidades</span>
+        </div>
+      </div>
+      <div class="rounded-2xl p-3 mb-3 flex items-center gap-3" style="background:#EEF2FF;">
+        <i class="fa-solid fa-boxes-stacked text-xs" style="color:#4F46E5;"></i>
+        <p class="text-xs font-semibold" style="color:#4338CA;">¿Cuántos bultos pedís de cada artículo?</p>
+      </div>
+      <div id="quantities-container" class="bg-white dark:bg-dark-card rounded-2xl shadow-sm overflow-hidden mb-28"></div>
     </div>
 
   </div><!-- /scroll -->
 
-  <!-- DOCK GESTIÓN (pedido) -->
-  <div id="order-dock" class="bottom-dock" style="background:#4c1d95;" onclick="openOrderExportModal()">
+  <!-- DOCK GESTIÓN (dinámico: paso 1 = continuar, paso 2 = generar) -->
+  <div id="order-dock" class="bottom-dock" onclick="onOrderDockTap()">
     <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-full flex items-center justify-center text-white shrink-0" style="background:#7c3aed;">
-        <i class="fa-solid fa-cart-shopping text-lg"></i>
+      <div id="order-dock-icon" class="w-10 h-10 rounded-full flex items-center justify-center text-white shrink-0" style="background:#4F46E5;">
+        <i class="fa-solid fa-arrow-right text-base"></i>
       </div>
       <div>
-        <span class="font-black text-sm uppercase tracking-wide text-gray-200">Generar Pedido</span>
-        <p class="text-xs mt-0.5" style="color:#c4b5fd;" id="order-counter">0 artículos</p>
+        <span class="font-black text-sm uppercase tracking-wide text-gray-200" id="order-dock-title">Continuar</span>
+        <p class="text-xs mt-0.5" style="color:#a5b4fc;" id="order-counter">0 artículos</p>
       </div>
     </div>
     <i class="fa-solid fa-chevron-right text-gray-400 text-lg mr-1"></i>
@@ -702,7 +807,7 @@
 
     // ── NAVIGATION ───────────────────────────────────────────────
     function setView(view, title, subtitle) {
-      ['view-home','view-list','view-editor','view-manager','view-order'].forEach(id => {
+      ['view-home','view-list','view-editor','view-manager','view-order','view-quantities'].forEach(id => {
         const el = document.getElementById(id); if (el) el.classList.add('hidden');
       });
       const el = document.getElementById(`view-${view}`);
@@ -720,7 +825,7 @@
     }
 
     function setMgrView(view, title, subtitle) {
-      ['view-home','view-list','view-editor','view-manager','view-order'].forEach(id => {
+      ['view-home','view-list','view-editor','view-manager','view-order','view-quantities'].forEach(id => {
         const el = document.getElementById(id); if (el) el.classList.add('hidden');
       });
       const el = document.getElementById(`view-${view}`);
@@ -736,6 +841,7 @@
     }
 
     function goBack() {
+      if (currentView === 'quantities') { setMgrView('order', currentOrderProv.name, 'Paso 1 · Seleccioná artículos'); updateOrderDock(); return; }
       if (currentView === 'order') { setMgrView('manager', '🔐 Gestión', 'Modo propietario'); renderMgrList(cachedProviders); return; }
       if (currentView === 'manager') { setView('home', 'Stock', 'Panel Central'); return; }
       if (currentView === 'editor' && Object.keys(changes).length > 0) saveDraft();
@@ -748,7 +854,7 @@
       try {
         const res = await fetch(`${WORKER_URL}?action=getProviders`);
         const d = await res.json();
-        if (!d.error) { cachedProviders = d; runAutonomousAICheck(); }
+        if (!d.error) { cachedProviders = d; updateHomeStats(); runAutonomousAICheck(); }
       } catch {}
     }
 
@@ -1333,7 +1439,7 @@
       currentOrderProv = { id, name };
       orderSelections = {};
       orderFilterMode = 'all';
-      setMgrView('order', name, 'Armar pedido');
+      setMgrView('order', name, 'Paso 1 · Seleccioná artículos');
       document.getElementById('order-search').value = '';
       filterOrderMode('all');
       const c = document.getElementById('order-container');
@@ -1347,7 +1453,7 @@
           const k = `${item.row}_${item.col}`;
           const raw = item.stock ? item.stock.toString() : 'x';
           const noStock = raw === 'x' || raw === '0' || !raw;
-          orderSelections[k] = { name: item.name, stock: raw, checked: noStock, qty: noStock ? 1 : 0 };
+          orderSelections[k] = { name: item.name, stock: raw, selected: noStock, qty: 1 };
         });
         document.getElementById('header-subtitle').textContent = `${orderItems.length} productos`;
         renderOrderItems(orderItems);
@@ -1367,33 +1473,34 @@
         const raw = item.stock ? item.stock.toString() : 'x';
         const noStock = raw === 'x' || raw === '0' || !raw;
         const stockLabel = noStock ? '❌ Sin stock' : fmtStockMgr(raw);
+        const isSelected = sel?.selected;
         const row = document.createElement('div');
-        row.className = 'mgr-row';
+        row.className = `sel-row${isSelected ? ' selected' : ''}`;
         row.id = `orow_${k}`;
         row.setAttribute('data-name', item.name.toLowerCase());
         row.setAttribute('data-nostock', noStock ? '1' : '0');
+        row.onclick = () => toggleSelectItem(k);
         row.innerHTML = `
-          <div class="flex flex-col min-w-0">
-            <span class="font-semibold text-gray-800 dark:text-gray-100 text-sm leading-snug">${item.name}</span>
-            <span class="text-xs mt-0.5 font-medium ${noStock ? 'text-red-500' : 'text-gray-400'}">${stockLabel}</span>
+          <div class="flex-1 min-w-0">
+            <p class="font-semibold text-gray-800 dark:text-gray-100 text-sm leading-snug">${item.name}</p>
+            <p class="text-xs mt-0.5 font-medium ${noStock ? 'text-red-500' : 'text-gray-400'}">${stockLabel}</p>
           </div>
-          <input type="number"
-            id="oqty_${k}"
-            value="${sel.qty || ''}"
-            min="1"
-            placeholder="0"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            class="mgr-qty ${sel.checked ? '' : 'opacity-30'}"
-            ${sel.checked ? '' : 'disabled'}
-            oninput="updateOrderQty('${k}',this.value)">
-          <input type="checkbox"
-            id="ochk_${k}"
-            class="mgr-check"
-            ${sel.checked ? 'checked' : ''}
-            onchange="toggleOrderItem('${k}',this.checked)">`;
+          <div class="sel-circle" id="osel_${k}">
+            ${isSelected ? '<i class="fa-solid fa-check text-white text-xs"></i>' : ''}
+          </div>`;
         c.appendChild(row);
       });
+    }
+
+    function toggleSelectItem(k) {
+      if (!orderSelections[k]) return;
+      orderSelections[k].selected = !orderSelections[k].selected;
+      const row = document.getElementById(`orow_${k}`);
+      const circle = document.getElementById(`osel_${k}`);
+      const isNow = orderSelections[k].selected;
+      row?.classList.toggle('selected', isNow);
+      if (circle) circle.innerHTML = isNow ? '<i class="fa-solid fa-check text-white text-xs"></i>' : '';
+      updateOrderDock();
     }
 
     function fmtStockMgr(raw) {
@@ -1405,7 +1512,7 @@
 
     function filterOrderSearch(q) {
       const term = q.toLowerCase().trim();
-      document.querySelectorAll('#order-container .mgr-row').forEach(row => {
+      document.querySelectorAll('#order-container .sel-row').forEach(row => {
         const nameOk = !term || row.getAttribute('data-name').includes(term);
         const modeOk = rowMatchesMode(row);
         row.style.display = nameOk && modeOk ? '' : 'none';
@@ -1414,14 +1521,14 @@
 
     function filterOrderMode(mode) {
       orderFilterMode = mode;
-      ['all', 'sinstock', 'checked'].forEach(m => {
+      ['all', 'sinstock', 'selected'].forEach(m => {
         const btn = document.getElementById(`ofilter-${m}`);
         if (!btn) return;
-        btn.className = `flex-1 py-2 rounded-xl text-xs font-bold transition-all ${m === mode ? 'text-white' : 'bg-gray-100 dark:bg-dark-border text-gray-500 dark:text-gray-400'}`;
-        if (m === mode) btn.style.background = '#7c3aed';
-        else btn.style.background = '';
+        const active = m === mode;
+        btn.className = `flex-1 py-2 rounded-xl text-xs font-bold transition-all ${active ? 'text-white' : 'bg-gray-100 dark:bg-dark-border text-gray-500 dark:text-gray-400'}`;
+        btn.style.background = active ? '#4F46E5' : '';
       });
-      document.querySelectorAll('#order-container .mgr-row').forEach(row => {
+      document.querySelectorAll('#order-container .sel-row').forEach(row => {
         row.style.display = rowMatchesMode(row) ? '' : 'none';
       });
     }
@@ -1429,43 +1536,78 @@
     function rowMatchesMode(row) {
       if (orderFilterMode === 'all') return true;
       if (orderFilterMode === 'sinstock') return row.getAttribute('data-nostock') === '1';
-      if (orderFilterMode === 'checked') {
+      if (orderFilterMode === 'selected') {
         const k = row.id.replace('orow_', '');
-        return !!(orderSelections[k]?.checked);
+        return !!(orderSelections[k]?.selected);
       }
       return true;
     }
 
-    function toggleOrderItem(k, checked) {
-      if (!orderSelections[k]) return;
-      orderSelections[k].checked = checked;
-      const qty = document.getElementById(`oqty_${k}`);
-      if (qty) {
-        qty.disabled = !checked;
-        qty.className = `mgr-qty ${checked ? '' : 'opacity-30'}`;
-        if (checked && (!qty.value || qty.value === '0')) { qty.value = '1'; orderSelections[k].qty = 1; }
-        else if (!checked) orderSelections[k].qty = 0;
-        else orderSelections[k].qty = parseInt(qty.value) || 1;
-      }
-      updateOrderDock();
-    }
-
-    function updateOrderQty(k, val) {
-      if (!orderSelections[k]) return;
-      orderSelections[k].qty = parseInt(val) || 0;
-      updateOrderDock();
-    }
-
     function updateOrderDock() {
-      const checked = Object.values(orderSelections).filter(s => s.checked);
+      const selected = Object.values(orderSelections).filter(s => s.selected);
       const dock = document.getElementById('order-dock');
-      dock.classList.toggle('visible', checked.length > 0);
-      document.getElementById('order-counter').textContent = `${checked.length} artículo${checked.length !== 1 ? 's' : ''} seleccionado${checked.length !== 1 ? 's' : ''}`;
+      dock.classList.toggle('visible', selected.length > 0);
+      const isStep2 = currentView === 'quantities';
+      document.getElementById('order-dock-title').textContent = isStep2 ? 'GENERAR PEDIDO' : 'CONTINUAR';
+      document.getElementById('order-dock-icon').innerHTML = isStep2
+        ? '<i class="fa-solid fa-cart-shopping text-base"></i>'
+        : '<i class="fa-solid fa-arrow-right text-base"></i>';
+      document.getElementById('order-counter').textContent =
+        isStep2
+          ? `${selected.length} artículo${selected.length !== 1 ? 's' : ''} en el pedido`
+          : `${selected.length} artículo${selected.length !== 1 ? 's' : ''} seleccionado${selected.length !== 1 ? 's' : ''}`;
+    }
+
+    function onOrderDockTap() {
+      if (currentView === 'order') loadQuantitiesView();
+      else if (currentView === 'quantities') openOrderExportModal();
+    }
+
+    // ── PASO 2: CANTIDADES ────────────────────────────────────────
+    function loadQuantitiesView() {
+      const selected = Object.values(orderSelections).filter(s => s.selected);
+      if (!selected.length) return;
+      setMgrView('quantities', currentOrderProv.name, 'Paso 2 · Cantidades de bultos');
+      renderQuantitiesItems(selected);
+      updateOrderDock();
+    }
+
+    function renderQuantitiesItems(items) {
+      const c = document.getElementById('quantities-container');
+      c.innerHTML = '';
+      items.forEach(item => {
+        const k = Object.keys(orderSelections).find(key => orderSelections[key] === item);
+        const raw = item.stock;
+        const noStock = raw === 'x' || raw === '0' || !raw;
+        const stockLabel = noStock ? '❌ Sin stock' : fmtStockMgr(raw);
+        const row = document.createElement('div');
+        row.className = 'qty-row';
+        row.innerHTML = `
+          <div class="flex-1 min-w-0">
+            <p class="font-semibold text-gray-800 dark:text-gray-100 text-sm leading-snug">${item.name}</p>
+            <p class="text-xs mt-0.5 font-medium ${noStock ? 'text-red-500' : 'text-gray-400'}">${stockLabel}</p>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <button onclick="stepOrderQty('${k}',-1)" class="step-btn step-minus">−</button>
+            <span class="step-num" id="qd_${k}">${item.qty || 1}</span>
+            <button onclick="stepOrderQty('${k}',1)" class="step-btn step-plus">+</button>
+          </div>`;
+        c.appendChild(row);
+      });
+    }
+
+    function stepOrderQty(k, delta) {
+      if (!orderSelections[k]) return;
+      const cur = orderSelections[k].qty || 1;
+      const next = Math.max(1, cur + delta);
+      orderSelections[k].qty = next;
+      const el = document.getElementById(`qd_${k}`);
+      if (el) el.textContent = next;
     }
 
     // ── EXPORT MODAL ──────────────────────────────────────────────
     function openOrderExportModal() {
-      const selected = Object.values(orderSelections).filter(s => s.checked);
+      const selected = Object.values(orderSelections).filter(s => s.selected);
       if (!selected.length) return;
       const prov = currentOrderProv?.name || '';
       document.getElementById('export-subtitle').textContent = `${selected.length} artículo${selected.length !== 1 ? 's' : ''} — ${prov}`;
@@ -1477,12 +1619,27 @@
         div.className = `flex items-center justify-between px-3 py-2.5 rounded-xl ${i % 2 === 0 ? 'bg-gray-50 dark:bg-dark-bg' : ''}`;
         div.innerHTML = `
           <span class="font-medium text-gray-800 dark:text-gray-200 text-sm flex-1 leading-snug">${item.name}</span>
-          <span class="font-black text-sm ml-3 shrink-0" style="color:#7c3aed;">${item.qty || '—'} ud.</span>`;
+          <span class="font-black text-sm ml-3 shrink-0" style="color:#4F46E5;">${item.qty || 1} bulto${(item.qty || 1) !== 1 ? 's' : ''}</span>`;
         preview.appendChild(div);
       });
       document.getElementById('order-export-modal').classList.remove('hidden');
     }
     function closeOrderExportModal() { document.getElementById('order-export-modal').classList.add('hidden'); }
+
+    // ── HOME STATS ────────────────────────────────────────────────
+    function updateHomeStats() {
+      if (!cachedProviders.length) return;
+      const countEl = document.getElementById('home-prov-count');
+      if (countEl) countEl.textContent = cachedProviders.length;
+      const atrasados = cachedProviders.filter(p => getDaysSince(p.lastUpdated) > 7).length;
+      const chip = document.getElementById('home-alert-chip');
+      const txt  = document.getElementById('home-alert-text');
+      if (chip && atrasados > 0) {
+        chip.classList.remove('hidden');
+        chip.classList.add('flex');
+        if (txt) txt.textContent = `${atrasados} para revisar`;
+      }
+    }
 
     // ── EXCEL GENERATION ─────────────────────────────────────────
     async function loadSheetJS() {
@@ -1496,7 +1653,7 @@
     }
 
     async function generateExcelAndDownload() {
-      const selected = Object.values(orderSelections).filter(s => s.checked);
+      const selected = Object.values(orderSelections).filter(s => s.selected);
       if (!selected.length) return showToast('Sin artículos seleccionados', true);
       showToast('Generando Excel...');
       try {
@@ -1571,13 +1728,13 @@
 
     // ── WHATSAPP EXPORT ──────────────────────────────────────────
     function openWhatsAppOrder() {
-      const selected = Object.values(orderSelections).filter(s => s.checked);
+      const selected = Object.values(orderSelections).filter(s => s.selected);
       if (!selected.length) return;
       const prov = currentOrderProv?.name || 'Proveedor';
       const today = new Date().toLocaleDateString('es-AR');
       let msg = `*PEDIDO MERCADO LIMPIO*\n📅 ${today}\n\n`;
       msg += `Hola! Les hacemos el siguiente pedido:\n\n`;
-      selected.forEach(item => { msg += `• ${item.name}: *${item.qty || 1} ud.*\n`; });
+      selected.forEach(item => { msg += `• ${item.name}: *${item.qty || 1} bulto${(item.qty || 1) !== 1 ? 's' : ''}*\n`; });
       msg += `\n📍 Languenheim 1095, Longchamps\n🕐 Entrega Lun-Vie de 7 a 15hs`;
       window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
     }

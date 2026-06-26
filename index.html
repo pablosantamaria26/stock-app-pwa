@@ -304,7 +304,16 @@
         </div>
       </div>
 
-      <div onclick="openAddItemModal()" class="mb-4 p-4 rounded-2xl flex items-center justify-between cursor-pointer active:scale-95 transition-transform bg-white dark:bg-dark-card shadow-sm border border-dashed border-blue-200 dark:border-blue-800">
+      <!-- Botón importar catálogo (solo proveedores Supabase) -->
+      <div id="import-catalog-btn" class="hidden mb-4 p-4 rounded-2xl flex items-center justify-between cursor-pointer active:scale-95 transition-transform bg-white dark:bg-dark-card shadow-sm border border-dashed border-teal-300 dark:border-teal-700" onclick="openImportCatalog()">
+        <div>
+          <p class="font-bold text-sm" style="color:#0D7B68;">Importar / actualizar catálogo</p>
+          <p class="text-xs text-gray-400 mt-0.5">Subir PDF para cargar artículos con código</p>
+        </div>
+        <i class="fa-solid fa-file-arrow-up text-xl" style="color:#0D7B68;"></i>
+      </div>
+
+      <div id="add-item-area" onclick="openAddItemModal()" class="mb-4 p-4 rounded-2xl flex items-center justify-between cursor-pointer active:scale-95 transition-transform bg-white dark:bg-dark-card shadow-sm border border-dashed border-blue-200 dark:border-blue-800">
         <div>
           <p class="font-bold text-blue-600 dark:text-blue-400 text-sm">¿Falta un producto?</p>
           <p class="text-xs text-gray-400 mt-0.5">Agregar nuevo artículo</p>
@@ -547,6 +556,45 @@
     </div>
   </div>
 
+  <!-- MODAL: IMPORTAR CATÁLOGO PDF -->
+  <div id="import-catalog-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-overlay hidden px-4">
+    <div class="bg-white dark:bg-dark-card p-6 rounded-[2rem] shadow-2xl w-full max-w-sm animate-scale-in">
+      <div class="text-center mb-5">
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl text-white" style="background:#0D7B68;">
+          <i class="fa-solid fa-file-arrow-up"></i>
+        </div>
+        <h2 class="text-xl font-black text-gray-800 dark:text-gray-100">Importar catálogo</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1" id="import-prov-label">Proveedor</p>
+      </div>
+      <!-- Estado: idle -->
+      <div id="import-state-idle">
+        <p class="text-sm text-gray-600 dark:text-gray-300 text-center mb-4">Seleccioná el PDF del catálogo DiawaraPlast.<br>Gemini extrae código, nombre y bultos por artículo.</p>
+        <input type="file" id="import-catalog-file" accept="application/pdf" class="hidden" onchange="processCatalogPDF(this.files[0])">
+        <button onclick="document.getElementById('import-catalog-file').click()" class="w-full py-3 rounded-xl font-bold text-white text-sm active:scale-95 transition-transform" style="background:#0D7B68;">
+          <i class="fa-solid fa-folder-open mr-2"></i>Elegir PDF
+        </button>
+      </div>
+      <!-- Estado: loading -->
+      <div id="import-state-loading" class="hidden text-center py-4">
+        <div class="w-12 h-12 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin mx-auto mb-3"></div>
+        <p class="font-bold text-gray-700 dark:text-gray-200 text-sm">Analizando con Gemini...</p>
+        <p class="text-xs text-gray-400 mt-1">Puede tardar 30–60 segundos según el tamaño del catálogo</p>
+      </div>
+      <!-- Estado: success -->
+      <div id="import-state-success" class="hidden text-center py-4">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 text-white text-2xl" style="background:#0D7B68;">✓</div>
+        <p class="font-black text-gray-800 dark:text-gray-100"><span id="import-count">0</span> artículos importados</p>
+        <p class="text-xs text-gray-400 mt-1">Guardados en Supabase con código y bultos</p>
+      </div>
+      <!-- Estado: error -->
+      <div id="import-state-error" class="hidden text-center py-4">
+        <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-3 text-red-500 text-2xl">✕</div>
+        <p class="font-bold text-red-600 text-sm" id="import-error-msg">Error</p>
+      </div>
+      <button onclick="closeImportCatalog()" class="w-full mt-4 py-3 rounded-xl font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 text-sm active:scale-95 transition-transform">Cerrar</button>
+    </div>
+  </div>
+
   <!-- MODAL: NUEVO ARTÍCULO -->
   <div id="add-item-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-overlay hidden px-4">
     <div class="bg-white dark:bg-dark-card p-6 rounded-[2rem] shadow-2xl w-full max-w-sm animate-scale-in">
@@ -671,6 +719,7 @@
     let totalItems        = 0;
     let cachedProviders   = [];
     let sbProveedores     = {};
+    let sbIdMap           = {};
     let aiCheckDone       = false;
     let deferredPrompt;
 
@@ -895,11 +944,23 @@
     }
 
     // ── DATA LOADING ─────────────────────────────────────────────
+    async function mergeProviders() {
+      const [gasRes, sbRes] = await Promise.all([
+        fetch(`${WORKER_URL}?action=getProviders`),
+        fetch(`${WORKER_URL}?action=getProveedoresSupabase`)
+      ]);
+      const gasData = await gasRes.json();
+      const sbList  = await sbRes.json().catch(() => []);
+      const list = [];
+      if (!gasData.error) list.push(...gasData);
+      if (Array.isArray(sbList)) sbList.forEach(p => list.push({ id: 'sb:' + p, name: p, source: 'supabase' }));
+      return list;
+    }
+
     async function silentLoadProviders() {
       try {
-        const res = await fetch(`${WORKER_URL}?action=getProviders`);
-        const d = await res.json();
-        if (!d.error) { cachedProviders = d; updateHomeStats(); runAutonomousAICheck(); }
+        const providers = await mergeProviders();
+        if (providers.length) { cachedProviders = providers; updateHomeStats(); runAutonomousAICheck(); }
       } catch {}
     }
 
@@ -908,7 +969,7 @@
       const l = document.getElementById('loader-list'), c = document.getElementById('list-container');
       c.innerHTML = ''; l.classList.remove('hidden');
       if (cachedProviders.length) { renderList(cachedProviders, 'provider'); l.classList.add('hidden'); return; }
-      try { const res = await fetch(`${WORKER_URL}?action=getProviders`); const d = await res.json(); cachedProviders = d; renderList(d, 'provider'); }
+      try { cachedProviders = await mergeProviders(); renderList(cachedProviders, 'provider'); }
       catch (e) { showToast(e.message, true); }
       finally { l.classList.add('hidden'); }
     }
@@ -935,12 +996,18 @@
         const d = document.createElement('div');
         d.className = 'bg-white dark:bg-dark-card p-4 rounded-2xl shadow-sm flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform border border-gray-50 dark:border-dark-border';
         if (type === 'provider') {
+          const isSb = item.source === 'supabase';
+          d.onclick = () => loadSheet(item.id, item.name);
+          if (isSb) {
+            d.classList.add('border-l-4', 'border-teal-500');
+            d.innerHTML = `<div class="flex items-center gap-3"><div class="w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg shrink-0" style="background:#d1fae5;color:#0D7B68;">${item.name.charAt(0)}</div><div><h3 class="font-bold text-gray-800 dark:text-gray-100 text-base leading-tight">${item.name}</h3><div class="flex items-center gap-2 mt-1"><span class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full font-bold" style="background:#d1fae5;color:#0D7B68;">CATÁLOGO</span></div></div></div><i class="fa-solid fa-chevron-right text-gray-300 dark:text-gray-600 ml-2"></i>`;
+          } else {
           const days = getDaysSince(item.lastUpdated);
           let col = 'green', lbl = 'Al día';
           if (days > 30) { col = 'red'; lbl = 'Atrasado'; } else if (days > 7) { col = 'yellow'; lbl = 'Revisar'; }
           d.classList.add(`border-l-4`, `border-${col}-500`);
-          d.onclick = () => loadSheet(item.id, item.name);
           d.innerHTML = `<div class="flex items-center gap-3"><div class="w-12 h-12 rounded-xl bg-${col}-100 dark:bg-${col}-900/30 text-${col}-700 dark:text-${col}-300 flex items-center justify-center font-black text-lg shrink-0">${item.name.charAt(0)}</div><div><h3 class="font-bold text-gray-800 dark:text-gray-100 text-base leading-tight">${item.name}</h3><div class="flex items-center gap-2 mt-1"><span class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-${col}-100 dark:bg-${col}-900/30 text-${col}-700 dark:text-${col}-300 font-bold">${lbl}</span><span class="text-xs text-gray-400 font-medium"><i class="fa-regular fa-clock mr-1"></i>Hace ${days} días</span></div></div></div><i class="fa-solid fa-chevron-right text-gray-300 dark:text-gray-600 ml-2"></i>`;
+          }
         } else {
           d.onclick = () => openPdfViewer(item.url);
           d.innerHTML = `<div class="flex items-center gap-3"><div class="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 text-orange-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-file-pdf text-xl"></i></div><h3 class="font-bold text-gray-800 dark:text-gray-100">${item.name}</h3></div><i class="fa-solid fa-chevron-right text-gray-300 dark:text-gray-600 ml-2"></i>`;
@@ -955,14 +1022,30 @@
       document.getElementById('editor-search').value = '';
       const c = document.getElementById('editor-container'), l = document.getElementById('loader-editor');
       c.innerHTML = ''; l.classList.remove('hidden');
+      const isSb = id.startsWith('sb:');
+      document.getElementById('import-catalog-btn').classList.toggle('hidden', !isSb);
+      document.getElementById('add-item-area').classList.toggle('hidden', isSb);
       try {
-        const res = await fetchWithRetry(`${WORKER_URL}?action=getSheetData&fileId=${id}`, {});
-        const d   = await res.json();
-        if (d.catalogUrl) { currentCatalogUrl = d.catalogUrl; document.getElementById('catalog-btn').classList.remove('hidden'); }
-        const items = d.items || [];
+        let items;
+        if (isSb) {
+          const proveedor = id.slice(3);
+          const res = await fetchWithRetry(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'getArticulosSupabase', proveedor }) });
+          const d = await res.json();
+          if (d.error) throw new Error(d.error);
+          items = (d.items || []).map(a => ({ ...a, name: a.nombre }));
+        } else {
+          const res = await fetchWithRetry(`${WORKER_URL}?action=getSheetData&fileId=${id}`, {});
+          const d   = await res.json();
+          if (d.catalogUrl) { currentCatalogUrl = d.catalogUrl; document.getElementById('catalog-btn').classList.remove('hidden'); }
+          items = d.items || [];
+        }
         document.getElementById('header-subtitle').textContent = `${items.length} productos`;
-        renderEditor(items);
-        checkDraftForSheet(id);
+        if (isSb && items.length === 0) {
+          c.innerHTML = `<div class="p-10 text-center"><div class="text-5xl mb-4">📋</div><p class="font-bold text-gray-700 dark:text-gray-200 mb-2">Sin artículos cargados</p><p class="text-sm text-gray-400 mb-5">Importá el catálogo PDF para cargar los artículos con código</p><button onclick="openImportCatalog()" class="px-6 py-3 rounded-xl font-bold text-white text-sm active:scale-95 transition-transform" style="background:#0D7B68;">Importar catálogo PDF</button></div>`;
+        } else {
+          renderEditor(items);
+          if (!isSb) checkDraftForSheet(id);
+        }
       } catch (e) {
         c.innerHTML = `<div class="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-6 text-center rounded-2xl font-bold text-sm">${e.message || 'Error al cargar'}</div>`;
       } finally { l.classList.add('hidden'); }
@@ -971,7 +1054,7 @@
     // ── EDITOR ───────────────────────────────────────────────────
     function renderEditor(items) {
       const c = document.getElementById('editor-container');
-      changes = {}; totalItems = items.length;
+      changes = {}; sbIdMap = {}; totalItems = items.length;
       c.innerHTML = '';
       if (!items.length) { c.innerHTML = '<div class="text-center p-10 opacity-50">Hoja vacía</div>'; return; }
       items.forEach(item => c.appendChild(buildItemCard(item)));
@@ -979,7 +1062,12 @@
     }
 
     function buildItemCard(item) {
-      const k      = `${item.row}_${item.col}`;
+      const isSb   = item.id !== undefined && item.row === undefined;
+      const k      = isSb ? `sb_${item.id}` : `${item.row}_${item.col}`;
+      const r      = isSb ? 0 : item.row;
+      const c      = isSb ? 0 : item.col;
+      if (isSb) sbIdMap[k] = item.id;
+
       const raw    = item.stock ? item.stock.toString() : '0';
       const num    = parseInt(raw.replace(/[^0-9]/g,'')) || 0;
       const isBulto= raw.toLowerCase().includes('b');
@@ -994,6 +1082,8 @@
 
       const safeAttr = item.name.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
       const safeJS   = item.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      const codigoBadge = item.codigo ? `<span class="text-[10px] px-2 py-0.5 rounded font-mono font-bold inline-block mb-1" style="background:#d1fae5;color:#0D7B68;">COD ${item.codigo}</span>` : '';
+      const bultosBadge = (isSb && item.bultos) ? `<span class="text-[10px] px-2 py-0.5 rounded font-mono font-bold inline-block mb-1 ml-1 bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">x${item.bultos} ud/bulto</span>` : '';
 
       const div = document.createElement('div');
       div.className = 'item-card';
@@ -1001,8 +1091,11 @@
       div.setAttribute('data-name', item.name.toLowerCase());
 
       div.innerHTML = `
-        <div class="flex items-start justify-between gap-2 mb-3">
-          <h3 class="font-bold text-gray-800 dark:text-gray-100 text-base leading-snug flex-1">${item.name}</h3>
+        <div class="flex items-start justify-between gap-2 mb-2">
+          <div class="flex-1 min-w-0">
+            ${codigoBadge}${bultosBadge}
+            <h3 class="font-bold text-gray-800 dark:text-gray-100 text-base leading-snug">${item.name}</h3>
+          </div>
           <span class="text-[11px] px-2.5 py-1 rounded-full font-bold shrink-0 ${prevClass}">${prevLabel}</span>
         </div>
 
@@ -1034,13 +1127,14 @@
               data-type="${typ}"
               data-name="${safeAttr}"
               data-prev="${raw}"
+              data-sbid="${isSb ? item.id : ''}"
               onfocus="this.select()"
-              oninput="trackChange('${k}',${item.row},${item.col},'${safeJS}')">
+              oninput="trackChange('${k}',${r},${c},'${safeJS}')">
             <button class="qty-btn" onclick="stepQty('${k}',1)">+</button>
           </div>
           <!-- Sin stock: fila propia full-width -->
           <button id="nostk_${k}"
-            onclick="setNoStock('${k}',${item.row},${item.col},'${safeJS}')"
+            onclick="setNoStock('${k}',${r},${c},'${safeJS}')"
             class="nostk-btn ${isX?'on':''}">
             ✕ &nbsp;Sin stock
           </button>
@@ -1085,7 +1179,9 @@
       setTypeVisual(k, t);
       const inp = document.getElementById(`input_${k}`);
       if (inp && inp.value) {
-        const [r, c] = k.split('_').map(Number);
+        const parts = k.split('_');
+        const r = parts[0] === 'sb' ? 0 : parseInt(parts[0]);
+        const c = parts[0] === 'sb' ? 0 : parseInt(parts[1]);
         trackChange(k, r, c, inp.dataset.name);
       }
     }
@@ -1101,8 +1197,10 @@
       const inp = document.getElementById(`input_${k}`);
       let val = parseInt(inp.value) || 0;
       val = Math.max(0, val + delta);
-      inp.value = val; // Mantener el 0 visible — 0 = sin stock, vacío = no contado
-      const [r, c] = k.split('_').map(Number);
+      inp.value = val;
+      const parts = k.split('_');
+      const r = parts[0] === 'sb' ? 0 : parseInt(parts[0]);
+      const c = parts[0] === 'sb' ? 0 : parseInt(parts[1]);
       trackChange(k, r, c, inp.dataset.name);
     }
 
@@ -1281,6 +1379,29 @@
       setSvState('saving');
       document.getElementById('save-modal').classList.remove('hidden');
 
+      // ── SUPABASE PROVIDERS ────────────────────────────────────
+      if (fileId.startsWith('sb:')) {
+        try {
+          const updates = Object.entries(changes)
+            .filter(([, ch]) => ch.newStock !== undefined)
+            .map(([k, ch]) => ({ id: sbIdMap[k], stock: ch.newStock }))
+            .filter(u => u.id !== undefined);
+          const r = await fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'updateArticuloStock', updates }) });
+          const d = await r.json();
+          if (d.error) throw new Error(d.error);
+          clearDraft(); changes = {}; sbIdMap = {}; updateDockAndProgress();
+          setSvState('success');
+          document.getElementById('sv-detail').textContent = `${updates.length} producto${updates.length!==1?'s':''} actualizado${updates.length!==1?'s':''}`;
+          setTimeout(() => { document.getElementById('save-modal').classList.add('hidden'); loadSheet(fileId, provName); }, 2200);
+        } catch (e) {
+          setSvState('offline');
+          document.getElementById('sv-detail').textContent = e.message || 'Error al guardar';
+          setTimeout(() => { document.getElementById('save-modal').classList.add('hidden'); }, 3200);
+        }
+        return;
+      }
+
+      // ── GAS PROVIDERS ─────────────────────────────────────────
       let saved = false;
       try {
         const r = await fetchWithRetry(WORKER_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'updateStock',fileId,items:snap,user:u})});
@@ -1453,13 +1574,18 @@
       const c = document.getElementById('mgr-list-container');
       c.innerHTML = '';
       if (!providers.length) { c.innerHTML = '<div class="text-center opacity-40 py-12 font-medium">Sin resultados</div>'; return; }
-      const sorted = [...providers].sort((a, b) => new Date(a.lastUpdated || 0) - new Date(b.lastUpdated || 0));
+      const sorted = [...providers].sort((a, b) => {
+        if (a.source === 'supabase' && b.source !== 'supabase') return 1;
+        if (b.source === 'supabase' && a.source !== 'supabase') return -1;
+        return new Date(a.lastUpdated || 0) - new Date(b.lastUpdated || 0);
+      });
       sorted.forEach(prov => {
+        const isSb = prov.source === 'supabase';
         const days = getDaysSince(prov.lastUpdated);
         let col = 'green';
-        if (days > 30) col = 'red'; else if (days > 7) col = 'yellow';
+        if (!isSb && days > 30) col = 'red'; else if (!isSb && days > 7) col = 'yellow';
         const d = document.createElement('div');
-        d.className = `bg-white dark:bg-dark-card p-4 rounded-2xl shadow-sm cursor-pointer active:scale-[0.98] transition-transform border border-gray-50 dark:border-dark-border border-l-4 border-${col}-500`;
+        d.className = `bg-white dark:bg-dark-card p-4 rounded-2xl shadow-sm cursor-pointer active:scale-[0.98] transition-transform border border-gray-50 dark:border-dark-border border-l-4 border-${isSb ? 'teal' : col}-500`;
         d.onclick = () => loadOrderSheet(prov.id, prov.name);
         d.innerHTML = `
           <div class="flex items-center gap-3">
@@ -1467,7 +1593,9 @@
             <div class="flex-1 min-w-0">
               <h3 class="font-bold text-gray-800 dark:text-gray-100 text-base leading-tight truncate">${prov.name}</h3>
               <div class="flex items-center gap-2 mt-1">
-                <span class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-${col}-100 dark:bg-${col}-900/30 text-${col}-700 dark:text-${col}-300 font-bold">Hace ${days}d</span>
+                ${isSb
+                  ? `<span class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full font-bold" style="background:#d1fae5;color:#0D7B68;">CATÁLOGO</span>`
+                  : `<span class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-${col}-100 dark:bg-${col}-900/30 text-${col}-700 dark:text-${col}-300 font-bold">Hace ${days}d</span>`}
                 <span class="text-xs text-gray-400 font-medium">Tocar para armar pedido</span>
               </div>
             </div>
@@ -1491,15 +1619,29 @@
       const l = document.getElementById('loader-order');
       c.innerHTML = ''; l.classList.remove('hidden');
       try {
-        const res = await fetchWithRetry(`${WORKER_URL}?action=getSheetData&fileId=${id}`, {});
-        const d = await res.json();
-        orderItems = d.items || [];
-        orderItems.forEach(item => {
-          const k = `${item.row}_${item.col}`;
-          const raw = item.stock ? item.stock.toString() : 'x';
-          const noStock = raw === 'x' || raw === '0' || !raw;
-          orderSelections[k] = { name: item.name, stock: raw, selected: noStock, qty: 1 };
-        });
+        const isSb = id.startsWith('sb:');
+        if (isSb) {
+          const proveedor = id.slice(3);
+          const res = await fetchWithRetry(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'getArticulosSupabase', proveedor }) });
+          const d = await res.json();
+          orderItems = (d.items || []).map(a => ({ ...a, name: a.nombre }));
+          orderItems.forEach(item => {
+            const k = `sb_${item.id}`;
+            const raw = item.stock || 'x';
+            const noStock = raw === 'x' || raw === '0' || !raw;
+            orderSelections[k] = { name: item.name, codigo: item.codigo, bultos: item.bultos, stock: raw, selected: noStock, qty: 1 };
+          });
+        } else {
+          const res = await fetchWithRetry(`${WORKER_URL}?action=getSheetData&fileId=${id}`, {});
+          const d = await res.json();
+          orderItems = d.items || [];
+          orderItems.forEach(item => {
+            const k = `${item.row}_${item.col}`;
+            const raw = item.stock ? item.stock.toString() : 'x';
+            const noStock = raw === 'x' || raw === '0' || !raw;
+            orderSelections[k] = { name: item.name, stock: raw, selected: noStock, qty: 1 };
+          });
+        }
         document.getElementById('header-subtitle').textContent = `${orderItems.length} productos`;
         renderOrderItems(orderItems);
         updateOrderDock();
@@ -1530,12 +1672,14 @@
       c.innerHTML = '';
       if (!items.length) { c.innerHTML = '<div class="p-8 text-center opacity-40 font-medium">Sin productos</div>'; return; }
       items.forEach(item => {
-        const k = `${item.row}_${item.col}`;
+        const isSb = item.id !== undefined && item.row === undefined;
+        const k = isSb ? `sb_${item.id}` : `${item.row}_${item.col}`;
         const sel = orderSelections[k];
         const raw = item.stock ? item.stock.toString() : 'x';
         const noStock = raw === 'x' || raw === '0' || !raw;
         const stockLabel = noStock ? '❌ Sin stock' : fmtStockMgr(raw);
         const isSelected = sel?.selected;
+        const codigoBadge = item.codigo ? `<span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded mr-1" style="background:#d1fae5;color:#0D7B68;">COD ${item.codigo}</span>` : '';
         const row = document.createElement('div');
         row.className = `sel-row${isSelected ? ' selected' : ''}`;
         row.id = `orow_${k}`;
@@ -1544,6 +1688,7 @@
         row.onclick = () => toggleSelectItem(k);
         row.innerHTML = `
           <div class="flex-1 min-w-0">
+            ${codigoBadge ? `<div class="mb-0.5">${codigoBadge}</div>` : ''}
             <p class="font-semibold text-gray-800 dark:text-gray-100 text-sm leading-snug">${item.name}</p>
             <p class="text-xs mt-0.5 font-medium ${noStock ? 'text-red-500' : 'text-gray-400'}">${stockLabel}</p>
           </div>
@@ -1824,6 +1969,47 @@
       msg += `\nLugar: Languenheim 1095, Longchamps`;
       msg += `\nEntrega: Lun-Vie de 7 a 15hs`;
       window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    // ── IMPORTAR CATÁLOGO DIAWARA ────────────────────────────────
+    function openImportCatalog() {
+      const modal = document.getElementById('import-catalog-modal');
+      document.getElementById('import-prov-label').textContent = currentProvNombre || currentFileId?.slice(3) || '';
+      ['idle','loading','success','error'].forEach(s => document.getElementById(`import-state-${s}`).classList.toggle('hidden', s !== 'idle'));
+      document.getElementById('import-catalog-file').value = '';
+      modal.classList.remove('hidden');
+    }
+    function closeImportCatalog() {
+      document.getElementById('import-catalog-modal').classList.add('hidden');
+      // Si se importó exitosamente, recargar el sheet
+      if (!document.getElementById('import-state-success').classList.contains('hidden')) {
+        loadSheet(currentFileId, currentProvNombre);
+      }
+    }
+    async function processCatalogPDF(file) {
+      if (!file) return;
+      ['idle','loading','success','error'].forEach(s => document.getElementById(`import-state-${s}`).classList.toggle('hidden', s !== 'loading'));
+      try {
+        const base64 = await fileToBase64(file);
+        const proveedor = currentFileId?.startsWith('sb:') ? currentFileId.slice(3) : (currentProvNombre || '');
+        const res = await fetch(WORKER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'importarCatalogo', pdfBase64: base64, proveedor })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        document.getElementById('import-count').textContent = data.total || 0;
+        ['idle','loading','success','error'].forEach(s => document.getElementById(`import-state-${s}`).classList.toggle('hidden', s !== 'success'));
+        cachedProviders = []; // forzar reload de providers para que aparezca Diawara si era nuevo
+      } catch (e) {
+        document.getElementById('import-error-msg').textContent = e.message || 'Error desconocido';
+        ['idle','loading','success','error'].forEach(s => document.getElementById(`import-state-${s}`).classList.toggle('hidden', s !== 'error'));
+      }
     }
 
     // ── GEMINI: ANÁLISIS DE LISTA PDF (via Worker) ───────────────

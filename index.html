@@ -1503,18 +1503,23 @@
         document.getElementById('header-subtitle').textContent = `${orderItems.length} productos`;
         renderOrderItems(orderItems);
         updateOrderDock();
-        // Indicador de bultos guardados
-        const bultosGuardados = Object.keys(getBultosData(name)).length;
-        const btn = document.querySelector('[onclick="openGeminiUpload()"]');
-        if (btn) {
-          if (bultosGuardados > 0) {
-            btn.innerHTML = `<i class="fa-solid fa-circle-check text-xs"></i> Lista cargada (${bultosGuardados} artículos con info de bultos)`;
+        // Indicador de bultos: primero local, luego sync con Supabase en background
+        const updateBultosBtn = (count) => {
+          const btn = document.querySelector('[onclick="openGeminiUpload()"]');
+          if (!btn) return;
+          if (count > 0) {
+            btn.innerHTML = `<i class="fa-solid fa-circle-check text-xs"></i> Lista cargada (${count} artículos con info de bultos)`;
             btn.style.cssText = 'background:#ECFDF5;color:#0D7B68;border:1.5px solid #A7F3D0;';
           } else {
             btn.innerHTML = `<i class="fa-solid fa-file-pdf text-xs"></i> Subir lista PDF · ver bultos por artículo`;
             btn.style.cssText = 'background:#FFF7ED;color:#D97706;border:1.5px solid #FED7AA;';
           }
-        }
+        };
+        updateBultosBtn(Object.keys(getBultosData(name)).length);
+        // Sync Supabase en background (actualiza botón si hay más datos)
+        syncBultosFromSupabase(name).then(datos => {
+          if (datos) updateBultosBtn(Object.keys(datos).length);
+        });
       } catch (e) {
         c.innerHTML = `<div class="p-6 text-center font-bold text-sm text-red-500">${e.message || 'Error al cargar'}</div>`;
       } finally { l.classList.add('hidden'); }
@@ -1824,6 +1829,23 @@
     // ── GEMINI: ANÁLISIS DE LISTA PDF (via Worker) ───────────────
     function getBultosData(provName) {
       try { return JSON.parse(localStorage.getItem('bultos_' + provName) || '{}'); } catch { return {}; }
+    }
+
+    async function syncBultosFromSupabase(provName) {
+      try {
+        const res = await fetch(WORKER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'getBultosData', provName })
+        });
+        if (!res.ok) return;
+        const { datos } = await res.json();
+        if (datos && Object.keys(datos).length > 0) {
+          localStorage.setItem('bultos_' + provName, JSON.stringify(datos));
+          return datos;
+        }
+      } catch {}
+      return null;
     }
 
     function openGeminiUpload() {

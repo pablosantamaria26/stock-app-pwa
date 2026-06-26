@@ -589,7 +589,8 @@
       <!-- Estado: error -->
       <div id="import-state-error" class="hidden text-center py-4">
         <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-3 text-red-500 text-2xl">✕</div>
-        <p class="font-bold text-red-600 text-sm" id="import-error-msg">Error</p>
+        <p class="font-bold text-red-600 text-sm mb-2" id="import-error-msg">Error</p>
+        <p class="text-xs text-gray-400 text-left bg-gray-50 dark:bg-gray-800 rounded-lg p-2 max-h-32 overflow-y-auto whitespace-pre-wrap break-all" id="import-raw-msg" style="display:none"></p>
       </div>
       <button onclick="closeImportCatalog()" class="w-full mt-4 py-3 rounded-xl font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 text-sm active:scale-95 transition-transform">Cerrar</button>
     </div>
@@ -2007,12 +2008,15 @@
           throw new Error(err.error || `HTTP ${res.status}`);
         }
         const data = await res.json();
-        if (data.error) throw new Error(data.error);
+        if (data.error) throw new Error(data.error + (data.raw ? '\n\nRespuesta Gemini:\n' + data.raw : ''));
         document.getElementById('import-count').textContent = data.total || 0;
         ['idle','loading','success','error'].forEach(s => document.getElementById(`import-state-${s}`).classList.toggle('hidden', s !== 'success'));
         cachedProviders = []; // forzar reload de providers para que aparezca Diawara si era nuevo
       } catch (e) {
-        document.getElementById('import-error-msg').textContent = e.message || 'Error desconocido';
+        const parts = (e.message || 'Error desconocido').split('\n\nRespuesta Gemini:\n');
+        document.getElementById('import-error-msg').textContent = parts[0];
+        const rawEl = document.getElementById('import-raw-msg');
+        if (parts[1]) { rawEl.textContent = parts[1]; rawEl.style.display = ''; } else { rawEl.style.display = 'none'; }
         ['idle','loading','success','error'].forEach(s => document.getElementById(`import-state-${s}`).classList.toggle('hidden', s !== 'error'));
       }
     }

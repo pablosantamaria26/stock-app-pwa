@@ -332,12 +332,15 @@
 
     <!-- MANAGER LIST (modo propietario) -->
     <div id="view-manager" class="hidden px-4 animate-slide-up">
-      <div class="sticky top-0 z-20 bg-gray-50 dark:bg-dark-bg pt-2 pb-3">
+      <div class="sticky top-0 z-20 bg-gray-50 dark:bg-dark-bg pt-2 pb-3 space-y-2">
         <div class="relative">
           <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
           <input type="text" id="mgr-search" oninput="filterMgrProviders(this.value)" placeholder="Buscar proveedor..."
             class="w-full pl-11 pr-4 py-3.5 rounded-2xl border-none shadow-md bg-white dark:bg-dark-card font-bold text-base outline-none focus:ring-4 focus:ring-purple-500/20 transition-all text-gray-800 dark:text-white">
         </div>
+        <button onclick="openNewProvModal()" class="w-full py-3 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 active:scale-95 transition-all text-white shadow-md" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);">
+          <i class="fa-solid fa-plus text-xs"></i> Nuevo proveedor desde catálogo
+        </button>
       </div>
       <div id="mgr-list-container" class="space-y-3 pb-8"></div>
       <div id="loader-mgr" class="hidden flex flex-col items-center mt-32">
@@ -568,7 +571,7 @@
       </div>
       <!-- Estado: idle -->
       <div id="import-state-idle">
-        <p class="text-sm text-gray-600 dark:text-gray-300 text-center mb-4">Seleccioná el PDF del catálogo DiawaraPlast.<br>Gemini extrae código, nombre y bultos por artículo.</p>
+        <p class="text-sm text-gray-600 dark:text-gray-300 text-center mb-4">Seleccioná el PDF del catálogo.<br>Gemini extrae código, nombre y bultos por artículo.</p>
         <input type="file" id="import-catalog-file" accept="application/pdf" class="hidden" onchange="processCatalogPDF(this.files[0])">
         <button onclick="document.getElementById('import-catalog-file').click()" class="w-full py-3 rounded-xl font-bold text-white text-sm active:scale-95 transition-transform" style="background:#0D7B68;">
           <i class="fa-solid fa-folder-open mr-2"></i>Elegir PDF
@@ -593,6 +596,46 @@
         <p class="text-xs text-gray-400 text-left bg-gray-50 dark:bg-gray-800 rounded-lg p-2 max-h-32 overflow-y-auto whitespace-pre-wrap break-all" id="import-raw-msg" style="display:none"></p>
       </div>
       <button onclick="closeImportCatalog()" class="w-full mt-4 py-3 rounded-xl font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 text-sm active:scale-95 transition-transform">Cerrar</button>
+    </div>
+  </div>
+
+  <!-- MODAL: NUEVO PROVEEDOR DESDE CATÁLOGO -->
+  <div id="new-prov-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-overlay hidden px-4">
+    <div class="bg-white dark:bg-dark-card p-6 rounded-[2rem] shadow-2xl w-full max-w-sm animate-scale-in">
+      <div class="text-center mb-5">
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl text-white" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);">
+          <i class="fa-solid fa-store"></i>
+        </div>
+        <h2 class="text-xl font-black text-gray-800 dark:text-gray-100">Nuevo proveedor</h2>
+        <p class="text-xs text-gray-400 mt-1">Gemini extrae todos los artículos del catálogo PDF</p>
+      </div>
+      <!-- idle -->
+      <div id="new-prov-state-idle">
+        <input type="text" id="new-prov-name" placeholder="Nombre del proveedor..."
+          class="w-full p-3.5 bg-gray-50 dark:bg-dark-bg border-2 border-gray-100 dark:border-gray-700 rounded-xl mb-3 font-bold text-base focus:outline-none focus:border-purple-500 text-gray-800 dark:text-white transition-colors">
+        <input type="file" id="new-prov-file" accept="application/pdf" class="hidden" onchange="processNewProvPDF(this.files[0])">
+        <button onclick="triggerNewProvFile()" class="w-full py-3 rounded-xl font-bold text-white text-sm active:scale-95 transition-transform" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);">
+          <i class="fa-solid fa-file-arrow-up mr-2"></i>Elegir catálogo PDF
+        </button>
+      </div>
+      <!-- loading -->
+      <div id="new-prov-state-loading" class="hidden text-center py-4">
+        <div class="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-3"></div>
+        <p class="font-bold text-gray-700 dark:text-gray-200 text-sm">Analizando con Gemini...</p>
+        <p class="text-xs text-gray-400 mt-1">Puede tardar 30–60 segundos</p>
+      </div>
+      <!-- success -->
+      <div id="new-prov-state-success" class="hidden text-center py-4">
+        <div class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 text-white text-2xl" style="background:#0D7B68;">✓</div>
+        <p class="font-black text-gray-800 dark:text-gray-100 text-lg"><span id="new-prov-count">0</span> artículos importados</p>
+        <p class="text-xs text-gray-400 mt-1">Proveedor listo para stock y pedidos</p>
+      </div>
+      <!-- error -->
+      <div id="new-prov-state-error" class="hidden text-center py-4">
+        <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-3 text-red-500 text-2xl">✕</div>
+        <p class="font-bold text-red-600 text-sm mb-1" id="new-prov-error-msg">Error desconocido</p>
+      </div>
+      <button onclick="closeNewProvModal()" class="w-full mt-4 py-3 rounded-xl font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 text-sm active:scale-95 transition-transform">Cerrar</button>
     </div>
   </div>
 
@@ -945,22 +988,41 @@
     }
 
     // ── DATA LOADING ─────────────────────────────────────────────
-    // Proveedores con catálogo en Supabase — siempre visibles aunque la tabla esté vacía
-    const SB_CATALOG_PROVIDERS = [
+    // Líneas Diawara individuales en Supabase (se colapsan en 1 tarjeta unificada)
+    const DIAWARA_LINES = [
       'DIAWARA PLAST SA LINEA HOGAR 2026',
       'DIAWARA PLAST SA LINEA INFANTIL 2026',
       'LANZAMIENTO 2026 DIAWARA PLAST SA'
     ];
+    const DIAWARA_UNIFIED = 'DIAWARA PLAST SA';
 
     async function mergeProviders() {
-      const gasRes = await fetch(`${WORKER_URL}?action=getProviders`);
-      const gasData = await gasRes.json();
+      const [gasResult, sbResult] = await Promise.allSettled([
+        fetch(`${WORKER_URL}?action=getProviders`).then(r => r.json()),
+        fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'getProveedoresSupabase' }) }).then(r => r.json())
+      ]);
       const list = [];
-      if (!gasData.error) list.push(...gasData);
-      SB_CATALOG_PROVIDERS.forEach(p => {
+      if (gasResult.status === 'fulfilled' && !gasResult.value?.error) list.push(...gasResult.value);
+      // Proveedores Supabase dinámicos — colapsa las 3 líneas Diawara en 1
+      const sbProviders = (sbResult.status === 'fulfilled' && Array.isArray(sbResult.value)) ? sbResult.value : [];
+      sbProviders.forEach(p => {
+        if (DIAWARA_LINES.includes(p)) return; // se maneja con la tarjeta unificada
         if (!list.find(x => x.id === 'sb:' + p)) list.push({ id: 'sb:' + p, name: p, source: 'supabase' });
       });
+      // Siempre agregar la tarjeta unificada Diawara
+      if (!list.find(x => x.id === 'sb:' + DIAWARA_UNIFIED)) {
+        list.push({ id: 'sb:' + DIAWARA_UNIFIED, name: DIAWARA_UNIFIED, source: 'supabase' });
+      }
       return list;
+    }
+
+    function getDiawaraLine(proveedor) {
+      if (!proveedor) return '';
+      const p = proveedor.toUpperCase();
+      if (p.includes('HOGAR')) return 'HOGAR';
+      if (p.includes('INFANTIL')) return 'INFANTIL';
+      if (p.includes('LANZAMIENTO')) return 'LANZAMIENTO';
+      return '';
     }
 
     async function silentLoadProviders() {
@@ -1088,19 +1150,25 @@
 
       const safeAttr = item.name.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
       const safeJS   = item.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-      const codigoBadge = item.codigo ? `<span class="text-[10px] px-2 py-0.5 rounded font-mono font-bold inline-block mb-1" style="background:#d1fae5;color:#0D7B68;">COD ${item.codigo}</span>` : '';
-      const bultosBadge = (isSb && item.bultos) ? `<span class="text-[10px] px-2 py-0.5 rounded font-mono font-bold inline-block mb-1 ml-1 bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">x${item.bultos} ud/bulto</span>` : '';
+      const lineaBadge = (isSb && item.proveedor) ? getDiawaraLine(item.proveedor) : '';
+      const lineaHtml  = lineaBadge ? `<span class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider mr-1" style="background:#fef3c7;color:#92400e;">${lineaBadge}</span>` : '';
+      const bultosBadge = (isSb && item.bultos) ? `<span class="text-[10px] px-2 py-0.5 rounded font-mono font-bold inline-block" style="background:#fff7ed;color:#c2410c;">x${item.bultos} ud/bulto</span>` : '';
+      // Código grande para proveedores Supabase, pequeño para GAS
+      const codigoHtml = isSb && item.codigo
+        ? `<div class="flex items-center gap-1.5 mb-1 flex-wrap">${lineaHtml}<span class="text-xl font-black font-mono tracking-wide leading-none" style="color:#0D7B68;">COD ${item.codigo}</span>${bultosBadge}</div>`
+        : (item.codigo ? `<span class="text-[10px] px-2 py-0.5 rounded font-mono font-bold inline-block mb-1" style="background:#d1fae5;color:#0D7B68;">COD ${item.codigo}</span>` : '');
+      const nameClass = isSb ? 'font-semibold text-gray-600 dark:text-gray-300 text-sm' : 'font-bold text-gray-800 dark:text-gray-100 text-base';
 
       const div = document.createElement('div');
       div.className = 'item-card';
       div.id = `card_${k}`;
-      div.setAttribute('data-name', item.name.toLowerCase());
+      div.setAttribute('data-name', (item.name + ' ' + (item.codigo || '')).toLowerCase());
 
       div.innerHTML = `
         <div class="flex items-start justify-between gap-2 mb-2">
           <div class="flex-1 min-w-0">
-            ${codigoBadge}${bultosBadge}
-            <h3 class="font-bold text-gray-800 dark:text-gray-100 text-base leading-snug">${item.name}</h3>
+            ${codigoHtml}
+            <h3 class="${nameClass} leading-snug">${item.name}</h3>
           </div>
           <span class="text-[11px] px-2.5 py-1 rounded-full font-bold shrink-0 ${prevClass}">${prevLabel}</span>
         </div>
@@ -1560,13 +1628,7 @@
       setMgrView('manager', '🔐 Gestión', 'Modo propietario');
       const l = document.getElementById('loader-mgr');
       l.classList.remove('hidden');
-      if (!cachedProviders.length) {
-        try {
-          const res = await fetch(`${WORKER_URL}?action=getProviders`);
-          const d = await res.json();
-          if (!d.error) cachedProviders = d;
-        } catch {}
-      }
+      try { cachedProviders = await mergeProviders(); } catch {}
       l.classList.add('hidden');
       document.getElementById('mgr-search').value = '';
       renderMgrList(cachedProviders);
@@ -1685,17 +1747,23 @@
         const noStock = raw === 'x' || raw === '0' || !raw;
         const stockLabel = noStock ? '❌ Sin stock' : fmtStockMgr(raw);
         const isSelected = sel?.selected;
-        const codigoBadge = item.codigo ? `<span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded mr-1" style="background:#d1fae5;color:#0D7B68;">COD ${item.codigo}</span>` : '';
+        const lineaBadge = (isSb && item.proveedor) ? getDiawaraLine(item.proveedor) : '';
+        const lineaHtml  = lineaBadge ? `<span class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider mr-1" style="background:#fef3c7;color:#92400e;">${lineaBadge}</span>` : '';
+        // Código grande para Supabase, pequeño para GAS
+        const codigoHtml = isSb && item.codigo
+          ? `<div class="flex items-center gap-1 mb-0.5">${lineaHtml}<span class="text-base font-black font-mono tracking-wide" style="color:#0D7B68;">COD ${item.codigo}</span></div>`
+          : (item.codigo ? `<div class="mb-0.5"><span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded" style="background:#d1fae5;color:#0D7B68;">COD ${item.codigo}</span></div>` : '');
+        const nameClass = isSb ? 'font-medium text-gray-700 dark:text-gray-200 text-sm' : 'font-semibold text-gray-800 dark:text-gray-100 text-sm';
         const row = document.createElement('div');
         row.className = `sel-row${isSelected ? ' selected' : ''}`;
         row.id = `orow_${k}`;
-        row.setAttribute('data-name', item.name.toLowerCase());
+        row.setAttribute('data-name', (item.name + ' ' + (item.codigo || '')).toLowerCase());
         row.setAttribute('data-nostock', noStock ? '1' : '0');
         row.onclick = () => toggleSelectItem(k);
         row.innerHTML = `
           <div class="flex-1 min-w-0">
-            ${codigoBadge ? `<div class="mb-0.5">${codigoBadge}</div>` : ''}
-            <p class="font-semibold text-gray-800 dark:text-gray-100 text-sm leading-snug">${item.name}</p>
+            ${codigoHtml}
+            <p class="${nameClass} leading-snug">${item.name}</p>
             <p class="text-xs mt-0.5 font-medium ${noStock ? 'text-red-500' : 'text-gray-400'}">${stockLabel}</p>
           </div>
           <div class="sel-circle" id="osel_${k}">
@@ -1794,22 +1862,28 @@
         const raw = item.stock;
         const noStock = raw === 'x' || raw === '0' || !raw;
         const stockLabel = noStock ? '❌ Sin stock' : fmtStockMgr(raw);
-        // Buscar unidades por bulto para este artículo
-        const nameLower = item.name.toLowerCase().trim();
-        let udPorBulto = null;
-        for (const [n, u] of Object.entries(bultosData)) {
-          if (nameLower.includes(n) || n.includes(nameLower.substring(0, Math.min(nameLower.length, 12)))) {
-            udPorBulto = u; break;
+        // Supabase: usa item.bultos directo; GAS: busca en bultosData por nombre
+        let udPorBulto = item.bultos || null;
+        if (!udPorBulto) {
+          const nameLower = item.name.toLowerCase().trim();
+          for (const [n, u] of Object.entries(bultosData)) {
+            if (nameLower.includes(n) || n.includes(nameLower.substring(0, Math.min(nameLower.length, 12)))) {
+              udPorBulto = u; break;
+            }
           }
         }
         const bultoBadge = udPorBulto
           ? `<span class="text-[10px] px-1.5 py-0.5 rounded-full font-bold" style="background:#d1fae5;color:#065f46;">${udPorBulto} ud/bulto</span>`
           : '';
+        const codigoHtml = item.codigo
+          ? `<span class="text-base font-black font-mono tracking-wide" style="color:#0D7B68;">COD ${item.codigo}</span>`
+          : '';
         const row = document.createElement('div');
         row.className = 'qty-row';
         row.innerHTML = `
           <div class="flex-1 min-w-0">
-            <p class="font-semibold text-gray-800 dark:text-gray-100 text-sm leading-snug">${item.name}</p>
+            ${codigoHtml ? `<div class="mb-0.5">${codigoHtml}</div>` : ''}
+            <p class="${item.codigo ? 'font-medium text-gray-600 dark:text-gray-300 text-sm' : 'font-semibold text-gray-800 dark:text-gray-100 text-sm'} leading-snug">${item.name}</p>
             <div class="flex items-center gap-2 mt-0.5 flex-wrap">
               <p class="text-xs font-medium ${noStock ? 'text-red-500' : 'text-gray-400'}">${stockLabel}</p>
               ${bultoBadge}
@@ -1897,19 +1971,24 @@
           [''],
           [`PEDIDO A: ${prov.toUpperCase()}`, '', today],
           [''],
-          ['ARTÍCULO', 'CANTIDAD A PEDIR', 'OBSERVACIONES'],
+          ['COD', 'ARTÍCULO', 'BULTOS A PEDIR', 'UD/BULTO'],
         ];
-        selected.forEach(item => rows.push([item.name, item.qty || 1, '']));
+        selected.forEach(item => rows.push([
+          item.codigo || '',
+          item.name,
+          item.qty || 1,
+          item.bultos || ''
+        ]));
         rows.push(['']);
-        rows.push([`Total: ${selected.length} artículo${selected.length !== 1 ? 's' : ''}`, '', '']);
+        rows.push([`Total: ${selected.length} artículo${selected.length !== 1 ? 's' : ''}`, '', '', '']);
 
         const ws = XLSX.utils.aoa_to_sheet(rows);
-        ws['!cols'] = [{ wch: 52 }, { wch: 18 }, { wch: 22 }];
+        ws['!cols'] = [{ wch: 10 }, { wch: 46 }, { wch: 16 }, { wch: 12 }];
         ws['!merges'] = [
-          { s: { r: 0, c: 0 }, e: { r: 0, c: 2 } },
-          { s: { r: 1, c: 0 }, e: { r: 1, c: 2 } },
-          { s: { r: 2, c: 0 }, e: { r: 2, c: 2 } },
-          { s: { r: 4, c: 0 }, e: { r: 4, c: 1 } },
+          { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } },
+          { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } },
+          { s: { r: 2, c: 0 }, e: { r: 2, c: 3 } },
+          { s: { r: 4, c: 0 }, e: { r: 4, c: 2 } },
         ];
 
         const S = {
@@ -1925,20 +2004,22 @@
         };
 
         const c = (r, col) => XLSX.utils.encode_cell({ r, c: col });
-        ['A1','B1','C1'].forEach(x => { if (ws[x]) ws[x].s = S.h1; });
-        ['A2','B2','C2'].forEach(x => { if (ws[x]) ws[x].s = S.h2; });
-        ['A3','B3','C3'].forEach(x => { if (ws[x]) ws[x].s = S.h2; });
+        ['A1','B1','C1','D1'].forEach(x => { if (ws[x]) ws[x].s = S.h1; });
+        ['A2','B2','C2','D2'].forEach(x => { if (ws[x]) ws[x].s = S.h2; });
+        ['A3','B3','C3','D3'].forEach(x => { if (ws[x]) ws[x].s = S.h2; });
         if (ws['A5']) ws['A5'].s = S.ped;
         if (ws['B5']) ws['B5'].s = S.ped;
-        if (ws['C5']) ws['C5'].s = S.pedR;
-        ['A7','B7','C7'].forEach(x => { if (ws[x]) ws[x].s = S.col; });
+        if (ws['C5']) ws['C5'].s = S.ped;
+        if (ws['D5']) ws['D5'].s = S.pedR;
+        ['A7','B7','C7','D7'].forEach(x => { if (ws[x]) ws[x].s = S.col; });
         selected.forEach((_, i) => {
           const r = 7 + i;
           const bg = i % 2 === 0 ? 'F8FAFC' : 'FFFFFF';
-          const na = c(r, 0), qa = c(r, 1), oa = c(r, 2);
-          if (ws[na]) ws[na].s = { ...( i % 2 === 0 ? S.ev : S.od ) };
+          const ca = c(r, 0), na = c(r, 1), qa = c(r, 2), ba = c(r, 3);
+          if (ws[ca]) ws[ca].s = { ...(i % 2 === 0 ? S.ev : S.od), font: { bold: true, sz: 10 }, alignment: { horizontal: 'center' } };
+          if (ws[na]) ws[na].s = i % 2 === 0 ? S.ev : S.od;
           if (ws[qa]) ws[qa].s = S.qty(bg);
-          if (ws[oa]) ws[oa].s = i % 2 === 0 ? S.ev : S.od;
+          if (ws[ba]) ws[ba].s = { ...(i % 2 === 0 ? S.ev : S.od), alignment: { horizontal: 'center' } };
         });
         const totRow = 8 + selected.length;
         if (ws[c(totRow, 0)]) ws[c(totRow, 0)].s = S.tot;
@@ -1970,7 +2051,9 @@
       msg += `Hola! Les hacemos el siguiente pedido:\n\n`;
       selected.forEach(item => {
         const qty = item.qty || 1;
-        msg += `• ${item.name}: *${qty} BULTO${qty !== 1 ? 'S' : ''}*\n`;
+        const codPart = item.codigo ? ` [COD ${item.codigo}]` : '';
+        const bultoInfo = item.bultos ? ` (${item.bultos} ud/bulto)` : '';
+        msg += `• ${item.name}${codPart}: *${qty} BULTO${qty !== 1 ? 'S' : ''}*${bultoInfo}\n`;
       });
       msg += `\nLugar: Languenheim 1095, Longchamps`;
       msg += `\nEntrega: Lun-Vie de 7 a 15hs`;
@@ -2108,6 +2191,53 @@
         r.onerror = rej;
         r.readAsDataURL(file);
       });
+    }
+
+    // ── NUEVO PROVEEDOR DESDE CATÁLOGO ───────────────────────────
+    function openNewProvModal() {
+      document.getElementById('new-prov-name').value = '';
+      document.getElementById('new-prov-file').value = '';
+      ['idle','loading','success','error'].forEach(s =>
+        document.getElementById(`new-prov-state-${s}`).classList.toggle('hidden', s !== 'idle'));
+      document.getElementById('new-prov-modal').classList.remove('hidden');
+    }
+
+    function closeNewProvModal() {
+      const wasSuccess = !document.getElementById('new-prov-state-success').classList.contains('hidden');
+      document.getElementById('new-prov-modal').classList.add('hidden');
+      if (wasSuccess) { cachedProviders = []; loadManagerProviders(); }
+    }
+
+    function triggerNewProvFile() {
+      const name = document.getElementById('new-prov-name').value.trim();
+      if (!name) { showToast('Ingresá el nombre del proveedor', true); return; }
+      document.getElementById('new-prov-file').click();
+    }
+
+    async function processNewProvPDF(file) {
+      if (!file) return;
+      const name = document.getElementById('new-prov-name').value.trim().toUpperCase();
+      if (!name) { showToast('Ingresá el nombre del proveedor', true); return; }
+      ['idle','loading','success','error'].forEach(s =>
+        document.getElementById(`new-prov-state-${s}`).classList.toggle('hidden', s !== 'loading'));
+      try {
+        const base64 = await fileToBase64(file);
+        const res = await fetch(WORKER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'importarCatalogo', pdfBase64: base64, proveedor: name })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        document.getElementById('new-prov-count').textContent = data.total || 0;
+        ['idle','loading','success','error'].forEach(s =>
+          document.getElementById(`new-prov-state-${s}`).classList.toggle('hidden', s !== 'success'));
+        cachedProviders = [];
+      } catch (e) {
+        document.getElementById('new-prov-error-msg').textContent = e.message || 'Error desconocido';
+        ['idle','loading','success','error'].forEach(s =>
+          document.getElementById(`new-prov-state-${s}`).classList.toggle('hidden', s !== 'error'));
+      }
     }
 
     function getDaysSince(d){if(!d)return 999;return Math.floor((new Date()-new Date(d))/86400000);}

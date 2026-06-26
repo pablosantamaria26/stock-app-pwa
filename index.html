@@ -944,16 +944,21 @@
     }
 
     // ── DATA LOADING ─────────────────────────────────────────────
+    // Proveedores con catálogo en Supabase — siempre visibles aunque la tabla esté vacía
+    const SB_CATALOG_PROVIDERS = [
+      'DIAWARA PLAST SA LINEA HOGAR 2026',
+      'DIAWARA PLAST SA LINEA INFANTIL 2026',
+      'LANZAMIENTO 2026 DIAWARA PLAST SA'
+    ];
+
     async function mergeProviders() {
-      const [gasRes, sbRes] = await Promise.all([
-        fetch(`${WORKER_URL}?action=getProviders`),
-        fetch(`${WORKER_URL}?action=getProveedoresSupabase`)
-      ]);
+      const gasRes = await fetch(`${WORKER_URL}?action=getProviders`);
       const gasData = await gasRes.json();
-      const sbList  = await sbRes.json().catch(() => []);
       const list = [];
       if (!gasData.error) list.push(...gasData);
-      if (Array.isArray(sbList)) sbList.forEach(p => list.push({ id: 'sb:' + p, name: p, source: 'supabase' }));
+      SB_CATALOG_PROVIDERS.forEach(p => {
+        if (!list.find(x => x.id === 'sb:' + p)) list.push({ id: 'sb:' + p, name: p, source: 'supabase' });
+      });
       return list;
     }
 

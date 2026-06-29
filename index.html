@@ -342,6 +342,12 @@
           <i class="fa-solid fa-plus text-xs"></i> Nuevo proveedor desde catálogo
         </button>
       </div>
+      <!-- Últimos stocks realizados -->
+      <div class="mb-5 mt-1" id="mgr-recent-section">
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1 mb-2">Últimos stocks realizados</p>
+        <div id="mgr-recent-list" class="space-y-2"></div>
+      </div>
+      <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1 mb-2">Proveedores</p>
       <div id="mgr-list-container" class="space-y-3 pb-8"></div>
       <div id="loader-mgr" class="hidden flex flex-col items-center mt-32">
         <div class="spinner mb-4" style="border-left-color:#0D7B68;"></div>
@@ -980,7 +986,7 @@
 
     function goBack() {
       if (currentView === 'quantities') { setMgrView('order', currentOrderProv.name, 'Paso 1 · Seleccioná artículos'); updateOrderDock(); return; }
-      if (currentView === 'order') { setMgrView('manager', '🔐 Gestión', 'Modo propietario'); renderMgrList(cachedProviders); return; }
+      if (currentView === 'order') { setMgrView('manager', '🔐 Gestión', 'Modo propietario'); renderRecentStocks(cachedProviders); renderMgrList(cachedProviders); return; }
       if (currentView === 'manager') { setView('home', 'Stock', 'Panel Central'); return; }
       if (currentView === 'editor' && Object.keys(changes).length > 0) saveDraft();
       if (currentView === 'editor') setView('list', 'Proveedores', 'Seleccioná un proveedor');
@@ -1003,15 +1009,21 @@
       ]);
       const list = [];
       if (gasResult.status === 'fulfilled' && !gasResult.value?.error) list.push(...gasResult.value);
-      // Proveedores Supabase dinámicos — colapsa las 3 líneas Diawara en 1
+      // Supabase devuelve [{proveedor, lastUpdated}] — colapsa las 3 líneas Diawara en 1
       const sbProviders = (sbResult.status === 'fulfilled' && Array.isArray(sbResult.value)) ? sbResult.value : [];
-      sbProviders.forEach(p => {
-        if (DIAWARA_LINES.includes(p)) return; // se maneja con la tarjeta unificada
-        if (!list.find(x => x.id === 'sb:' + p)) list.push({ id: 'sb:' + p, name: p, source: 'supabase' });
+      let diawaraLastUpdated = null;
+      sbProviders.forEach(item => {
+        const p  = typeof item === 'string' ? item : item.proveedor;
+        const lu = typeof item === 'string' ? null : item.lastUpdated;
+        if (DIAWARA_LINES.includes(p)) {
+          if (!diawaraLastUpdated || lu > diawaraLastUpdated) diawaraLastUpdated = lu;
+          return;
+        }
+        if (!list.find(x => x.id === 'sb:' + p)) list.push({ id: 'sb:' + p, name: p, source: 'supabase', lastUpdated: lu });
       });
-      // Siempre agregar la tarjeta unificada Diawara
+      // Tarjeta unificada Diawara con la fecha del stock más reciente
       if (!list.find(x => x.id === 'sb:' + DIAWARA_UNIFIED)) {
-        list.push({ id: 'sb:' + DIAWARA_UNIFIED, name: DIAWARA_UNIFIED, source: 'supabase' });
+        list.push({ id: 'sb:' + DIAWARA_UNIFIED, name: DIAWARA_UNIFIED, source: 'supabase', lastUpdated: diawaraLastUpdated });
       }
       return list;
     }
@@ -1066,15 +1078,14 @@
         if (type === 'provider') {
           const isSb = item.source === 'supabase';
           d.onclick = () => loadSheet(item.id, item.name);
-          if (isSb) {
-            d.classList.add('border-l-4', 'border-teal-500');
-            d.innerHTML = `<div class="flex items-center gap-3"><div class="w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg shrink-0" style="background:#d1fae5;color:#0D7B68;">${item.name.charAt(0)}</div><div><h3 class="font-bold text-gray-800 dark:text-gray-100 text-base leading-tight">${item.name}</h3><div class="flex items-center gap-2 mt-1"><span class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full font-bold" style="background:#d1fae5;color:#0D7B68;">CATÁLOGO</span></div></div></div><i class="fa-solid fa-chevron-right text-gray-300 dark:text-gray-600 ml-2"></i>`;
-          } else {
+          {
           const days = getDaysSince(item.lastUpdated);
-          let col = 'green', lbl = 'Al día';
-          if (days > 30) { col = 'red'; lbl = 'Atrasado'; } else if (days > 7) { col = 'yellow'; lbl = 'Revisar'; }
-          d.classList.add(`border-l-4`, `border-${col}-500`);
-          d.innerHTML = `<div class="flex items-center gap-3"><div class="w-12 h-12 rounded-xl bg-${col}-100 dark:bg-${col}-900/30 text-${col}-700 dark:text-${col}-300 flex items-center justify-center font-black text-lg shrink-0">${item.name.charAt(0)}</div><div><h3 class="font-bold text-gray-800 dark:text-gray-100 text-base leading-tight">${item.name}</h3><div class="flex items-center gap-2 mt-1"><span class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-${col}-100 dark:bg-${col}-900/30 text-${col}-700 dark:text-${col}-300 font-bold">${lbl}</span><span class="text-xs text-gray-400 font-medium"><i class="fa-regular fa-clock mr-1"></i>Hace ${days} días</span></div></div></div><i class="fa-solid fa-chevron-right text-gray-300 dark:text-gray-600 ml-2"></i>`;
+          let col = isSb ? 'teal' : 'green';
+          let lbl = item.lastUpdated ? (days === 0 ? 'Hoy' : days === 1 ? 'Ayer' : `Hace ${days}d`) : (isSb ? 'Sin stock aún' : 'Al día');
+          if (item.lastUpdated && days > 30) col = 'red';
+          else if (item.lastUpdated && days > 7) col = 'yellow';
+          d.classList.add('border-l-4', `border-${col}-500`);
+          d.innerHTML = `<div class="flex items-center gap-3"><div class="w-12 h-12 rounded-xl bg-${col}-100 dark:bg-${col}-900/30 text-${col}-700 dark:text-${col}-300 flex items-center justify-center font-black text-lg shrink-0">${item.name.charAt(0)}</div><div><h3 class="font-bold text-gray-800 dark:text-gray-100 text-base leading-tight">${item.name}</h3><div class="flex items-center gap-2 mt-1"><span class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-${col}-100 dark:bg-${col}-900/30 text-${col}-700 dark:text-${col}-300 font-bold">${lbl}</span>${!isSb ? `<span class="text-xs text-gray-400 font-medium"><i class="fa-regular fa-clock mr-1"></i>Hace ${days} días</span>` : ''}</div></div></div><i class="fa-solid fa-chevron-right text-gray-300 dark:text-gray-600 ml-2"></i>`;
           }
         } else {
           d.onclick = () => openPdfViewer(item.url);
@@ -1631,7 +1642,37 @@
       try { cachedProviders = await mergeProviders(); } catch {}
       l.classList.add('hidden');
       document.getElementById('mgr-search').value = '';
+      renderRecentStocks(cachedProviders);
       renderMgrList(cachedProviders);
+    }
+
+    function renderRecentStocks(providers) {
+      const c = document.getElementById('mgr-recent-list');
+      if (!c) return;
+      const withDate = [...providers]
+        .filter(p => p.lastUpdated)
+        .sort((a, b) => (b.lastUpdated || '') > (a.lastUpdated || '') ? 1 : -1)
+        .slice(0, 6);
+      if (!withDate.length) {
+        c.innerHTML = '<p class="text-xs text-gray-400 text-center py-2">Sin registros aún</p>';
+        return;
+      }
+      c.innerHTML = '';
+      withDate.forEach(prov => {
+        const days = getDaysSince(prov.lastUpdated);
+        const lbl = days === 0 ? 'Hoy' : days === 1 ? 'Ayer' : `Hace ${days}d`;
+        let fgCol = '#0D7B68', bgCol = '#d1fae5';
+        if (days > 30) { fgCol = '#dc2626'; bgCol = '#fee2e2'; }
+        else if (days > 7) { fgCol = '#d97706'; bgCol = '#fef3c7'; }
+        const div = document.createElement('div');
+        div.className = 'flex items-center gap-3 bg-white dark:bg-dark-card rounded-xl px-3 py-2.5 shadow-sm border border-gray-50 dark:border-dark-border cursor-pointer active:scale-[0.98] transition-transform';
+        div.onclick = () => loadOrderSheet(prov.id, prov.name);
+        div.innerHTML = `
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm shrink-0 text-white" style="background:${fgCol};">${prov.name.charAt(0)}</div>
+          <p class="font-semibold text-gray-800 dark:text-gray-100 text-sm flex-1 truncate">${prov.name}</p>
+          <span class="text-xs font-bold px-2 py-1 rounded-full shrink-0" style="background:${bgCol};color:${fgCol};">${lbl}</span>`;
+        c.appendChild(div);
+      });
     }
 
     function filterMgrProviders(q) {
@@ -1642,32 +1683,29 @@
       const c = document.getElementById('mgr-list-container');
       c.innerHTML = '';
       if (!providers.length) { c.innerHTML = '<div class="text-center opacity-40 py-12 font-medium">Sin resultados</div>'; return; }
-      const sorted = [...providers].sort((a, b) => {
-        if (a.source === 'supabase' && b.source !== 'supabase') return 1;
-        if (b.source === 'supabase' && a.source !== 'supabase') return -1;
-        return new Date(a.lastUpdated || 0) - new Date(b.lastUpdated || 0);
-      });
+      // Ordena por fecha de último stock (más antiguo primero = necesita atención)
+      const sorted = [...providers].sort((a, b) => new Date(a.lastUpdated || 0) - new Date(b.lastUpdated || 0));
       sorted.forEach(prov => {
         const isSb = prov.source === 'supabase';
         const days = getDaysSince(prov.lastUpdated);
-        let col = 'green';
-        if (!isSb && days > 30) col = 'red'; else if (!isSb && days > 7) col = 'yellow';
+        let col = isSb ? 'teal' : 'green';
+        const lbl = prov.lastUpdated ? (days === 0 ? 'Hoy' : days === 1 ? 'Ayer' : `Hace ${days}d`) : 'Sin stock aún';
+        if (prov.lastUpdated && days > 30) col = 'red';
+        else if (prov.lastUpdated && days > 7) col = 'yellow';
         const d = document.createElement('div');
-        d.className = `bg-white dark:bg-dark-card p-4 rounded-2xl shadow-sm cursor-pointer active:scale-[0.98] transition-transform border border-gray-50 dark:border-dark-border border-l-4 border-${isSb ? 'teal' : col}-500`;
+        d.className = `bg-white dark:bg-dark-card p-4 rounded-2xl shadow-sm cursor-pointer active:scale-[0.98] transition-transform border border-gray-50 dark:border-dark-border border-l-4 border-${col}-500`;
         d.onclick = () => loadOrderSheet(prov.id, prov.name);
         d.innerHTML = `
           <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg shrink-0" style="background:#d1fae5;color:#0D7B68;">${prov.name.charAt(0)}</div>
+            <div class="w-12 h-12 rounded-xl bg-${col}-100 dark:bg-${col}-900/30 text-${col}-700 dark:text-${col}-300 flex items-center justify-center font-black text-lg shrink-0">${prov.name.charAt(0)}</div>
             <div class="flex-1 min-w-0">
               <h3 class="font-bold text-gray-800 dark:text-gray-100 text-base leading-tight truncate">${prov.name}</h3>
               <div class="flex items-center gap-2 mt-1">
-                ${isSb
-                  ? `<span class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full font-bold" style="background:#d1fae5;color:#0D7B68;">CATÁLOGO</span>`
-                  : `<span class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-${col}-100 dark:bg-${col}-900/30 text-${col}-700 dark:text-${col}-300 font-bold">Hace ${days}d</span>`}
+                <span class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-${col}-100 dark:bg-${col}-900/30 text-${col}-700 dark:text-${col}-300 font-bold">${lbl}</span>
                 <span class="text-xs text-gray-400 font-medium">Tocar para armar pedido</span>
               </div>
             </div>
-            <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background:#d1fae5;color:#0D7B68;">
+            <div class="w-9 h-9 rounded-xl bg-${col}-100 dark:bg-${col}-900/30 text-${col}-700 flex items-center justify-center shrink-0">
               <i class="fa-solid fa-cart-plus text-sm"></i>
             </div>
           </div>`;

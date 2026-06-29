@@ -1739,13 +1739,13 @@
       const c = document.getElementById('order-container');
       c.innerHTML = '';
       if (!items.length) { c.innerHTML = '<div class="p-8 text-center opacity-40 font-medium">Sin productos</div>'; return; }
+      const bultosData = getBultosData(currentOrderProv?.name || '');
       items.forEach(item => {
         const isSb = item.id !== undefined && item.row === undefined;
         const k = isSb ? `sb_${item.id}` : `${item.row}_${item.col}`;
         const sel = orderSelections[k];
         const raw = item.stock ? item.stock.toString() : 'x';
         const noStock = raw === 'x' || raw === '0' || !raw;
-        const stockLabel = noStock ? '❌ Sin stock' : fmtStockMgr(raw);
         const isSelected = sel?.selected;
         const lineaBadge = (isSb && item.proveedor) ? getDiawaraLine(item.proveedor) : '';
         const lineaHtml  = lineaBadge ? `<span class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider mr-1" style="background:#fef3c7;color:#92400e;">${lineaBadge}</span>` : '';
@@ -1754,6 +1754,18 @@
           ? `<div class="flex items-center gap-1 mb-0.5">${lineaHtml}<span class="text-base font-black font-mono tracking-wide" style="color:#0D7B68;">COD ${item.codigo}</span></div>`
           : (item.codigo ? `<div class="mb-0.5"><span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded" style="background:#d1fae5;color:#0D7B68;">COD ${item.codigo}</span></div>` : '');
         const nameClass = isSb ? 'font-medium text-gray-700 dark:text-gray-200 text-sm' : 'font-semibold text-gray-800 dark:text-gray-100 text-sm';
+        // Sub-label: si hay stock → mostrarlo; si sin stock → ud/bulto (más útil que "sin stock" repetido)
+        let udPorBulto = item.bultos || null;
+        if (!udPorBulto) {
+          const nl = item.name.toLowerCase().trim();
+          for (const [n, u] of Object.entries(bultosData)) {
+            if (nl.includes(n) || n.includes(nl.substring(0, Math.min(nl.length, 12)))) { udPorBulto = u; break; }
+          }
+        }
+        const infoLabel = noStock
+          ? (udPorBulto ? `${udPorBulto} ud/bulto` : '')
+          : fmtStockMgr(raw);
+        const infoClass = noStock ? 'text-teal-600 dark:text-teal-400 font-bold' : 'text-gray-400';
         const row = document.createElement('div');
         row.className = `sel-row${isSelected ? ' selected' : ''}`;
         row.id = `orow_${k}`;
@@ -1764,7 +1776,7 @@
           <div class="flex-1 min-w-0">
             ${codigoHtml}
             <p class="${nameClass} leading-snug">${item.name}</p>
-            <p class="text-xs mt-0.5 font-medium ${noStock ? 'text-red-500' : 'text-gray-400'}">${stockLabel}</p>
+            ${infoLabel ? `<p class="text-xs mt-0.5 font-medium ${infoClass}">${infoLabel}</p>` : ''}
           </div>
           <div class="sel-circle" id="osel_${k}">
             ${isSelected ? '<i class="fa-solid fa-check text-white text-xs"></i>' : ''}

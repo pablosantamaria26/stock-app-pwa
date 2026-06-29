@@ -1008,7 +1008,8 @@
         fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'getProveedoresSupabase' }) }).then(r => r.json())
       ]);
       const list = [];
-      if (gasResult.status === 'fulfilled' && !gasResult.value?.error) list.push(...gasResult.value);
+      const gasItems = (gasResult.status === 'fulfilled' && Array.isArray(gasResult.value)) ? gasResult.value : [];
+      list.push(...gasItems);
       // Supabase devuelve [{proveedor, lastUpdated}] — colapsa las 3 líneas Diawara en 1
       const sbProviders = (sbResult.status === 'fulfilled' && Array.isArray(sbResult.value)) ? sbResult.value : [];
       let diawaraLastUpdated = null;
@@ -1071,22 +1072,33 @@
       const c = document.getElementById('list-container');
       c.innerHTML = '';
       if (!items.length) { c.innerHTML = '<div class="text-center opacity-40 py-12 font-medium">Sin resultados</div>'; return; }
-      if (type === 'provider') items = [...items].sort((a, b) => new Date(a.lastUpdated || 0) - new Date(b.lastUpdated || 0));
+      if (type === 'provider') items = [...items].sort((a, b) => {
+        if (a.source === 'supabase' && b.source !== 'supabase') return -1;
+        if (b.source === 'supabase' && a.source !== 'supabase') return 1;
+        const da = a.lastUpdated ? new Date(a.lastUpdated).getTime() : 0;
+        const db = b.lastUpdated ? new Date(b.lastUpdated).getTime() : 0;
+        return (isNaN(da) ? 0 : da) - (isNaN(db) ? 0 : db);
+      });
       items.forEach(item => {
         const d = document.createElement('div');
         d.className = 'bg-white dark:bg-dark-card p-4 rounded-2xl shadow-sm flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform border border-gray-50 dark:border-dark-border';
         if (type === 'provider') {
           const isSb = item.source === 'supabase';
           d.onclick = () => loadSheet(item.id, item.name);
-          {
           const days = getDaysSince(item.lastUpdated);
-          let col = isSb ? 'teal' : 'green';
-          let lbl = item.lastUpdated ? (days === 0 ? 'Hoy' : days === 1 ? 'Ayer' : `Hace ${days}d`) : (isSb ? 'Sin stock aún' : 'Al día');
-          if (item.lastUpdated && days > 30) col = 'red';
-          else if (item.lastUpdated && days > 7) col = 'yellow';
-          d.classList.add('border-l-4', `border-${col}-500`);
-          d.innerHTML = `<div class="flex items-center gap-3"><div class="w-12 h-12 rounded-xl bg-${col}-100 dark:bg-${col}-900/30 text-${col}-700 dark:text-${col}-300 flex items-center justify-center font-black text-lg shrink-0">${item.name.charAt(0)}</div><div><h3 class="font-bold text-gray-800 dark:text-gray-100 text-base leading-tight">${item.name}</h3><div class="flex items-center gap-2 mt-1"><span class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-${col}-100 dark:bg-${col}-900/30 text-${col}-700 dark:text-${col}-300 font-bold">${lbl}</span>${!isSb ? `<span class="text-xs text-gray-400 font-medium"><i class="fa-regular fa-clock mr-1"></i>Hace ${days} días</span>` : ''}</div></div></div><i class="fa-solid fa-chevron-right text-gray-300 dark:text-gray-600 ml-2"></i>`;
+          let col, lbl;
+          if (isSb) {
+            col = 'teal';
+            lbl = item.lastUpdated ? (days === 0 ? 'Hoy' : days === 1 ? 'Ayer' : `Hace ${days}d`) : 'Sin stock aún';
+            if (item.lastUpdated && days > 30) col = 'red';
+            else if (item.lastUpdated && days > 7) col = 'yellow';
+          } else {
+            if (days > 30) { col = 'red'; lbl = 'Atrasado'; }
+            else if (days > 7) { col = 'yellow'; lbl = 'Revisar'; }
+            else { col = 'green'; lbl = item.lastUpdated ? (days === 0 ? 'Hoy' : days === 1 ? 'Ayer' : `Hace ${days}d`) : 'Al día'; }
           }
+          d.classList.add('border-l-4', `border-${col}-500`);
+          d.innerHTML = `<div class="flex items-center gap-3"><div class="w-12 h-12 rounded-xl bg-${col}-100 dark:bg-${col}-900/30 text-${col}-700 dark:text-${col}-300 flex items-center justify-center font-black text-lg shrink-0">${item.name.charAt(0)}</div><div><h3 class="font-bold text-gray-800 dark:text-gray-100 text-base leading-tight">${item.name}</h3><div class="flex items-center gap-2 mt-1"><span class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-${col}-100 dark:bg-${col}-900/30 text-${col}-700 dark:text-${col}-300 font-bold">${lbl}</span></div></div></div><i class="fa-solid fa-chevron-right text-gray-300 dark:text-gray-600 ml-2"></i>`;
         } else {
           d.onclick = () => openPdfViewer(item.url);
           d.innerHTML = `<div class="flex items-center gap-3"><div class="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 text-orange-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-file-pdf text-xl"></i></div><h3 class="font-bold text-gray-800 dark:text-gray-100">${item.name}</h3></div><i class="fa-solid fa-chevron-right text-gray-300 dark:text-gray-600 ml-2"></i>`;
@@ -1683,15 +1695,28 @@
       const c = document.getElementById('mgr-list-container');
       c.innerHTML = '';
       if (!providers.length) { c.innerHTML = '<div class="text-center opacity-40 py-12 font-medium">Sin resultados</div>'; return; }
-      // Ordena por fecha de último stock (más antiguo primero = necesita atención)
-      const sorted = [...providers].sort((a, b) => new Date(a.lastUpdated || 0) - new Date(b.lastUpdated || 0));
+      // SB primero, luego GAS; dentro de cada grupo: más antiguo primero = necesita atención
+      const sorted = [...providers].sort((a, b) => {
+        if (a.source === 'supabase' && b.source !== 'supabase') return -1;
+        if (b.source === 'supabase' && a.source !== 'supabase') return 1;
+        const da = a.lastUpdated ? new Date(a.lastUpdated).getTime() : 0;
+        const db = b.lastUpdated ? new Date(b.lastUpdated).getTime() : 0;
+        return (isNaN(da) ? 0 : da) - (isNaN(db) ? 0 : db);
+      });
       sorted.forEach(prov => {
         const isSb = prov.source === 'supabase';
         const days = getDaysSince(prov.lastUpdated);
-        let col = isSb ? 'teal' : 'green';
-        const lbl = prov.lastUpdated ? (days === 0 ? 'Hoy' : days === 1 ? 'Ayer' : `Hace ${days}d`) : 'Sin stock aún';
-        if (prov.lastUpdated && days > 30) col = 'red';
-        else if (prov.lastUpdated && days > 7) col = 'yellow';
+        let col, lbl;
+        if (isSb) {
+          col = 'teal';
+          lbl = prov.lastUpdated ? (days === 0 ? 'Hoy' : days === 1 ? 'Ayer' : `Hace ${days}d`) : 'Sin stock aún';
+          if (prov.lastUpdated && days > 30) col = 'red';
+          else if (prov.lastUpdated && days > 7) col = 'yellow';
+        } else {
+          if (days > 30) { col = 'red'; lbl = 'Atrasado'; }
+          else if (days > 7) { col = 'yellow'; lbl = 'Revisar'; }
+          else { col = 'green'; lbl = prov.lastUpdated ? (days === 0 ? 'Hoy' : days === 1 ? 'Ayer' : `Hace ${days}d`) : 'Al día'; }
+        }
         const d = document.createElement('div');
         d.className = `bg-white dark:bg-dark-card p-4 rounded-2xl shadow-sm cursor-pointer active:scale-[0.98] transition-transform border border-gray-50 dark:border-dark-border border-l-4 border-${col}-500`;
         d.onclick = () => loadOrderSheet(prov.id, prov.name);

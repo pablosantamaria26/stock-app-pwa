@@ -341,6 +341,14 @@
         <button onclick="openNewProvModal()" class="w-full py-3 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 active:scale-95 transition-all text-white shadow-md" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);">
           <i class="fa-solid fa-plus text-xs"></i> Nuevo proveedor desde catálogo
         </button>
+        <div class="flex items-center justify-between px-1 pt-0.5">
+          <button onclick="forgetAdminDevice()" class="text-xs text-gray-400 dark:text-gray-500 font-medium flex items-center gap-1 active:text-red-400 transition-colors">
+            <i class="fa-solid fa-right-from-bracket text-[10px]"></i> Olvidar este dispositivo
+          </button>
+          <button onclick="openNtfyModal()" class="text-xs font-bold flex items-center gap-1 transition-colors" id="ntfy-status-btn" style="color:#7c3aed;">
+            <i class="fa-solid fa-bell text-[10px]"></i> Notificaciones
+          </button>
+        </div>
       </div>
       <!-- Últimos stocks realizados -->
       <div class="mb-5 mt-1" id="mgr-recent-section">
@@ -686,6 +694,48 @@
     <div class="flex-1 bg-white w-full overflow-hidden"><iframe id="pdf-frame" class="w-full h-full border-0" src=""></iframe></div>
   </div>
 
+  <!-- MODAL: NTFY NOTIFICACIONES -->
+  <div id="ntfy-modal" class="fixed inset-0 z-[100] flex items-center justify-center modal-overlay hidden px-6">
+    <div class="bg-white dark:bg-dark-card p-6 rounded-[2rem] shadow-2xl w-full max-w-sm animate-scale-in">
+      <div class="text-center mb-5">
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 text-3xl" style="background:#ede9fe;">🔔</div>
+        <h2 class="text-lg font-black text-gray-800 dark:text-white">Notificaciones a tu iPhone</h2>
+        <p class="text-xs text-gray-400 mt-1">Recibís una notificación cada vez que un empleado guarda stock.</p>
+      </div>
+      <div class="space-y-3 mb-5">
+        <div class="flex gap-3 items-start">
+          <div class="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-black shrink-0 mt-0.5" style="background:#7c3aed;">1</div>
+          <div>
+            <p class="font-bold text-gray-800 dark:text-gray-100 text-sm">Instalá la app ntfy en tu iPhone</p>
+            <p class="text-xs text-gray-400">Buscala en el App Store: <span class="font-bold text-purple-600">ntfy</span></p>
+          </div>
+        </div>
+        <div class="flex gap-3 items-start">
+          <div class="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-black shrink-0 mt-0.5" style="background:#7c3aed;">2</div>
+          <div>
+            <p class="font-bold text-gray-800 dark:text-gray-100 text-sm">Elegí un topic secreto único</p>
+            <p class="text-xs text-gray-400">Ej: <span class="font-mono font-bold text-gray-600 dark:text-gray-300">ml-stock-1234abc</span> (cualquier nombre que recuerdes)</p>
+          </div>
+        </div>
+        <div class="flex gap-3 items-start">
+          <div class="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-black shrink-0 mt-0.5" style="background:#7c3aed;">3</div>
+          <div>
+            <p class="font-bold text-gray-800 dark:text-gray-100 text-sm">Configurá el Worker</p>
+            <p class="text-xs text-gray-400">En Cloudflare Dashboard → Workers → broken-butterfly-3928 → Settings → Variables → Agregá <span class="font-mono font-bold text-gray-600 dark:text-gray-300">NTFY_TOPIC</span> = tu topic</p>
+          </div>
+        </div>
+        <div class="flex gap-3 items-start">
+          <div class="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-black shrink-0 mt-0.5" style="background:#7c3aed;">4</div>
+          <div>
+            <p class="font-bold text-gray-800 dark:text-gray-100 text-sm">Suscribite en ntfy</p>
+            <p class="text-xs text-gray-400">Abrí la app ntfy → símbolo <span class="font-bold">+</span> → escribí tu topic → listo 🎉</p>
+          </div>
+        </div>
+      </div>
+      <button onclick="closeNtfyModal()" class="w-full py-3.5 rounded-2xl font-bold text-white text-sm active:scale-95 transition-transform" style="background:#7c3aed;">Entendido</button>
+    </div>
+  </div>
+
   <!-- MODAL: PIN GESTIÓN -->
   <div id="pin-modal" class="fixed inset-0 z-[100] flex items-center justify-center modal-overlay hidden px-6">
     <div id="pin-card" class="bg-white dark:bg-dark-card p-6 rounded-[2.5rem] shadow-2xl w-full max-w-xs text-center animate-scale-in">
@@ -817,7 +867,7 @@
           const r = await fetchWithRetry(WORKER_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'updateStock',fileId:e.fileId,items:e.items,user:e.user}) }, 2);
           const d = await r.json();
           if (d.error) remaining.push(e);
-          else { sent++; syncToSupabase(e.items, e.user, e.provName).catch(() => {}); }
+          else { sent++; notifyStock(e.provName); syncToSupabase(e.items, e.user, e.provName).catch(() => {}); }
         } catch { remaining.push(e); }
       }
       saveQueue(remaining); updatePendingAlert();
@@ -910,7 +960,7 @@
       updateCpill(navigator.onLine);
       updatePendingAlert();
       if (navigator.onLine) drainQueue();
-      silentLoadProviders();
+      if (localStorage.getItem('ml_admin') === '1') { loadManagerProviders(); } else { silentLoadProviders(); }
       loadSbProveedores();
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('service-worker.js').then(reg => {
@@ -948,6 +998,17 @@
         if (Array.isArray(data)) data.forEach(p => { sbProveedores[p.nombre.toLowerCase().trim()] = p.id; });
       } catch {}
     }
+
+    function notifyStock(provName) {
+      fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'notifyStock', provName }) }).catch(() => {});
+    }
+    function forgetAdminDevice() {
+      localStorage.removeItem('ml_admin');
+      showToast('Dispositivo olvidado — la próxima vez pedirá PIN');
+      setView('home', 'Stock', 'Panel Central');
+    }
+    function openNtfyModal() { document.getElementById('ntfy-modal').classList.remove('hidden'); }
+    function closeNtfyModal() { document.getElementById('ntfy-modal').classList.add('hidden'); }
 
     // ── NAVIGATION ───────────────────────────────────────────────
     function setView(view, title, subtitle) {
@@ -1488,6 +1549,7 @@
           if (d.error) throw new Error(d.error);
           clearDraft(); changes = {}; sbIdMap = {}; updateDockAndProgress();
           setSvState('success');
+          notifyStock(provName);
           document.getElementById('sv-detail').textContent = `${updates.length} producto${updates.length!==1?'s':''} actualizado${updates.length!==1?'s':''}`;
           setTimeout(() => { document.getElementById('save-modal').classList.add('hidden'); loadSheet(fileId, provName); }, 2200);
         } catch (e) {
@@ -1512,6 +1574,7 @@
 
       if (saved) {
         setSvState('success');
+        notifyStock(provName);
         document.getElementById('sv-detail').textContent = `${snap.length} producto${snap.length!==1?'s':''} actualizado${snap.length!==1?'s':''}`;
         setTimeout(() => { document.getElementById('save-modal').classList.add('hidden'); cachedProviders = []; silentLoadProviders(); goBack(); }, 2200);
       } else {
@@ -1610,6 +1673,7 @@
 
     // ── PIN ──────────────────────────────────────────────────────
     function openPinModal() {
+      if (localStorage.getItem('ml_admin') === '1') { loadManagerProviders(); return; }
       pinBuffer = '';
       updatePinDots();
       document.getElementById('pin-error').classList.add('hidden');
@@ -1628,6 +1692,7 @@
         setTimeout(() => {
           if (pinBuffer === MANAGER_PIN) {
             closePinModal();
+            localStorage.setItem('ml_admin', '1');
             loadManagerProviders();
           } else {
             document.getElementById('pin-error').classList.remove('hidden');

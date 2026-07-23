@@ -1007,7 +1007,7 @@
     }
     async function syncGasToSupabase() {
       const btn = document.getElementById('sync-gas-btn');
-      const gasProvs = cachedProviders.filter(p => p.source !== 'supabase' && p.id && !p.id.startsWith('sb:'));
+      const gasProvs = cachedProviders.filter(p => p.source !== 'supabase' && p.source !== 'supabase2' && p.id && !p.id.startsWith('sb:') && !p.id.startsWith('sb2:'));
       if (!gasProvs.length) { showToast('No hay proveedores GAS para sincronizar'); return; }
       btn.disabled = true;
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs"></i> Sincronizando...';
@@ -1126,9 +1126,10 @@
     const DIAWARA_UNIFIED = 'DIAWARA PLAST SA';
 
     async function mergeProviders() {
-      const [gasResult, sbResult] = await Promise.allSettled([
+      const [gasResult, sbResult, sb2Result] = await Promise.allSettled([
         fetch(`${WORKER_URL}?action=getProviders`).then(r => r.json()),
-        fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'getProveedoresSupabase' }) }).then(r => r.json())
+        fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'getProveedoresSupabase' }) }).then(r => r.json()),
+        fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'getProveedoresSb2' }) }).then(r => r.json())
       ]);
       const list = [];
       const gasItems = (gasResult.status === 'fulfilled' && Array.isArray(gasResult.value)) ? gasResult.value : [];
@@ -1149,6 +1150,11 @@
       if (!list.find(x => x.id === 'sb:' + DIAWARA_UNIFIED)) {
         list.push({ id: 'sb:' + DIAWARA_UNIFIED, name: DIAWARA_UNIFIED, source: 'supabase', lastUpdated: diawaraLastUpdated });
       }
+      // Proveedores Supabase-nativos (sin hoja GAS)
+      const sb2Providers = (sb2Result.status === 'fulfilled' && Array.isArray(sb2Result.value)) ? sb2Result.value : [];
+      sb2Providers.forEach(p => {
+        if (!list.find(x => x.id === 'sb2:' + p.id)) list.push({ id: 'sb2:' + p.id, name: p.nombre, source: 'supabase2', lastUpdated: p.lastUpdated });
+      });
       return list;
     }
 
@@ -1236,9 +1242,10 @@
       document.getElementById('editor-search').value = '';
       const c = document.getElementById('editor-container'), l = document.getElementById('loader-editor');
       c.innerHTML = ''; l.classList.remove('hidden');
-      const isSb = id.startsWith('sb:');
+      const isSb  = id.startsWith('sb:');
+      const isSb2 = id.startsWith('sb2:');
       document.getElementById('import-catalog-btn').classList.toggle('hidden', !isSb);
-      document.getElementById('add-item-area').classList.toggle('hidden', isSb);
+      document.getElementById('add-item-area').classList.toggle('hidden', isSb || isSb2);
       try {
         let items;
         if (isSb) {
@@ -1247,6 +1254,12 @@
           const d = await res.json();
           if (d.error) throw new Error(d.error);
           items = (d.items || []).map(a => ({ ...a, name: a.nombre }));
+        } else if (isSb2) {
+          const provId = id.slice(4);
+          const res = await fetchWithRetry(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'getStockSb2', provId }) });
+          const d = await res.json();
+          if (d.error) throw new Error(d.error);
+          items = d.items || [];
         } else {
           const res = await fetchWithRetry(`${WORKER_URL}?action=getSheetData&fileId=${id}`, {});
           const d   = await res.json();
@@ -1599,6 +1612,27 @@
       setSvState('saving');
       document.getElementById('save-modal').classList.remove('hidden');
 
+      // ── SUPABASE2 PROVIDERS (stock_inventario nativos) ────────
+      if (fileId.startsWith('sb2:')) {
+        try {
+          const provId = fileId.slice(4);
+          const items = snap.filter(ch => ch.newStock !== undefined).map(ch => ({ name: ch.name, newStock: ch.newStock }));
+          const r = await fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'updateStockSb2', provId, items, user: u }) });
+          const d = await r.json();
+          if (!d.ok) throw new Error('Error guardando en Supabase');
+          clearDraft(); changes = {}; updateDockAndProgress();
+          setSvState('success');
+          notifyStock(provName);
+          document.getElementById('sv-detail').textContent = `${items.length} producto${items.length!==1?'s':''} actualizado${items.length!==1?'s':''}`;
+          setTimeout(() => { document.getElementById('save-modal').classList.add('hidden'); loadSheet(fileId, provName); }, 2200);
+        } catch (e) {
+          setSvState('offline');
+          document.getElementById('sv-detail').textContent = e.message || 'Error al guardar';
+          setTimeout(() => { document.getElementById('save-modal').classList.add('hidden'); }, 3200);
+        }
+        return;
+      }
+
       // ── SUPABASE PROVIDERS ────────────────────────────────────
       if (fileId.startsWith('sb:')) {
         try {
@@ -1877,7 +1911,8 @@
       const l = document.getElementById('loader-order');
       c.innerHTML = ''; l.classList.remove('hidden');
       try {
-        const isSb = id.startsWith('sb:');
+        const isSb  = id.startsWith('sb:');
+        const isSb2 = id.startsWith('sb2:');
         if (isSb) {
           const proveedor = id.slice(3);
           const res = await fetchWithRetry(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'getArticulosSupabase', proveedor }) });
@@ -1888,6 +1923,17 @@
             const raw = item.stock || 'x';
             const noStock = raw === 'x' || raw === '0' || !raw;
             orderSelections[k] = { name: item.name, codigo: item.codigo, bultos: item.bultos, stock: raw, selected: noStock, qty: 1 };
+          });
+        } else if (isSb2) {
+          const provId = id.slice(4);
+          const res = await fetchWithRetry(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'getStockSb2', provId }) });
+          const d = await res.json();
+          orderItems = d.items || [];
+          orderItems.forEach(item => {
+            const k = `${item.row}_${item.col}`;
+            const raw = item.stock ? item.stock.toString() : 'x';
+            const noStock = raw === 'x' || raw === '0' || !raw;
+            orderSelections[k] = { name: item.name, stock: raw, selected: noStock, qty: 1 };
           });
         } else {
           const res = await fetchWithRetry(`${WORKER_URL}?action=getSheetData&fileId=${id}`, {});

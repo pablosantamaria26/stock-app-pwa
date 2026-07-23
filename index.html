@@ -341,6 +341,9 @@
         <button onclick="openNewProvModal()" class="w-full py-3 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 active:scale-95 transition-all text-white shadow-md" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);">
           <i class="fa-solid fa-plus text-xs"></i> Nuevo proveedor desde catálogo
         </button>
+        <button id="sync-gas-btn" onclick="syncGasToSupabase()" class="w-full py-3 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 active:scale-95 transition-all text-white shadow-md" style="background:linear-gradient(135deg,#0D7B68,#059669);">
+          <i class="fa-solid fa-arrows-rotate text-xs"></i> Sincronizar GAS → Supabase
+        </button>
         <div class="flex items-center justify-between px-1 pt-0.5">
           <button onclick="forgetAdminDevice()" class="text-xs text-gray-400 dark:text-gray-500 font-medium flex items-center gap-1 active:text-red-400 transition-colors">
             <i class="fa-solid fa-right-from-bracket text-[10px]"></i> Olvidar este dispositivo
@@ -1002,6 +1005,67 @@
     function notifyStock(provName) {
       fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'notifyStock', provName }) }).catch(() => {});
     }
+    async function syncGasToSupabase() {
+      const btn = document.getElementById('sync-gas-btn');
+      const gasProvs = cachedProviders.filter(p => p.source !== 'supabase' && p.id && !p.id.startsWith('sb:'));
+      if (!gasProvs.length) { showToast('No hay proveedores GAS para sincronizar'); return; }
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs"></i> Sincronizando...';
+
+      // Traer proveedores ya registrados en Supabase
+      let existingProvs = {};
+      try {
+        const r = await fetch(`${SB_URL}/rest/v1/proveedores?select=id,nombre`, { headers: { apikey: SB_ANON, Authorization: `Bearer ${SB_ANON}` } });
+        const d = await r.json();
+        if (Array.isArray(d)) d.forEach(p => { existingProvs[p.nombre.toLowerCase().trim()] = p.id; });
+      } catch(e) {}
+
+      let synced = 0, errors = 0;
+      for (const prov of gasProvs) {
+        try {
+          const key = prov.name.toLowerCase().trim();
+          let provId = existingProvs[key];
+
+          // Crear proveedor en Supabase si no existe
+          if (!provId) {
+            const r = await fetch(`${SB_URL}/rest/v1/proveedores`, {
+              method: 'POST',
+              headers: { apikey: SB_ANON, Authorization: `Bearer ${SB_ANON}`, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+              body: JSON.stringify({ nombre: prov.name, activo: true })
+            });
+            const d = await r.json();
+            provId = Array.isArray(d) ? d[0]?.id : d?.id;
+            if (provId) { existingProvs[key] = provId; sbProveedores[key] = provId; }
+          }
+          if (!provId) { errors++; continue; }
+
+          // Traer artículos actuales del GAS
+          const gasRes = await fetchWithRetry(`${WORKER_URL}?action=getSheetData&fileId=${prov.id}`, {});
+          const gasData = await gasRes.json();
+          const items = (gasData.items || []).filter(it => it.name);
+          if (!items.length) { synced++; continue; }
+
+          // Insertar en stock_inventario
+          const rows = items.map(it => {
+            const raw = it.stock ? it.stock.toString() : 'x';
+            const isBulto = raw.toUpperCase().endsWith('B') && raw.length > 1;
+            const num = parseFloat(raw.replace(/[^0-9.,]/g,'').replace(',','.')) || 0;
+            return { proveedor_id: provId, articulo_original: it.name, stock_raw: raw, stock_unidades: raw === 'x' ? 0 : num, es_bulto: isBulto, operador: 'MIGRACIÓN GAS', fecha_conteo: new Date().toISOString() };
+          });
+          await fetch(`${SB_URL}/rest/v1/stock_inventario`, {
+            method: 'POST',
+            headers: { apikey: SB_ANON, Authorization: `Bearer ${SB_ANON}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+            body: JSON.stringify(rows)
+          });
+          synced++;
+        } catch(e) { errors++; }
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-arrows-rotate text-xs"></i> Sincronizar GAS → Supabase';
+      showToast(`✅ ${synced} proveedores sincronizados${errors ? ` (${errors} con errores)` : ''}`);
+    }
+
     function forgetAdminDevice() {
       localStorage.removeItem('ml_admin');
       showToast('Dispositivo olvidado — la próxima vez pedirá PIN');

@@ -1012,31 +1012,29 @@
       btn.disabled = true;
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs"></i> Sincronizando...';
 
-      // Traer proveedores ya registrados en Supabase
-      let existingProvs = {};
+      // Traer proveedores registrados en Supabase
+      let normProvs = {};
       try {
         const r = await fetch(`${SB_URL}/rest/v1/proveedores?select=id,nombre`, { headers: { apikey: SB_ANON, Authorization: `Bearer ${SB_ANON}` } });
         const d = await r.json();
-        if (Array.isArray(d)) d.forEach(p => { existingProvs[p.nombre.toLowerCase().trim()] = p.id; });
+        const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+        if (Array.isArray(d)) d.forEach(p => { normProvs[norm(p.nombre)] = p.id; });
       } catch(e) {}
+
+      // Quita la palabra "stock" y normaliza para matchear GAS → Supabase
+      const matchProv = (gasName) => {
+        const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+        const clean = norm(gasName).replace(/\bstock\b/g,'').replace(/\s+/g,' ').trim();
+        if (normProvs[clean]) return normProvs[clean];
+        // Fallback: buscar si alguna clave de Supabase contiene el nombre limpio o viceversa
+        const k = Object.keys(normProvs).find(k => k.includes(clean) || clean.includes(k));
+        return k ? normProvs[k] : null;
+      };
 
       let synced = 0, errors = 0;
       for (const prov of gasProvs) {
         try {
-          const key = prov.name.toLowerCase().trim();
-          let provId = existingProvs[key];
-
-          // Crear proveedor en Supabase si no existe
-          if (!provId) {
-            const r = await fetch(`${SB_URL}/rest/v1/proveedores`, {
-              method: 'POST',
-              headers: { apikey: SB_ANON, Authorization: `Bearer ${SB_ANON}`, 'Content-Type': 'application/json', Prefer: 'return=representation' },
-              body: JSON.stringify({ nombre: prov.name, activo: true })
-            });
-            const d = await r.json();
-            provId = Array.isArray(d) ? d[0]?.id : d?.id;
-            if (provId) { existingProvs[key] = provId; sbProveedores[key] = provId; }
-          }
+          const provId = matchProv(prov.name);
           if (!provId) { errors++; continue; }
 
           // Traer artículos actuales del GAS
@@ -1052,12 +1050,12 @@
             const num = parseFloat(raw.replace(/[^0-9.,]/g,'').replace(',','.')) || 0;
             return { proveedor_id: provId, articulo_original: it.name, stock_raw: raw, stock_unidades: raw === 'x' ? 0 : num, es_bulto: isBulto, operador: 'MIGRACIÓN GAS', fecha_conteo: new Date().toISOString() };
           });
-          await fetch(`${SB_URL}/rest/v1/stock_inventario`, {
+          const sbRes = await fetch(`${SB_URL}/rest/v1/stock_inventario`, {
             method: 'POST',
             headers: { apikey: SB_ANON, Authorization: `Bearer ${SB_ANON}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
             body: JSON.stringify(rows)
           });
-          synced++;
+          if (sbRes.ok) synced++; else errors++;
         } catch(e) { errors++; }
       }
 

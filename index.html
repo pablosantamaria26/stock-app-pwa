@@ -1000,7 +1000,11 @@
     }
 
     function notifyStock(provName) {
-      fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'notifyStock', provName }) }).catch(() => {});
+      console.log('[notifyStock] enviando para:', provName);
+      fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'notifyStock', provName }) })
+        .then(r => r.json())
+        .then(d => console.log('[notifyStock] respuesta:', JSON.stringify(d)))
+        .catch(e => console.error('[notifyStock] error:', e));
     }
     function forgetAdminDevice() {
       localStorage.removeItem('ml_admin');

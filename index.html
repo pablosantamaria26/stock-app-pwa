@@ -870,7 +870,7 @@
           const r = await fetchWithRetry(WORKER_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'updateStock',fileId:e.fileId,items:e.items,user:e.user}) }, 2);
           const d = await r.json();
           if (d.error) remaining.push(e);
-          else { sent++; notifyStock(e.provName); syncToSupabase(e.items, e.user, e.provName).catch(() => {}); }
+          else { sent++; notifyStock(e.provName); await syncToSupabase(e.items, e.user, e.provName); }
         } catch { remaining.push(e); }
       }
       saveQueue(remaining); updatePendingAlert();
@@ -1663,7 +1663,7 @@
         const d = await r.json();
         if (d.error) throw new Error(d.error);
         saved = true;
-        syncToSupabase(snap, u, provName).catch(() => {});
+        await syncToSupabase(snap, u, provName);
       } catch {}
 
       clearDraft(); changes = {}; updateDockAndProgress();
@@ -1702,16 +1702,23 @@
     // ── SUPABASE ─────────────────────────────────────────────────
     async function syncToSupabase(items, operador, provName) {
       const key = (provName || currentProvNombre || '').toLowerCase().trim();
+      // Si sbProveedores aun no cargo, intentar recargarlo
+      if (!Object.keys(sbProveedores).length) await loadSbProveedores();
       const provId = sbProveedores[key];
-      if (!provId) return;
-      const rows = items.filter(it => it.name).map(it => {
-        const raw = it.newStock || 'x';
-        const isBulto = raw.toUpperCase().endsWith('B') && raw.length > 1;
-        const num = parseFloat(raw.replace(/[^0-9.,]/g,'').replace(',','.')) || 0;
-        return {proveedor_id:provId, articulo_original:it.name, stock_raw:raw, stock_unidades:raw==='x'?0:num, es_bulto:isBulto, operador, fecha_conteo:new Date().toISOString()};
-      });
-      if (!rows.length) return;
-      await fetch(`${SB_URL}/rest/v1/stock_inventario`, {method:'POST', headers:{apikey:SB_ANON,Authorization:`Bearer ${SB_ANON}`,'Content-Type':'application/json',Prefer:'return=minimal'}, body:JSON.stringify(rows)});
+      if (!provId) return; // proveedor no esta en SB2, skip silencioso
+      const filtered = items.filter(it => it.name && it.newStock !== undefined);
+      if (!filtered.length) return;
+      try {
+        const r = await fetch(WORKER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'updateStockSb2', provId, items: filtered, user: operador })
+        });
+        const d = await r.json();
+        if (!d.ok) showToast('Stock guardado pero no sincronizó con el bot. Avisá.', true);
+      } catch {
+        showToast('Stock guardado pero no sincronizó con el bot. Avisá.', true);
+      }
     }
 
     // ── AI ───────────────────────────────────────────────────────

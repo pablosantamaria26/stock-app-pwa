@@ -1150,9 +1150,11 @@
       if (!list.find(x => x.id === 'sb:' + DIAWARA_UNIFIED)) {
         list.push({ id: 'sb:' + DIAWARA_UNIFIED, name: DIAWARA_UNIFIED, source: 'supabase', lastUpdated: diawaraLastUpdated });
       }
-      // Proveedores Supabase-nativos (sin hoja GAS)
+      // Proveedores Supabase-nativos (sin hoja GAS); si hay GAS con mismo nombre, SB2 gana
       const sb2Providers = (sb2Result.status === 'fulfilled' && Array.isArray(sb2Result.value)) ? sb2Result.value : [];
       sb2Providers.forEach(p => {
+        const dupIdx = list.findIndex(x => x.name.toLowerCase() === p.nombre.toLowerCase() && x.source !== 'supabase2');
+        if (dupIdx !== -1) list.splice(dupIdx, 1);
         if (!list.find(x => x.id === 'sb2:' + p.id)) list.push({ id: 'sb2:' + p.id, name: p.nombre, source: 'supabase2', lastUpdated: p.lastUpdated });
       });
       return list;

@@ -1949,7 +1949,7 @@
             const k = `${item.row}_${item.col}`;
             const raw = item.stock ? item.stock.toString() : 'x';
             const noStock = raw === 'x' || raw === '0' || !raw;
-            orderSelections[k] = { name: item.name, stock: raw, selected: noStock, qty: 1 };
+            orderSelections[k] = { name: item.name, codigo: item.codigo, bultos: item.bultos, stock: raw, selected: noStock, qty: 1 };
           });
         } else {
           const res = await fetchWithRetry(`${WORKER_URL}?action=getSheetData&fileId=${id}`, {});
@@ -2315,9 +2315,10 @@
       msg += `Hola! Les hacemos el siguiente pedido:\n\n`;
       selected.forEach(item => {
         const qty = item.qty || 1;
-        const codPart = item.codigo ? ` [COD ${item.codigo}]` : '';
+        // Codigo adelante: es lo que el vendedor busca primero para cargar el pedido
+        const codPart = item.codigo ? `${item.codigo} - ` : '';
         const bultoInfo = item.bultos ? ` (${item.bultos} ud/bulto)` : '';
-        msg += `• ${item.name}${codPart}: *${qty} BULTO${qty !== 1 ? 'S' : ''}*${bultoInfo}\n`;
+        msg += `• ${codPart}${item.name}: *${qty} BULTO${qty !== 1 ? 'S' : ''}*${bultoInfo}\n`;
       });
       msg += `\nLugar: Languenheim 1095, Longchamps`;
       msg += `\nEntrega: Lun-Vie de 7 a 15hs`;

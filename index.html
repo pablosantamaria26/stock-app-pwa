@@ -1125,6 +1125,12 @@
     ];
     const DIAWARA_UNIFIED = 'DIAWARA PLAST SA';
 
+    // Proveedores migrados a Supabase-nativo (SB2): su hoja GAS ya no se muestra,
+    // el stock se carga y guarda directo en SB2. Clave = fileId de la hoja GAS.
+    const GAS_MIGRADOS_A_SB2 = [
+      '1ZKIufMhxbCD1MC7SVEjyPEJNWgnd4E3oWH0dxSSvowo', // Samantha Stock -> sb2:samantha
+    ];
+
     async function mergeProviders() {
       const [gasResult, sbResult, sb2Result] = await Promise.allSettled([
         fetch(`${WORKER_URL}?action=getProviders`).then(r => r.json()),
@@ -1133,7 +1139,8 @@
       ]);
       const list = [];
       const gasItems = (gasResult.status === 'fulfilled' && Array.isArray(gasResult.value)) ? gasResult.value : [];
-      list.push(...gasItems);
+      // Hojas GAS de proveedores ya migrados a SB2: se ocultan para no duplicar la tarjeta
+      list.push(...gasItems.filter(g => !GAS_MIGRADOS_A_SB2.includes(g.id)));
       // Supabase devuelve [{proveedor, lastUpdated}] — colapsa las 3 líneas Diawara en 1
       const sbProviders = (sbResult.status === 'fulfilled' && Array.isArray(sbResult.value)) ? sbResult.value : [];
       let diawaraLastUpdated = null;

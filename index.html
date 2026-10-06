@@ -1130,6 +1130,11 @@
     const GAS_MIGRADOS_A_SB2 = [
       '1ZKIufMhxbCD1MC7SVEjyPEJNWgnd4E3oWH0dxSSvowo', // Samantha Stock -> sb2:samantha
     ];
+    // Hojas GAS que se ocultan solo cuando el proveedor SB2 equivalente ya está activo
+    // (así el cambio en la app no deja al proveedor sin tarjeta mientras se migra).
+    const GAS_MIGRANDO_A_SB2 = {
+      '118BgA8aJy0uzO9F4gKl_x9DVLYUiwUQi_gpnoV7v9fQ': 'romyl', // Romyl stock -> sb2:romyl (lista con códigos, oct-2026)
+    };
 
     async function mergeProviders() {
       const [gasResult, sbResult, sb2Result] = await Promise.allSettled([
@@ -1159,6 +1164,11 @@
       }
       // Proveedores Supabase-nativos (sin hoja GAS); si hay GAS con mismo nombre, SB2 gana
       const sb2Providers = (sb2Result.status === 'fulfilled' && Array.isArray(sb2Result.value)) ? sb2Result.value : [];
+      Object.entries(GAS_MIGRANDO_A_SB2).forEach(([fileId, sb2Id]) => {
+        if (!sb2Providers.some(p => p.id === sb2Id)) return;
+        const idx = list.findIndex(x => x.id === fileId);
+        if (idx !== -1) list.splice(idx, 1);
+      });
       sb2Providers.forEach(p => {
         const dupIdx = list.findIndex(x => x.name.toLowerCase() === p.nombre.toLowerCase() && x.source !== 'supabase2');
         if (dupIdx !== -1) list.splice(dupIdx, 1);

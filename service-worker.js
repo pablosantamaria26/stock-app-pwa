@@ -1,4 +1,4 @@
-const CACHE_NAME = 'deposito-pro-v34';
+const CACHE_NAME = 'deposito-pro-v35';
 const ASSETS = [
   './',
   './index.html',

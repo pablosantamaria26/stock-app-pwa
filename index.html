@@ -978,9 +978,7 @@
           reg.addEventListener('updatefound', () => {
             const newWorker = reg.installing;
             newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
-                window.location.reload();
-              }
+              /* Sin recarga automática: la versión nueva se usa al volver a abrir. */
             });
           });
         }).catch(() => {});
@@ -1263,6 +1261,7 @@
     }
 
     async function loadSheet(id, name) {
+      if (String(arguments[0]).indexOf("qr:") === 0) return abrirModoQueruclor();
       currentFileId = id; currentProvNombre = name; currentCatalogUrl = null;
       setView('editor', name, 'Cargando...');
       document.getElementById('editor-search').value = '';
@@ -2575,5 +2574,27 @@
       t._tid = setTimeout(() => {t.style.opacity='0';t.style.transform='translate(-50%,-14px) scale(0.9)';}, 3200);
     }
   </script>
+<script>
+/* Queruclor en la app de stock: un proveedor más, que abre su propia pantalla. */
+(function () {
+  var original = mergeProviders;
+  mergeProviders = async function () {
+    var lista = await original.apply(this, arguments);
+    return (lista || []).concat([{ id: "qr:queruclor", name: "QUERUCLOR", source: "supabase", lastUpdated: null }]);
+  };
+})();
+function abrirModoQueruclor() {
+  if (document.getElementById("qrModo")) return;
+  var o = document.createElement("div");
+  o.id = "qrModo";
+  o.style.cssText = "position:fixed;inset:0;z-index:9999;background:#fff;display:flex;flex-direction:column";
+  o.innerHTML = '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#02274F;color:#fff;font:700 15px system-ui">' +
+    '<button id="qrModoCerrar" style="background:rgba(255,255,255,.15);color:#fff;border:0;border-radius:10px;padding:8px 12px;font:700 14px system-ui">← Volver</button>' +
+    '<span>QUERUCLOR · escaneo por código</span></div>' +
+    '<iframe src="stock-queruclor.html" title="Stock Queruclor" style="flex:1;border:0;width:100%"></iframe>';
+  document.body.appendChild(o);
+  document.getElementById("qrModoCerrar").onclick = function () { o.remove(); };
+}
+</script>
 </body>
 </html>

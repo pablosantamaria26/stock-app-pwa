@@ -1,4 +1,4 @@
-const CACHE_NAME = 'deposito-pro-v32';
+const CACHE_NAME = 'deposito-pro-v33';
 const ASSETS = [
   './',
   './index.html',
@@ -18,7 +18,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => Promise.all(
       keys.map((k) => {
-        if (!k.includes(CACHE_NAME)) return caches.delete(k);
+        if (k.startsWith("deposito-pro-") && !k.includes(CACHE_NAME)) return caches.delete(k);
       })
     ))
   );

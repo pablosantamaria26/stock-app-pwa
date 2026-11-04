@@ -536,9 +536,12 @@ body.modo-devol .tareas button.on{color:#7c2d12}
 
 .cam{background:var(--sup);border:1px solid var(--ln);border-radius:12px;padding:12px;margin-bottom:12px}
 #video{width:100%;border-radius:9px;background:#000;display:none;aspect-ratio:4/3;object-fit:cover}
-.cam-b{width:100%;padding:14px;border:0;border-radius:11px;background:var(--v);color:#fff;
-  font:inherit;font-weight:800;font-size:15px;cursor:pointer;margin-top:10px}
-.cam-b:disabled{background:#cbd5e1;cursor:not-allowed}
+/* Secundaria: el lector (USB/Bluetooth, como el SAT AI402W) ya escanea solo con el cursor en
+   el campo de arriba — la cámara es una alternativa para cuando no se tiene el lector a mano,
+   no un paso que haya que hacer siempre. Mismo estilo chico que «Consultar stock»/«Movimientos». */
+.cam-b{display:block;margin:12px auto 0;border:1px solid var(--ln);background:var(--sup);border-radius:99px;
+  padding:7px 14px;font:inherit;font-size:12.5px;font-weight:700;color:var(--t2);cursor:pointer}
+.cam-b:disabled{background:#f1f5f9;color:#94a3b8;border-color:#f1f5f9;cursor:not-allowed}
 .cam-n{font-size:12px;color:var(--t3);margin-top:8px;text-align:center}
 .man{display:flex;gap:8px;margin-top:10px}
 .man input{flex:1;padding:11px 12px;border:2px solid var(--ln);border-radius:9px;font:inherit;font-size:16px}
@@ -689,8 +692,8 @@ body.modo-recibir .ok{background:var(--az)}
     </div>
     <div id="sugerencias" class="sug" role="listbox" aria-label="Artículos encontrados"></div>
     <video id="video" playsinline muted></video>
-    <button class="cam-b" id="camBtn">📷 Prender la cámara</button>
-    <div class="cam-n" id="camNota">Con el lector USB o Bluetooth, dejá el cursor en el campo de arriba y escaneá.</div>
+    <button class="cam-b" id="camBtn">📷 Usar la cámara (sin el lector)</button>
+    <div class="cam-n" id="camNota">Con el lector USB o Bluetooth, dejá el cursor en el campo de arriba y escaneá: no hace falta la cámara.</div>
     <div class="cam-n" id="entradaNota"></div>
   </section>
 
@@ -2704,7 +2707,7 @@ body.modo-recibir .ok{background:var(--az)}
   function apagarCamara() {
     if (cerrarCamara) { try { cerrarCamara(); } catch (e) {} cerrarCamara = null; }
     if ($("video")) $("video").style.display = "none";
-    if ($("camBtn") && !$("camBtn").disabled) $("camBtn").textContent = "📷 Prender la cámara";
+    if ($("camBtn") && !$("camBtn").disabled) $("camBtn").textContent = "📷 Usar la cámara (sin el lector)";
   }
   function prepararCamara() {
     const b = $("camBtn"), nota = $("camNota");

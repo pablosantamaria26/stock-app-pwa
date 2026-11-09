@@ -1034,9 +1034,9 @@ body.modo-recibir .ok{background:var(--az)}
     </div>`;
   }
   function resumenLinea(l) {
-    if (!l) return `<span class="vn-chip nada">SIN FECHA</span>`;
+    if (!l) return "Sin vencimiento registrado";
     const pr = l.proximo;
-    const txt = pr ? `<span class="vn-chip ${(ESTADO[pr.estado] || [])[1] || "nada"}">${(ESTADO[pr.estado] || [])[0] || ""}</span> ${fechaHtml(pr)}` : (l.sin_fecha_unidades > 0 ? `<span class="vn-chip nada">SIN FECHA</span>` : "");
+    const txt = pr ? `<span class="vn-chip ${(ESTADO[pr.estado] || [])[1] || "nada"}">${(ESTADO[pr.estado] || [])[0] || ""}</span> ${fechaHtml(pr)}` : (l.sin_fecha_unidades > 0 ? "Sin vencimiento registrado" : "");
     return txt + (l.exacto ? "" : ` <span class="vn-chip ojo">CONCILIACIÓN PENDIENTE</span>`);
   }
 

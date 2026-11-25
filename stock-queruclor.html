@@ -2328,7 +2328,53 @@ body.modo-recibir .ok{background:var(--az)}
       try { ped = rpc("qr_dev_pedido", { p_pedido: String(id) }); }
       catch (e) { return aviso("mal", "Sin conexión con el servidor: no se pudo leer el pedido. " + e.message); }
       if (!ped) { aviso("mal", "El pedido " + id + " no tiene remito emitido: no hay nada despachado para devolver."); return false; }
+      if (!aliasDe || aliasDe !== ped.pedido_id) { aliasDe = ped.pedido_id; alias = new Set(); recibidasCod.clear(); }
+      alias.add(String(id)); alias.add(String(ped.pedido_id));
+      marcarRecibidas();
       return true;
+    }
+
+    /* 25/11/2026 (Rodrigo, devolución de 5 cajas de lavandina): las etiquetas dicen «ML-<código corto>-<caja>» (001836) y el
+       pedido abierto se identifica por su id interno (c9149c38-…). Se comparaban entre sí: nunca coincidían, así que con el
+       pedido abierto CADA caja decía «Esa caja es de otro pedido» y había que cerrar y abrir la app para leer la siguiente.
+       Ahora la caja pertenece al pedido si la base lo dice (qr_bulto_info.pedido_id) o si es el número con el que se abrió. */
+    let alias = new Set(), aliasDe = null;
+    function esDeEstePedido(c) {
+      if (!ped) return true;
+      const ids = [...alias, String(ped.pedido_id)];
+      const igual = (a, b) => String(a) === String(b) || (/^\d+$/.test(a) && /^\d+$/.test(b) && Number(a) === Number(b));
+      if (ids.some(x => igual(x, c.pedido))) return true;
+      if (c.bulto) {
+        let info = null; try { info = rpc("qr_bulto_info", { p_codigo: c.bulto }); } catch (e) { return true; }   // sin conexión: lo decide la operación
+        if (info && String(info.pedido_id) === String(ped.pedido_id)) { alias.add(String(c.pedido)); return true; }
+      }
+      return false;
+    }
+
+    /* 25/11/2026: «Declarado por el repartidor» pedía escanear todas las cajas aunque ya se hubieran recibido algunas, y con cajas
+       iguales no había forma de saber cuál faltaba. Se pregunta a la base (qr_bulto_info, sin trabar la pantalla) qué cajas
+       declaradas ya se recibieron, y se marcan con su número. */
+    const recibidasCod = new Map();            // código → { quien, fecha }
+    const nroCaja = cod => { const m = String(cod || "").match(/(\d{3,})$/); return m ? "N° " + m[1] : cod; };
+    const recibidaDe = info => {
+      if (!info || !info.devolucion || !info.devolucion.recibida) return null;
+      const h = (info.historial || []).filter(x => /^devuelta/.test(x.accion || "")).pop() || {};
+      return { quien: h.quien || "", fecha: h.fecha || "" };
+    };
+    function marcarRecibidas() {
+      const cods = [...new Set(((ped && ped.casos) || []).filter(c => c.estado_fisico !== "recibida").flatMap(c => (c.items || []).filter(i => i.bulto).map(i => i.bulto)))];
+      if (!cods.length || typeof fetch !== "function") return;
+      const pid = ped.pedido_id;
+      /* El QRSrv de Stock no tiene lectura asincrónica: fetch va al mismo servidor con el token del puesto. */
+      const info = c => fetch("/rest/v1/rpc/qr_bulto_info", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ p_codigo: c }), cache: "no-store" })
+        .then(r => r.ok ? r.json() : null).catch(() => null);
+      Promise.all(cods.map(info)).then(lista => {
+        if (!ped || ped.pedido_id !== pid) return;
+        let cambio = false;
+        (lista || []).forEach((info, i) => { const r = recibidaDe(info); if (r && !recibidasCod.has(cods[i])) { recibidasCod.set(cods[i], r); cambio = true; } });
+        const inp = raiz.querySelector("#dvCod");
+        if (cambio && !(inp && inp.value)) pintar();   // solo si nadie está escribiendo un código
+      }).catch(() => {});
     }
 
     function escanear(txt, entrada) {
@@ -2355,7 +2401,7 @@ body.modo-recibir .ok{background:var(--az)}
         if (/^https?:/i.test(String(txt).trim())) return aviso("mal", "Ese es el QR de contacto con Administración. Escaneá el código de barras de la caja o el QR chico que está debajo de las barras.");
         return aviso("mal", "No reconozco ese código. Escaneá la etiqueta de la caja (barras o QR chico).");
       }
-      if (ped && String(ped.pedido_id) !== String(c.pedido)) {
+      if (ped && !esDeEstePedido(c)) {
         /* 20/10/2026: una caja de OTRO pedido no se suma a este ni cambia la pantalla sola. */
         msg = { tipo: "mal", txt: "Esa caja es de otro pedido (#" + c.pedido + "), no del que estás recibiendo (#" + ped.pedido_id + " · " + ped.cliente_nombre + "). No se sumó.", abrir: c.pedido };
         return pintar();
@@ -2365,10 +2411,18 @@ body.modo-recibir .ok{background:var(--az)}
         if (!cargarPedido(c.pedido)) return;
       }
       if (c.bulto) {
-        if (cajas.some(x => x.codigo === c.bulto)) return aviso("ojo", "Esa caja ya está en la lista: no se suma dos veces.");
+        if (cajas.some(x => x.codigo === c.bulto)) return aviso("info", "La caja " + nroCaja(c.bulto) + " ya está en la lista (se leyó dos veces): no se suma de nuevo. Seguí con la próxima.");
         let info = null;
         try { info = rpc("qr_bulto_info", { p_codigo: c.bulto }); } catch (e) { return aviso("mal", "Sin conexión: " + e.message); }
         if (!info || info.estado !== "activo") return aviso("mal", "Ese código no está registrado como caja de este pedido.");
+        /* 25/11/2026: una caja ya recibida no entra a la lista ni frena nada: se dice cuándo se recibió y qué falta. */
+        const ya = recibidaDe(info);
+        if (ya) {
+          recibidasCod.set(c.bulto, ya);
+          const faltan = [...new Set(declaradosPend().flatMap(k => (k.items || []).filter(i => i.bulto && !recibidasCod.has(i.bulto) && !cajas.some(x => x.codigo === i.bulto)).map(i => nroCaja(i.bulto))))];
+          return aviso("info", "La caja " + nroCaja(c.bulto) + " ya se recibió" + (ya.quien ? " (" + ya.quien + (ya.fecha ? " · " + hora(ya.fecha) : "") + ")" : "") + ": no hace falta leerla de nuevo." +
+            (faltan.length ? " Faltan: " + faltan.join(", ") + "." : "") + (emiteNota ? " Si falta la nota, está abajo en el caso." : ""));
+        }
         /* Caja surtida: vuelve lo que la base registró que lleva. Si no tiene
            el detalle por caja (pedido viejo), no se adivina: se eligen las
            unidades «sin código», con el motivo. */
@@ -2468,7 +2522,14 @@ body.modo-recibir .ok{background:var(--az)}
         if (e.key.length === 1) { if (!inp.value) teclas = []; teclas.push(e.timeStamp || performance.now()); }
         else if (e.key === "Backspace" || e.key === "Delete") teclas.push(Infinity);
       });
-      setTimeout(() => { if (raiz.offsetParent && (document.activeElement === document.body || !document.activeElement)) inp.focus(); }, 0);
+      /* 25/11/2026: el cursor vuelve al código también si quedó en un botón (el lector siempre escribe ahí). Nunca se saca de un
+         campo, una lista o un texto que la persona esté usando. */
+      setTimeout(() => {
+        if (!raiz.offsetParent) return;
+        const a = document.activeElement;
+        const editando = a && (/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName) || a.isContentEditable);
+        if (!a || a === document.body || (!editando && !(a.closest && a.closest("[role=dialog], dialog, #quienOverlay")))) inp.focus();
+      }, 0);
     }
 
     function chip(txt, cls) { return `<span class="dv-chip ${cls}">${esc(txt)}</span>`; }
@@ -2596,6 +2657,8 @@ body.modo-recibir .ok{background:var(--az)}
       const hayManual = items.some(i => !i.bulto);
       const pendDecl = declaradosPend();
       const escaneados = new Set(cajas.map(c => c.codigo));
+      const conCod = [...new Set(pendDecl.flatMap(c => (c.items || []).filter(i => i.bulto).map(i => i.bulto)))];
+      const faltanDecl = conCod.filter(b => !recibidasCod.has(b) && !escaneados.has(b)).length;
       const distintas = cajas.filter(c => c.distinta && !(c.dev && c.dev.recibida));
       const motivoSel = `<select id="dvMotivo" aria-label="Motivo sin código"><option value="" ${sinCod.motivo ? "" : "selected"}>Elegí el motivo…</option>
           ${MOTIVOS.map(t => `<option ${sinCod.motivo === t ? "selected" : ""}>${esc(t)}</option>`).join("")}
@@ -2640,11 +2703,13 @@ body.modo-recibir .ok{background:var(--az)}
           <button type="button" class="dv-b" data-a="cerrar">Volver a la lista</button>
         </div>
         ${pasosHTML}
-        ${pendDecl.length ? `<h4>Declarado por el repartidor</h4><div class="dv-decl">${pendDecl.map(c => `
-          <div class="dv-decl-c"><span class="dv-decl-q">Declaró ${esc(c.quien || "—")} · ${hora(c.fecha)}</span>${(c.items || []).map(i => `
-            <div class="dv-decl-i ${i.bulto && escaneados.has(i.bulto) ? "ok" : ""}"><b>${cant(i.cajas, i.sueltas)}</b><span>${esc(i.nombre || i.ean)}</span>
+        ${pendDecl.length ? `<h4>Declarado por el repartidor${conCod.length ? ` · <span class="dv-decl-falta">${faltanDecl ? "faltan " + faltanDecl + " de " + conCod.length : "todas leídas"}</span>` : ""}</h4><div class="dv-decl">${pendDecl.map(c => `
+          <div class="dv-decl-c"><span class="dv-decl-q">Declaró ${esc(c.quien || "—")} · ${hora(c.fecha)}</span>${(c.items || []).map(i => {
+            const rec = i.bulto && recibidasCod.get(i.bulto), esc2 = i.bulto && escaneados.has(i.bulto);
+            return `
+            <div class="dv-decl-i ${rec || esc2 ? "ok" : ""} ${rec ? "ya" : ""}"><b>${cant(i.cajas, i.sueltas)}</b><span>${i.bulto ? `<strong class="dv-nro">${esc(nroCaja(i.bulto))}</strong> ` : ""}${esc(i.nombre || i.ean)}</span>
               ${i.bulto ? "" : `<i>sin código</i>`}
-              <em>${i.bulto && escaneados.has(i.bulto) ? "✓ escaneada" : "escaneá su código"}</em></div>`).join("")}</div>`).join("")}</div>` : ""}
+              <em>${rec ? "✓ recibida" + (rec.quien ? " · " + esc(rec.quien) : "") + (rec.fecha ? " " + esc(hora(rec.fecha)) : "") : esc2 ? "✓ escaneada" : "escaneá su código"}</em></div>`; }).join("")}</div>`).join("")}</div>` : ""}
         ${cajas.length ? `<h4>Cajas identificadas por código</h4><div class="dv-cajas">${cajas.map((c, i) => {
             const uc = ((ped.articulos || []).find(a => a.ean === c.ean) || {}).uc || null;
             const estado = c.sana === false ? "0" : c.reacondicionada ? "2" : "1";
@@ -2963,6 +3028,7 @@ body.modo-recibir .ok{background:var(--az)}
     .dv-decl-i{ display:flex; flex-wrap:wrap; gap:4px 10px; align-items:center; padding:6px 0; font-size:14px } .dv-decl-i b{ font-size:15px } .dv-decl-i span{ flex:1; min-width:160px }
     .dv-decl-i code{ font-size:13px; font-weight:800; background:#fff; border:1px solid #bfdbfe; padding:2px 7px; border-radius:6px; user-select:all }
     .dv-decl-i em{ font-style:normal; font-size:12px; font-weight:800; color:#92400e } .dv-decl-i.ok em{ color:#166534 }
+    .dv-decl-i.ya span{ color:#4b5563 } .dv-nro{ font-weight:900; letter-spacing:.02em } .dv-decl-falta{ font-size:13px; font-weight:800; color:#92400e }
     .dv-caja.distinta{ border-color:#f59e0b; background:#fffbeb }
     .dv-dif{ margin:10px 0; padding:10px 12px; border:2px solid #f59e0b; border-radius:12px; background:#fffbeb; display:flex; flex-direction:column; gap:6px }
     .dv-dif-l{ display:flex; flex-direction:column; gap:2px; font-size:13px } .dv-dif input{ padding:9px; border:1px solid #cbd5e1; border-radius:8px; font:inherit; font-size:14px }
@@ -3110,6 +3176,10 @@ body.modo-recibir .ok{background:var(--az)}
     if (t === "movs") pintarMovs();
     if (t === "devol" && window.DevUI && !devol) devol = DevUI.montar($("v-devol"), { modo: "stock", quien: () => E.quien(), novedadEnLinea: true });
     else if (t === "devol" && devol) devol.pintar();
+    /* 25/11/2026: el lector (SAT por Bluetooth en el celular del depósito) escribe donde está el cursor; al entrar a «Recibir
+       devolución» el foco quedaba en el botón de la pestaña y la lectura se perdía (Rodrigo terminó escribiendo el código a mano). */
+    if (t === "devol") setTimeout(() => { const d = document.getElementById("dvCod");
+      if (d && !$("quienOverlay").style.display.includes("flex")) d.focus(); }, 0);
     if (conEntrada) setTimeout(() => { const m = $("manual"); if (m && document.activeElement !== m && !$("quienOverlay").style.display.includes("flex")) m.focus(); }, 0);
   }
 

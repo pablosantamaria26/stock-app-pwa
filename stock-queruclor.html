@@ -522,6 +522,20 @@ body.modo-devol .tareas button.on{color:#7c2d12}
 .hist{font-size:11.5px;color:var(--t2);margin-top:8px;line-height:1.45}
 .sel{width:100%;padding:11px 12px;border:2px solid var(--ln);border-radius:9px;font:inherit;font-size:15px;background:var(--sup)}
 .aviso-lindo{background:var(--aml);border:1px solid #fcd34d;color:#78350f;border-radius:11px;padding:10px 12px;font-size:13px;line-height:1.45;margin:8px 0}
+/* 27/11/2026: aviso de devoluciones pendientes y recepción por cantidad (produccion/stock-devolucion-cantidad-parche.js) */
+.tareas button{position:relative}
+.t-pend{position:absolute;top:3px;right:4px;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#dc2626;color:#fff;font:800 12px/20px system-ui,sans-serif;text-align:center;box-shadow:0 0 0 2px #fff}
+.t-pend[hidden]{display:none}
+.aviso-devol{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:10px 12px;border-radius:12px;background:#fff7ed;border:1.5px solid #fdba74;color:#7c2d12}
+.aviso-devol[hidden]{display:none}
+.aviso-devol > div{flex:1;min-width:0} .aviso-devol b{display:block;font-size:15px} .aviso-devol span{display:block;font-size:12.5px;margin-top:2px}
+.aviso-devol .ok{flex:none;min-height:44px;padding:0 18px}
+.dv-cant{margin:10px 0;padding:12px;border:2px solid #fdba74;border-radius:12px;background:#fffbeb}
+.dv-cant-h b{display:block;font-size:15.5px;line-height:1.25} .dv-cant-h span{display:block;font-size:12.5px;color:#7c2d12;margin-top:2px}
+.dv-cant-c{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 4px}
+.dv-cant .dv-cant-b{min-width:52px;min-height:52px;font-size:24px;font-weight:800;line-height:1;touch-action:manipulation}
+.dv-cant-n{width:84px;min-height:52px;font-size:24px;font-weight:800;text-align:center;border:2px solid #cbd5e1;border-radius:10px;background:#fff;color:#0f172a}
+.dv-cant-de{font-size:13px;color:#475569}
 @media (max-width:380px){ .tareas button{font-size:11.5px;padding:8px 3px} }
 @media (prefers-reduced-motion: reduce){ *{transition:none !important} }
 
@@ -1188,6 +1202,7 @@ body.modo-recibir .ok{background:var(--az)}
 </div>
 
 <div class="wrap">
+  <div class="aviso-devol" id="avisoDevol" role="status" aria-live="polite" hidden></div>
   <div class="consultas">
     <button id="t-stock" class="link">📊 Consultar stock</button>
     <button id="t-movs" class="link">📜 Movimientos</button>
@@ -2310,6 +2325,7 @@ body.modo-recibir .ok{background:var(--az)}
     const S = global.QRSrv;
     let ped = null, cajas = [], manual = {}, op = nuevoOp(modo), msg = null, ocupado = false, opPend = null;
     let vista = "recibir", sinCod = { abierto: false, motivo: "", otro: "" }, casoSel = null, motivoDif = "";
+    /* stock-cantidad 27/11/2026 */ let porCant = {};   // ean → { n, decl, disp, cand: [códigos] | null, nombre }
     /* Cuándo se redibujó solo (por algo que hizo otro equipo). Un toque que
        llega justo después pudo haber apuntado a otro renglón. */
     let refrescadoAfuera = 0;
@@ -2319,7 +2335,7 @@ body.modo-recibir .ok{background:var(--az)}
 
     const rpc = (fn, a) => S.rpc(fn, a);
     function aviso(tipo, txt) { msg = { tipo, txt }; pintar(); }
-    const limpiar = () => { cajas = []; manual = {}; op = nuevoOp(modo); opPend = null; sinCod = { abierto: false, motivo: "", otro: "" }; casoSel = null; motivoDif = ""; };
+    const limpiar = () => { cajas = []; manual = {}; op = nuevoOp(modo); opPend = null; sinCod = { abierto: false, motivo: "", otro: "" }; casoSel = null; motivoDif = ""; porCant = {}; };
     /* Lo declarado por el repartidor que todavía falta recibir (casos abiertos de este pedido). */
     const declaradosPend = () => ((ped && ped.casos) || []).filter(c => c.estado_fisico !== "recibida");
     const codigosDeclarados = () => new Set(declaradosPend().flatMap(c => (c.items || []).filter(i => i.bulto).map(i => i.bulto)));
@@ -2436,6 +2452,13 @@ body.modo-recibir .ok{background:var(--az)}
         const decl = codigosDeclarados();
         const distinta = !(info.devolucion && (info.devolucion.declarada || info.devolucion.recibida)) && decl.size > 0 && !decl.has(c.bulto);
         cajas.push({ codigo: c.bulto, ean: info.ean, nombre: (surtida ? "Surtida · " : "") + info.nombre + lleva, sana: true, dev: info.devolucion, distinta, entrada: entrada || "lector" });
+        /* 27/11/2026: una caja cerrada leída ofrece poner cuántas volvieron (ver produccion/stock-devolucion-cantidad-parche.js). */
+        if (!surtida && !distinta && !(info.devolucion && info.devolucion.recibida)) {
+          prepararCantidad(info.ean);
+          /* Si lee OTRA caja del mismo artículo, está leyendo una por una: la cantidad pasa a ser las leídas (salvo que la haya
+             cambiado a mano). Así nadie confirma sin querer cajas que no leyó. */
+          const pp = porCant[info.ean]; if (pp && !pp.manual && leidasDe(info.ean) > 1) pp.n = leidasDe(info.ean);
+        }
         casoSel = null;
         msg = info.devolucion && info.devolucion.recibida
           ? { tipo: "ojo", txt: "Esa caja ya se recibió: no vuelve a sumar stock." + (emiteNota ? " Si falta la nota, está abajo en el caso." : "") }
@@ -2487,9 +2510,72 @@ body.modo-recibir .ok{background:var(--az)}
         ? { bulto: c.codigo, ean: c.ean, sana: true, reacondicionada: true, unidades: c.unidades, sin_danio: !!c.sinDanio }
         : { bulto: c.codigo, ean: c.ean, sana: c.sana });
       Object.keys(manual).forEach(ean => { const m = manual[ean]; if (m.cajas || m.sueltas) out.push({ ean, cajas: m.cajas, sueltas: m.sueltas, sana: m.sana }); });
+      Object.keys(porCant).forEach(ean => extrasDe(ean).forEach(cod => out.push({ bulto: cod, ean, sana: true })));   // por cantidad: con su código real
       return out;
     };
     const motivoTxt = () => sinCod.motivo === "otro" ? sinCod.otro.trim() : sinCod.motivo;
+
+    /* ── Recibir por cantidad (27/11/2026) ──────────────────────────
+       Se lee UNA caja y se pone cuántas volvieron; las demás se registran con el código real de cajas iguales del mismo pedido
+       (primero las declaradas por el repartidor), verificadas una por una (activas y no recibidas). La base controla igual que
+       si se hubieran leído; la operación guarda cuántas fueron por cantidad. */
+    const leidasDe = ean => cajas.filter(c => c.ean === ean && !c.distinta && !(c.dev && c.dev.recibida)).length;
+    const libresDe = ean => { const p = porCant[ean]; return p && p.cand ? p.cand.filter(cod => !cajas.some(x => x.codigo === cod)) : []; };
+    const maxDe = ean => { const p = porCant[ean], le = leidasDe(ean); return p && p.cand ? Math.max(le, Math.min(p.disp, le + libresDe(ean).length)) : le; };
+    function extrasDe(ean) { const p = porCant[ean]; if (!p || !p.cand) return []; return libresDe(ean).slice(0, Math.max(0, Math.min(p.n, maxDe(ean)) - leidasDe(ean))); }
+    function porCantidadResumen() {
+      const r = {};
+      Object.keys(porCant).forEach(ean => { const ex = extrasDe(ean); if (ex.length) r[ean] = { leidas: leidasDe(ean), por_cantidad: ex.length, codigos: ex }; });
+      return Object.keys(r).length ? r : null;
+    }
+    function prepararCantidad(ean) {
+      if (!ped || porCant[ean] || typeof fetch !== "function") return;
+      const a = (ped.articulos || []).find(x => x.ean === ean); if (!a) return;
+      const decl = Math.max(0, (Number(a.devuelto_cajas) || 0) - (Number(a.recibido_cajas) || 0));
+      const disp = Math.max(1, (Number(a.cajas) || 0) - (Number(a.recibido_cajas) || 0));
+      porCant[ean] = { n: Math.max(1, Math.min(decl || 1, disp)), decl, disp, cand: null, nombre: a.nombre };
+      const pid = ped.pedido_id;
+      /* El QRSrv de Stock no tiene lectura asincrónica: fetch va al mismo servidor con el token del puesto (sin trabar la pantalla). */
+      const post = (fn, body) => fetch("/rest/v1/rpc/" + fn, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), cache: "no-store" })
+        .then(r => r.ok ? r.json() : null).catch(() => null);
+      const sigue = () => ped && ped.pedido_id === pid && porCant[ean];
+      post("qr_bultos_de_pedido", { p_pedido: String(pid) }).then(res => {
+        if (!sigue()) return;
+        const declSet = codigosDeclarados();
+        const l = ((res && res.bultos) || []).filter(b => b.estado === "activo" && b.ean === ean && (!b.tipo || b.tipo === "cerrada") && !recibidasCod.has(b.codigo) && !cajas.some(x => x.codigo === b.codigo))
+          .sort((x, y) => (Number(declSet.has(y.codigo)) - Number(declSet.has(x.codigo))) || ((x.n || 0) - (y.n || 0)));
+        return Promise.all(l.slice(0, Math.min(40, disp + 3)).map(b => post("qr_bulto_info", { p_codigo: b.codigo }).then(info => ({ b, info })))).then(rs => {
+          if (!sigue()) return;
+          porCant[ean].cand = rs.filter(x => x.info && x.info.estado === "activo" && String(x.info.pedido_id) === String(pid) && !recibidaDe(x.info)).map(x => x.b.codigo);
+          const inp = raiz.querySelector("#dvCod");
+          if (!(inp && inp.value)) pintar();
+        });
+      }).catch(() => { if (sigue()) { porCant[ean].cand = []; pintar(); } });
+    }
+    function cantidadHTML() {
+      const eans = Object.keys(porCant).filter(e => leidasDe(e) > 0);
+      return eans.map(ean => {
+        const p = porCant[ean], le = leidasDe(ean), mx = maxDe(ean);
+        if (p.cand) p.n = Math.min(Math.max(p.n, le), mx);
+        const extra = p.cand ? Math.max(0, p.n - le) : 0;
+        const declTx = p.decl ? "Declaró el repartidor: " + p.decl + " caja" + (p.decl === 1 ? "" : "s") + "." : "El repartidor no declaró cajas de este artículo.";
+        return `<div class="dv-cant" data-cant="${esc(ean)}">
+          <div class="dv-cant-h"><b>¿Cuántas cajas de ${esc(p.nombre || ean)} volvieron?</b><span>${declTx} Leíste ${le}.</span></div>
+          ${p.cand ? `<div class="dv-cant-c">
+            <button type="button" class="dv-b dv-cant-b" data-a="cant-menos" data-ean="${esc(ean)}" ${p.n <= le ? "disabled" : ""} aria-label="Una caja menos">−</button>
+            <input type="number" class="dv-cant-n" data-cant-ean="${esc(ean)}" min="${le}" max="${mx}" inputmode="numeric" value="${p.n}" aria-label="Cajas que volvieron">
+            <button type="button" class="dv-b dv-cant-b" data-a="cant-mas" data-ean="${esc(ean)}" ${p.n >= mx ? "disabled" : ""} aria-label="Una caja más">+</button>
+            <span class="dv-cant-de">de ${mx} posible${mx === 1 ? "" : "s"}</span></div>
+            <p class="dv-nota">${extra ? "Se suman " + extra + " caja" + (extra === 1 ? "" : "s") + " más con el código de las cajas iguales de este pedido, sin leerlas (cerradas y sanas). Si alguna volvió abierta o dañada, leé esa caja aparte." : "Solo la caja leída."}${mx <= le && p.decl > le ? " No hay otras cajas de este artículo en el pedido para sumar: leé las que falten." : ""}</p>`
+          : `<p class="dv-nota">Buscando las cajas iguales de este pedido…</p>`}
+        </div>`;
+      }).join("");
+    }
+    raiz.addEventListener("change", e => {
+      const i = e.target.closest && e.target.closest(".dv-cant-n"); if (!i) return;
+      const p = porCant[i.dataset.cantEan]; if (!p) return;
+      const v = Math.floor(Number(i.value)); p.n = isFinite(v) ? v : p.n; p.manual = true; pintar();
+    });
 
     /* ── Pintar ────────────────────────────────────────────────── */
     function pintar() {
@@ -2557,7 +2643,7 @@ body.modo-recibir .ok{background:var(--az)}
       if (ops.length) { try { (S.get("qr_devolucion_ops", "select=id,datos&id=in.(" + ops.map(encodeURIComponent).join(",") + ")", 30) || []).forEach(o => { datosOp[o.id] = o.datos || {}; }); } catch (e) {} }
       return `<div class="dv-rec">${l.map(r => { const dop = datosOp[String(r.op || "").split("|").slice(0, 4).join("|")] || {};
         const nC = (r.cajas || []).length;
-        return `<div>Recibió <b>${esc(r.quien || "—")}</b> el ${hora(r.fecha)}${r.origen ? " desde " + esc(origen(r.origen)) : ""}${r.evidencia ? " · " + esc(r.evidencia) : ""}${nC ? " · " + nC + " caja" + (nC === 1 ? "" : "s") + " por código" : ""}${dop.entrada === "manual" ? ' · <span class="dv-chip ojo">código escrito a mano (no lo leyó el lector)</span>' : ""}</div>`; }).join("")}</div>`;
+        return `<div>Recibió <b>${esc(r.quien || "—")}</b> el ${hora(r.fecha)}${r.origen ? " desde " + esc(origen(r.origen)) : ""}${r.evidencia ? " · " + esc(r.evidencia) : ""}${nC ? " · " + nC + " caja" + (nC === 1 ? "" : "s") + " por código" : ""}${dop.por_cantidad ? " · " + Object.keys(dop.por_cantidad).reduce((t, k) => t + (Number(dop.por_cantidad[k].por_cantidad) || 0), 0) + " por cantidad (sin leer)" : ""}${dop.entrada === "manual" ? ' · <span class="dv-chip ojo">código escrito a mano (no lo leyó el lector)</span>' : ""}</div>`; }).join("")}</div>`;
     }
     const agruparRecibido = c => {
       const g = {};
@@ -2643,6 +2729,7 @@ body.modo-recibir .ok{background:var(--az)}
       /* 25/10/2026: la suscripción a avisos de Windows no compite con el trabajo: enlace chico al pie. */
       const avisos = modo === "caja" && "Notification" in global && Notification.permission === "default"
         ? `<div class="dv-sec dv-pie"><button type="button" class="dv-lnk" data-a="avisos">Recibir un aviso de Windows en esta PC cuando llegue una devolución</button></div>` : "";
+      if (cfg.alPendientes) try { cfg.alPendientes(l.recibir.length); } catch (e) {}   // aviso de pendientes sin otra consulta
       const lista = l[vista];
       cargarVendedores(lista);
       const vacio = { recibir: "No hay cajas por recibir.", nota: "No hay devoluciones recibidas esperando nota.", historial: "Todavía no hay devoluciones cerradas." }[vista];
@@ -2658,7 +2745,8 @@ body.modo-recibir .ok{background:var(--az)}
       const pendDecl = declaradosPend();
       const escaneados = new Set(cajas.map(c => c.codigo));
       const conCod = [...new Set(pendDecl.flatMap(c => (c.items || []).filter(i => i.bulto).map(i => i.bulto)))];
-      const faltanDecl = conCod.filter(b => !recibidasCod.has(b) && !escaneados.has(b)).length;
+      const porCantSet = new Set(Object.keys(porCant).flatMap(extrasDe));
+      const faltanDecl = conCod.filter(b => !recibidasCod.has(b) && !escaneados.has(b) && !porCantSet.has(b)).length;
       const distintas = cajas.filter(c => c.distinta && !(c.dev && c.dev.recibida));
       const motivoSel = `<select id="dvMotivo" aria-label="Motivo sin código"><option value="" ${sinCod.motivo ? "" : "selected"}>Elegí el motivo…</option>
           ${MOTIVOS.map(t => `<option ${sinCod.motivo === t ? "selected" : ""}>${esc(t)}</option>`).join("")}
@@ -2703,13 +2791,13 @@ body.modo-recibir .ok{background:var(--az)}
           <button type="button" class="dv-b" data-a="cerrar">Volver a la lista</button>
         </div>
         ${pasosHTML}
-        ${pendDecl.length ? `<h4>Declarado por el repartidor${conCod.length ? ` · <span class="dv-decl-falta">${faltanDecl ? "faltan " + faltanDecl + " de " + conCod.length : "todas leídas"}</span>` : ""}</h4><div class="dv-decl">${pendDecl.map(c => `
+        ${pendDecl.length ? `<h4>Declarado por el repartidor${conCod.length ? ` · <span class="dv-decl-falta">${faltanDecl ? "faltan " + faltanDecl + " de " + conCod.length : porCantSet.size ? "completas · " + porCantSet.size + " por cantidad" : "todas leídas"}</span>` : ""}</h4><div class="dv-decl">${pendDecl.map(c => `
           <div class="dv-decl-c"><span class="dv-decl-q">Declaró ${esc(c.quien || "—")} · ${hora(c.fecha)}</span>${(c.items || []).map(i => {
-            const rec = i.bulto && recibidasCod.get(i.bulto), esc2 = i.bulto && escaneados.has(i.bulto);
+            const rec = i.bulto && recibidasCod.get(i.bulto), esc2 = i.bulto && escaneados.has(i.bulto), pc2 = i.bulto && porCantSet.has(i.bulto);
             return `
-            <div class="dv-decl-i ${rec || esc2 ? "ok" : ""} ${rec ? "ya" : ""}"><b>${cant(i.cajas, i.sueltas)}</b><span>${i.bulto ? `<strong class="dv-nro">${esc(nroCaja(i.bulto))}</strong> ` : ""}${esc(i.nombre || i.ean)}</span>
+            <div class="dv-decl-i ${rec || esc2 || pc2 ? "ok" : ""} ${rec ? "ya" : ""}"><b>${cant(i.cajas, i.sueltas)}</b><span>${i.bulto ? `<strong class="dv-nro">${esc(nroCaja(i.bulto))}</strong> ` : ""}${esc(i.nombre || i.ean)}</span>
               ${i.bulto ? "" : `<i>sin código</i>`}
-              <em>${rec ? "✓ recibida" + (rec.quien ? " · " + esc(rec.quien) : "") + (rec.fecha ? " " + esc(hora(rec.fecha)) : "") : esc2 ? "✓ escaneada" : "escaneá su código"}</em></div>`; }).join("")}</div>`).join("")}</div>` : ""}
+              <em>${rec ? "✓ recibida" + (rec.quien ? " · " + esc(rec.quien) : "") + (rec.fecha ? " " + esc(hora(rec.fecha)) : "") : esc2 ? "✓ escaneada" : pc2 ? "✓ por cantidad" : "escaneá su código"}</em></div>`; }).join("")}</div>`).join("")}</div>` : ""}
         ${cajas.length ? `<h4>Cajas identificadas por código</h4><div class="dv-cajas">${cajas.map((c, i) => {
             const uc = ((ped.articulos || []).find(a => a.ean === c.ean) || {}).uc || null;
             const estado = c.sana === false ? "0" : c.reacondicionada ? "2" : "1";
@@ -2728,6 +2816,7 @@ body.modo-recibir .ok{background:var(--az)}
               <p class="dv-nota">Vuelve como caja completa recién al confirmar: se verifica contra el catálogo y queda registrado que se recibió abierta y reacondicionada (no es de fábrica).</p>
             </div>` : ""}`}
             <button type="button" class="dv-x" data-a="quitar" data-i="${i}" aria-label="Quitar">✕</button></div>`; }).join("")}</div>` : ""}
+        ${cantidadHTML()}
         ${distintas.length && pendDecl.length ? `<div class="dv-dif"><b>Llegó distinto de lo declarado</b>
           <div class="dv-dif-l"><span>Declarado: ${esc(pendDecl[0].items.map(i => cant(i.cajas, i.sueltas) + " " + (i.nombre || i.ean) + (i.bulto ? " (con código)" : "")).join(", "))}</span>
             <span>Llegó: ${esc(distintas.map(c => c.nombre).join(", "))}</span></div>
@@ -2791,7 +2880,8 @@ body.modo-recibir .ok{background:var(--az)}
       if (a === "vista") { vista = b.dataset.v; msg = null; pintar(); }
       if (a === "cerrar") { ped = null; limpiar(); msg = null; pintar(); }
       if (a === "abrir") abrirPedido(b.dataset.ped);
-      if (a === "quitar") { cajas.splice(+b.dataset.i, 1); pintar(); }
+      if (a === "quitar") { cajas.splice(+b.dataset.i, 1); Object.keys(porCant).forEach(e => { if (!leidasDe(e)) delete porCant[e]; }); pintar(); }
+      if (a === "cant-menos" || a === "cant-mas") { const p = porCant[b.dataset.ean]; if (p) { p.n += a === "cant-mas" ? 1 : -1; p.manual = true; pintar(); } }
       if (a === "reintentar" && opPend) { const o = opPend; operar(o, "Guardado."); }
       if (a === "sin-codigo") { sinCod.abierto = true; casoSel = null; pintar(); }
       if (a === "sin-codigo-caso") {
@@ -2808,6 +2898,7 @@ body.modo-recibir .ok{background:var(--az)}
         const conManual = items.some(i => !i.bulto);
         if (conManual && !motivoTxt()) return aviso("mal", "Elegí por qué no tenés el código de la caja: queda registrado con la recepción.");
         const o = { tipo: "recepcion", items, entrada: entradaDe() };
+        const pc = porCantidadResumen(); if (pc) o.por_cantidad = pc;   // queda en el historial de la operación
         if (conManual) o.motivo_sin_codigo = motivoTxt();
         if (casoSel && !cajas.length) o.caso = casoSel;
         operar(o, "Recepción confirmada." + (emiteNota ? " Falta emitir la nota." : " La nota la emite Caja o Facturación."));
@@ -3168,13 +3259,15 @@ body.modo-recibir .ok{background:var(--az)}
     $("entrada").style.display = conEntrada ? "" : "none";
     $("remitoWrap").style.display = t === "recibir" ? "" : "none";
     ["recibir", "contar", "devol", "stock", "movs"].forEach(x => { $("v-" + x).style.display = x === t ? "" : "none"; });
+    { const av = document.getElementById("avisoDevol"); if (av && t === "devol") av.hidden = true; }
+    if (t !== "devol") setTimeout(() => revisarDevol(false), 0);
     $("sugerencias").innerHTML = "";
     if (!conEntrada) apagarCamara();
     if (t === "recibir") { limpiar(); avisoBorrador(); }
     if (t === "contar") pintarConteo();
     if (t === "stock") pintarStock();
     if (t === "movs") pintarMovs();
-    if (t === "devol" && window.DevUI && !devol) devol = DevUI.montar($("v-devol"), { modo: "stock", quien: () => E.quien(), novedadEnLinea: true });
+    if (t === "devol" && window.DevUI && !devol) devol = DevUI.montar($("v-devol"), { modo: "stock", quien: () => E.quien(), novedadEnLinea: true, alPendientes: n => pintarAvisoDevol(n) });
     else if (t === "devol" && devol) devol.pintar();
     /* 25/11/2026: el lector (SAT por Bluetooth en el celular del depósito) escribe donde está el cursor; al entrar a «Recibir
        devolución» el foco quedaba en el botón de la pestaña y la lectura se perdía (Rodrigo terminó escribiendo el código a mano). */
@@ -3713,6 +3806,37 @@ body.modo-recibir .ok{background:var(--az)}
     estado("", navigator.onLine ? "Conectado" : "Sin conexión");
     setTarea(tarea);
   }
+
+  /* ── Aviso de devoluciones pendientes (27/11/2026, produccion/stock-devolucion-cantidad-parche.js) ──
+     Sin consultas periódicas: se cuenta al abrir, al volver a la app (como mucho cada 2 min) y al cambiar de tarea, con la bandeja
+     SIN historial (p_hist 0). Dentro de «Recibir devolución» lo actualiza la bandeja que esa sección ya lee. */
+  let devolUlt = 0, devolN = 0;
+  const tituloBase = document.title.replace(/^\(\d+\+?\)\s*/, "");
+  function pintarAvisoDevol(n) {
+    devolN = Math.max(0, Number(n) || 0);
+    const b = $("t-devol");
+    if (b) {
+      let g = b.querySelector(".t-pend"); if (!g) { g = document.createElement("span"); g.className = "t-pend"; g.setAttribute("aria-hidden", "true"); b.appendChild(g); }
+      g.textContent = devolN > 99 ? "99+" : String(devolN); g.hidden = !devolN;
+      b.setAttribute("aria-label", "Recibir devolución" + (devolN ? " · " + devolN + " pendiente" + (devolN === 1 ? "" : "s") : ""));
+    }
+    const av = $("avisoDevol");
+    if (av) {
+      av.hidden = !devolN || tarea === "devol";
+      av.innerHTML = devolN ? `<div><b>${devolN} devoluci${devolN === 1 ? "ón" : "ones"} por recibir</b><span>Lo declaró el repartidor: la mercadería vuelve al depósito.</span></div><button type="button" class="ok" id="avisoDevolIr">Recibir</button>` : "";
+      const ir = $("avisoDevolIr"); if (ir) ir.onclick = () => setTarea("devol");
+    }
+    document.title = (devolN ? "(" + (devolN > 99 ? "99+" : devolN) + ") " : "") + tituloBase;
+  }
+  function revisarDevol(forzar) {
+    if (document.hidden || typeof fetch !== "function") return;
+    if (!forzar && Date.now() - devolUlt < 120000) return;
+    devolUlt = Date.now();
+    fetch("/rest/v1/rpc/qr_dev_bandeja", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ p_hist: 0 }), cache: "no-store" })
+      .then(r => r.ok ? r.json() : null).then(bd => { if (bd && Array.isArray(bd.por_recibir)) pintarAvisoDevol(bd.por_recibir.length); }).catch(() => {});
+  }
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && tarea !== "devol") revisarDevol(false); });
+  window.qrStockRevisarDevol = revisarDevol;
 
   window.StockUI = { setTarea, procesarEntrada, estado: () => ({ tarea, vista, conteo: cnt }) };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", iniciar);
